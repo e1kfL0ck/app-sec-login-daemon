@@ -1,5 +1,6 @@
 """Basic login daemon Flask application."""
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+import os
 import db
 
 
@@ -89,4 +90,6 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Only enable debug mode if DEBUG environment variable is set
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)
