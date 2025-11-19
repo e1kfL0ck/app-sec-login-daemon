@@ -343,6 +343,9 @@ paket-files/
 **/__pycache__/
 *.pyc
 
+# SQLite database files
+*.db
+
 # Cake - Uncomment if you are using it
 #tools/**
 #!tools/packages.config
