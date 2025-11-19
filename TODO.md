@@ -1,4 +1,4 @@
-## TODO
+# TODO
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
@@ -7,11 +7,11 @@ This file lists high-level tasks and function contracts for the login/registrati
 - Description: Handle user login.
 - Inputs: email and password (hashing/verification happens server-side).
 - Behavior:
-    - On failure: increment `nb_failed_logins` for the user.
-    - On success: reset `nb_failed_logins` and update the `last_login` timestamp.
+-  - On failure: increment `nb_failed_logins` for the user.
+-  - On success: reset `nb_failed_logins` and update the `last_login` timestamp.
 - Signature:
 
-```
+```text
 login(email, password) -> login_template(success)
 ```
 
@@ -20,14 +20,14 @@ login(email, password) -> login_template(success)
 - Description: Handle user registration.
 - Inputs: `username`, `email`, `password`, `confirm_password`.
 - Validation rules:
-    - `email` must not already exist in the database.
-    - `email` must be a valid format.
-    - `email` must pass blacklist/whitelist checks (domain checks).
-    - `password` must meet security requirements and match `confirm_password`.
+-  - `email` must not already exist in the database.
+-  - `email` must be a valid format.
+-  - `email` must pass blacklist/whitelist checks (domain checks).
+-  - `password` must meet security requirements and match `confirm_password`.
 - Post-action: send an activation token via email (currently printed to console in dev).
 - Signature:
 
-```
+```text
 register(username, email, password, confirm_password) -> register_template(errors, username, email)
 ```
 
@@ -36,7 +36,7 @@ register(username, email, password, confirm_password) -> register_template(error
 - Description: Activate an account using an activation token provided in an email link.
 - Signature:
 
-```
+```text
 validate_token(token) -> token_template(valid)
 ```
 
@@ -45,7 +45,7 @@ validate_token(token) -> token_template(valid)
 - Description: Check if a user exceeded the allowed number of failed login attempts and act accordingly.
 - Signature / possible outcomes:
 
-```
+```text
 check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickroll
 ```
 
@@ -72,10 +72,11 @@ check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickrol
 ---
 
 Notes:
+
 - Garder les signatures de fonctions comme contrat minimal. Implémenter validations et erreurs détaillées dans le code.
 - Penser à ajouter tests unitaires pour :
-    - validation d'email
-    - règles de mot de passe
-    - flux d'activation (token)
+-  - validation d'email
+-  - règles de mot de passe
+-  - flux d'activation (token)
 
 
