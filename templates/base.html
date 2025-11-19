@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title or "User registration lab" }}</title>
+</head>
+<body>
+  <header>
+    <h1>User registration lab</h1>
+    <nav>
+      <a href="{{ url_for('index') }}">Home</a> |
+      <a href="{{ url_for('register') }}">Register</a>
+    </nav>
+    <hr>
+  </header>
+
+  {% block content %}{% endblock %}
+</body>
+</html>

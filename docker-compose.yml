@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    container_name: flask
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - sqlite_data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
