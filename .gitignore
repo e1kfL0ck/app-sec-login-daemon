@@ -416,3 +416,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Latex temporary files
+*.synctex.gz
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+*.log
