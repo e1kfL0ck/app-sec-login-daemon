@@ -63,7 +63,7 @@ check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickrol
 - `fingerprint` to be defined (method, fields, TTL...)
 - `check_fingerprint() -> fingerprint_errors`
 
-### Nginx (deployment)
+## Nginx (deployment)
 
 - Rate limiting (IP / endpoint).
 - Redirection HTTP -> HTTPS. Enforced.
