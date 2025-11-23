@@ -6,6 +6,7 @@
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{parskip}  
+\usepackage{svg}
 
 \title{Application Security -- Laboratories -- LAB03\\[0.5em]
 \large User registration process (Part A)}
@@ -69,16 +70,14 @@ The component collects the following data from the user during registration:
 \subsection*{Non-Functional Requirements}
 \paragraph{Security Requirements}
 \begin{description}
-  \item [NFR-S01] All input must be treated as untrusted and validated on the server.
-  \item [NFR-S02] Passwords must be stored using secure, modern cryptographic hashingitemize.
-  \item [NFR-S03] The system must be protected from SQL injection, XSS, CSRF, command injections.
-  \item [NFR-S04] Sensitive information (passwords, tokens) must not be logged.
-  \item [NFR-S05] All communication between client and server should use HTTPS.
+  \item [NFR-S01] Passwords must be stored using secure, modern cryptographic hashingitemize.
+  \item [NFR-S02] Sensitive information (passwords, tokens) must not be logged.
+  \item [NFR-S03] All communication between client and server should use HTTPS.
 \end{description}
 
 \paragraph{Usability Requirements}
 \begin{description}
-  \item [NFR-U01] Error and validation messages must be clear and user-friendly.
+  \item [NFR-U01] Error and validation messages from the frontend must be clear and user-friendly.
   \item [NFR-U02] Registration should require no more than one user interaction step before activation.
 \end{description}
 
@@ -112,7 +111,7 @@ The component collects the following data from the user during registration:
 \subsection*{Backend}
 \begin{itemize}
   \item Python 3: Core application logic and registration workflows run here.
-  \item Flask: Web framework for routing (for example, \texttt{POST /register} and \texttt{GET /activate/<token>}), input validation, and returning HTML or JSON responses.
+  \item Flask: Web framework for routing (e.g., \texttt{POST /register} and \texttt{GET /activate/<token>}), input validation, and returning HTML or JSON responses.
 \end{itemize}
 
 \subsection*{Security \& Cryptography}
@@ -137,13 +136,11 @@ The component collects the following data from the user during registration:
   \item \texttt{nginx} as reverse proxy to the Python application (via Gunicorn); serves static files and handles TLS termination.
 \end{itemize}
 
-\vspace{1em}
-\noindent
-\textbf{Notes:} This document formats the requirements and design notes for the user registration component. If you want, I can:
-\begin{itemize}
-  \item generate a minimal \texttt{README} with build and run instructions,
-  \item produce example SQL \texttt{CREATE TABLE} statements,
-  \item or compile this document to PDF on your machine and show issues.
-\end{itemize}
+\section*{UML Diagram}
+\subsection*{User Registration Process}
+\includegraphics[width=\textwidth]{UML-Register.pdf}
+
+\subsection*{Token Validation Process}
+\includegraphics[width=\textwidth]{UML-ValidateToken.pdf}
 
 \end{document}
