@@ -128,7 +128,6 @@ def register():
 
     # Création de l'utilisateur
     password_hash = generate_password_hash(password)
-    activation_token = secrets.token_hex(32)
     created_at = datetime.now()
 
     db.execute(
@@ -139,6 +138,11 @@ def register():
         (email, password_hash, created_at.isoformat(), 0)
     )
     db.commit()
+
+
+    #TODO: store activation token and send email
+
+    activation_token = secrets.token_hex(32)
 
     activation_link = url_for("activate", token=activation_token, _external=True)
 
