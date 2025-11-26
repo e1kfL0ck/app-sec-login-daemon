@@ -1,0 +1,146 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}  
+\usepackage{svg}
+
+\title{Application Security -- Laboratories -- LAB03\\[0.5em]
+\large User registration process (Part A)}
+\author{Gaillard Théo \\ \texttt{theo.gaillard@student.put.poznan.pl} \\
+Quivron Emile \\ \texttt{emile.quivron@student.put.poznan.pl} \\
+\\
+Supervisor: Michał Apolinarski, Ph.D. \\ Politechnika Poznańska}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{Component Short Description}
+The user registration module is a secure software component responsible for creating new user accounts within the system.
+Its primary purpose is to allow new users to provide personal and authentication information, validate that information securely on the server side, and store the finalized account data in the application database.
+
+\subsection*{Collected data}
+The component collects the following data from the user during registration:
+\begin{itemize}
+  \item Email address -- used as the unique identifier for the account and for sending activation tokens.
+  \item Password -- chosen by the user and processed using strong hashing before storage.
+  \item Optional user metadata -- such as username or full name, depending on system requirements.
+\end{itemize}
+
+\subsection*{Security assumptions and objectives}
+\begin{itemize}
+  \item The server is assumed to operate over a secure HTTPS channel to ensure confidentiality during transmission.
+  \item All data submitted by users is considered untrusted and must be validated server-side to prevent injection attacks, malformed input, or exploitation attempts.
+  \item Passwords must never be stored in plain text; they are protected using a secure one-way hashing function with salting.
+  \item A unique activation token is generated for each new registration to confirm ownership of the provided email address.
+  \item The module supports error handling and defensive measures throughout the process, including input validation, token verification, storage integrity constraints, and optional security hardening (rate limiting, advanced password policies, and event logging).
+\end{itemize}
+
+\section*{Component Requirements}
+\subsection*{Functional Requirements}
+\begin{description}
+  \item [FR-01] The system must provide a user registration form for entering required data.
+  \item [FR-02] The server must validate all submitted fields for correctness, integrity, and constraints.
+  \item [FR-03] The system must verify that the email address is not already registered.
+  \item [FR-04] The system must hash passwords securely before storing them.
+  \item [FR-05] The system must generate a unique account activation token after registration.
+  \item [FR-06] The system must send an activation link containing the token to the user’s email address.
+  \item [FR-07] The system must activate the account by validating the token upon request.
+  \item [FR-08] The system must handle invalid or expired tokens with clear error messages.
+  \item [FR-09] The module must store user data (email, hashed password, token status, timestamps).
+  \item [FR-10] The system should log validation or activation errors.
+\end{description}
+
+\subsection*{Optional Functional Requirements (Bonus Features)}
+\begin{description}
+  \item [OFR-01] Display a password strength meter during user input.
+  \item [OFR-02] Enforce an advanced password policy (length, complexity, blacklist, etc.).
+  \item [OFR-03] Perform email verification through DNS MX lookup or SMTP handshake.
+  \item [OFR-04] Apply email domain restrictions via whitelist or blacklist.
+  \item [OFR-05] Support registration using invitation tokens.
+  \item [OFR-06] Implement CAPTCHA or rate limiting to prevent automated or abusive submissions.
+  \item [OFR-07] Improve activation token security (short lifetime, association with device/IP, etc.).
+  \item [OFR-08] Log successful and failed registration attempts as security events.
+\end{description}
+
+\subsection*{Non-Functional Requirements}
+\paragraph{Security Requirements}
+\begin{description}
+  \item [NFR-S01] Passwords must be stored using secure, modern cryptographic hashingitemize.
+  \item [NFR-S02] Sensitive information (passwords, tokens) must not be logged.
+  \item [NFR-S03] All communication between client and server should use HTTPS.
+\end{description}
+
+\paragraph{Usability Requirements}
+\begin{description}
+  \item [NFR-U01] Error and validation messages from the frontend must be clear and user-friendly.
+  \item [NFR-U02] Registration should require no more than one user interaction step before activation.
+\end{description}
+
+\paragraph{Performance Requirements}
+\begin{description}
+  \item [NFR-P01]: Registration requests should be processed with low latency.
+  \item [NFR-P02]: The system should scale to the required number of concurrent registrations.
+\end{description}
+
+\paragraph{Reliability Requirements}
+\begin{description}
+  \item [NFR-R01]: Duplicate account creation with the same email must be prevented.
+  \item [NFR-R02]: Activation tokens must have a configurable expiration period.
+  \item [NFR-R03]: Token validation must fail safely in cases of expiration or tampering.
+\end{description}
+
+\paragraph{Maintainability Requirements}
+\begin{description}
+  \item [NFR-M01]: The module must be structured with separate layers for validation, logic, and data access.
+  \item [NFR-M02]: Configuration values must be stored in an accessible JSON configuration file.
+\end{description}
+
+\section*{Tech Stack}
+\subsection*{Frontend}
+\begin{itemize}
+  \item HTML5 and CSS3: For building the registration and activation pages.
+  \item JavaScript: Handles client-side input validation (email format, password strength meter, etc.).
+  \item Optional: Bootstrap or TailwindCSS for quick UI styling and responsive layouts.
+\end{itemize}
+
+\subsection*{Backend}
+\begin{itemize}
+  \item Python 3: Core application logic and registration workflows run here.
+  \item Flask: Web framework for routing (e.g., \texttt{POST /register} and \texttt{GET /activate/<token>}), input validation, and returning HTML or JSON responses.
+\end{itemize}
+
+\subsection*{Security \& Cryptography}
+\begin{itemize}
+  \item \texttt{bcrypt}: For secure password hashing with salt.
+  \item \texttt{secrets} (Python standard library): For generating secure random activation tokens.
+\end{itemize}
+
+\subsection*{Database}
+\begin{itemize}
+  \item SQLite3: local file-based relational database accessed using Python's built-in \texttt{sqlite3} module.
+  \item Example tables and columns:
+        \begin{itemize}
+          \item \texttt{users}: \texttt{id}, \texttt{email}, \texttt{password\_hash}, \texttt{created\_at}, \texttt{activated} (boolean)
+          \item \texttt{activation\_tokens}: \texttt{token}, \texttt{user\_id}, \texttt{expires\_at}
+        \end{itemize}
+  \item Constraints should ensure unique emails, token expiration rules, and referential integrity.
+\end{itemize}
+
+\subsection*{Web Server}
+\begin{itemize}
+  \item \texttt{nginx} as reverse proxy to the Python application (via Gunicorn); serves static files and handles TLS termination.
+\end{itemize}
+
+\section*{UML Diagram}
+\subsection*{User Registration Process}
+\includegraphics[width=\textwidth]{UML-Register.pdf}
+
+\subsection*{Token Validation Process}
+\includegraphics[width=\textwidth]{UML-ValidateToken.pdf}
+
+\end{document}
