@@ -1,17 +1,18 @@
 import re
 from datetime import datetime, timedelta
 import secrets
+import os
 import uvicorn
 
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, url_for
 from werkzeug.security import generate_password_hash
 from asgiref.wsgi import WsgiToAsgi
 
 from db import get_db, close_db
 
 app = Flask(__name__)
-app.secret_key = "change_me_in_real_app"
 
+app.secret_key = os.environ.get("SECRET_KEY")
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DANGEROUS_PATTERNS = [

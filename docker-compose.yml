@@ -9,5 +9,6 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
+      - SECRET_KEY='c08c0daf2d56cec64970aff25efd527ec7559747b9eb6cec713c890d7f2bea46'
     restart: unless-stopped
 
