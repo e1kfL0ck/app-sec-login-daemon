@@ -1,9 +1,10 @@
+import os
 import re
 from datetime import datetime, timedelta
 import secrets
 import uvicorn
 
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, url_for
 from werkzeug.security import generate_password_hash
 from asgiref.wsgi import WsgiToAsgi
 
@@ -107,27 +108,17 @@ def register():
 
     db = get_db()
 
-    # Vérifier unicité email
-    existing = db.execute(
-        "SELECT id FROM users WHERE email = ?",
-        (email,)
-    ).fetchone()
-
-    if existing:
-        errors.append("Email is already registered.")
-        return render_template("register.html", errors=errors, email=email)
-
     # Création de l'utilisateur
     password_hash = generate_password_hash(password)
     activation_token = secrets.token_hex(32)
-    expires_at = datetime.utcnow() + timedelta(hours=24)
+    created_at = datetime.now()
 
     db.execute(
         """
-        INSERT INTO users (email, password_hash, is_active, activation_token, activation_expires_at)
-        VALUES (?, ?, 0, ?, ?)
+        INSERT INTO users (email, password_hash, created_at, activated)
+        VALUES (?, ?, ?, ?)
         """,
-        (email, password_hash, activation_token, expires_at.isoformat())
+        (email, password_hash, created_at.isoformat(), 0)
     )
     db.commit()
 
