@@ -424,3 +424,4 @@ FodyWeavers.xsd
 *.fls
 *.fdb_latexmk
 *.log
+data/app.db
