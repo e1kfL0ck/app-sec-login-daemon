@@ -49,15 +49,15 @@ def validate_safe_simple_field(value: str, field_name: str, errors: list, max_le
     value = value.strip()
 
     if len(value) > max_len:
-        errors.append(f"{field_name} is too long.")
+        errors.append("User input error.")
         return ""
 
     if contains_dangerous_pattern(value):
-        errors.append(f"{field_name} contains forbidden patterns.")
+        errors.append("User input error.")
         return ""
 
     if any(c in DISALLOWED_CHARS_SIMPLE for c in value):
-        errors.append(f"{field_name} contains forbidden characters.")
+        errors.append("User input error.")
         return ""
 
     return value
@@ -86,9 +86,6 @@ def validate_registration_input(email: str, password: str, confirm_password: str
             errors.append("Password must be at least 8 characters.")
         if not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
             errors.append("Password must contain at least one letter and one digit.")
-
-        if contains_dangerous_pattern(password):
-            errors.append("Password contains forbidden patterns.")
 
     return email, errors
 
