@@ -17,19 +17,22 @@ app.secret_key = os.environ.get("SECRET_KEY")
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DANGEROUS_PATTERNS = [
     re.compile(r"<\s*script", re.IGNORECASE),
-    re.compile(r"on\w+\s*=", re.IGNORECASE),    # onclick=, onerror=, etc.
+    re.compile(r"on\w+\s*=", re.IGNORECASE),  # onclick=, onerror=, etc.
     re.compile(r"javascript\s*:", re.IGNORECASE),
 ]
 
 DISALLOWED_CHARS_SIMPLE = set("<>{};&")
 
+
 @app.teardown_appcontext
 def teardown_db(exception):
     close_db()
 
+
 @app.route("/")
 def index():
     return "Home – registration lab"
+
 
 def contains_dangerous_pattern(value: str) -> bool:
     if not value:
@@ -40,7 +43,9 @@ def contains_dangerous_pattern(value: str) -> bool:
     return False
 
 
-def validate_safe_simple_field(value: str, field_name: str, errors: list, max_len: int = 255):
+def validate_safe_simple_field(
+    value: str, field_name: str, errors: list, max_len: int = 255
+):
     """
     Champs “simples” (email, pseudo, etc.) : on interdit certains caractères
     + on limite la taille + on bloque quelques patterns dangereux.
@@ -109,10 +114,7 @@ def register():
     db = get_db()
 
     # Vérifier unicité email
-    existing = db.execute(
-        "SELECT id FROM users WHERE email = ?",
-        (email,)
-    ).fetchone()
+    existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
 
     if existing:
         errors.append("Email is already registered.")
@@ -128,7 +130,7 @@ def register():
         INSERT INTO users (email, password_hash, is_active, activation_token, activation_expires_at)
         VALUES (?, ?, 0, ?, ?)
         """,
-        (email, password_hash, activation_token, expires_at.isoformat())
+        (email, password_hash, activation_token, expires_at.isoformat()),
     )
     db.commit()
 
@@ -140,6 +142,7 @@ def register():
         activation_link=activation_link,
         email=email,
     )
+
 
 asgi_app = WsgiToAsgi(app)
 
