@@ -15,6 +15,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
 DANGEROUS_PATTERNS = [
     re.compile(r"<\s*script", re.IGNORECASE),
     re.compile(r"on\w+\s*=", re.IGNORECASE),  # onclick=, onerror=, etc.
@@ -44,32 +45,41 @@ def contains_dangerous_pattern(value: str) -> bool:
 
 
 def validate_safe_simple_field(
-    value: str, field_name: str, errors: list, max_len: int = 255
+    field_value: str, field_name: str, errors: list[str], max_len: int = 255
 ):
     """
-    Champs “simples” (email, pseudo, etc.) : on interdit certains caractères
-    + on limite la taille + on bloque quelques patterns dangereux.
+    Check sof safety and compliance of simple fields (email, pseudo, etc..) :
+    - disallow certain characters
+    - limit length
+    - block some dangerous patterns
     """
-    if value is None:
-        value = ""
-    value = value.strip()
 
-    if len(value) > max_len:
-        errors.append("User input error.")
+    if field_value is None:
+        errors.append("User input error: field is empty")
         return ""
 
-    if contains_dangerous_pattern(value):
-        errors.append("User input error.")
+    field_value = field_value.strip()
+
+    if len(field_value) > max_len:
+        errors.append("User input error: field is too long")
         return ""
 
-    if any(c in DISALLOWED_CHARS_SIMPLE for c in value):
-        errors.append("User input error.")
+    if contains_dangerous_pattern(field_value):
+        errors.append("User input error: dangerous pattern detected.")
         return ""
 
-    return value
+    if any(c in DISALLOWED_CHARS_SIMPLE for c in field_value):
+        errors.append("User input error: disallowed characters detected.")
+        return ""
+
+    return field_value
 
 
 def validate_registration_input(email: str, password: str, confirm_password: str):
+    """
+    Validate registration input fields and returns cleaned email and error list.
+    """
+
     errors = []
 
     email = validate_safe_simple_field(email, "Email", errors, max_len=255)
@@ -79,6 +89,8 @@ def validate_registration_input(email: str, password: str, confirm_password: str
         errors.append("Email is required.")
     elif not EMAIL_REGEX.match(email):
         errors.append("Email format is invalid.")
+
+    # TODO : add password sanitation and strength checks
 
     password = password or ""
     confirm_password = confirm_password or ""
@@ -113,7 +125,7 @@ def register():
 
     db = get_db()
 
-    # Vérifier unicité email
+    # Check for email uniqueness
     existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
 
     if existing:
