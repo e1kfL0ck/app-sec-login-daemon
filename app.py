@@ -73,7 +73,7 @@ def validate_safe_simple_field(
         errors.append("User input error: disallowed characters detected.")
         return ""
 
-    return field_value
+    return errors
 
 
 def validate_registration_input(email: str, password: str, confirm_password: str):
