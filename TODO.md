@@ -78,3 +78,8 @@ Notes:
   - email validation
   - password rules
   - activation flux (tokens)
+
+---
+
+Modify the UML to implement user interactions. Register should be in the frontend.
+Finish the implementation of the app, and have it ready for next session.
