@@ -1,4 +1,27 @@
 document.addEventListener("DOMContentLoaded", function () {
+
+    const clientErrorsContainer = document.getElementById("client-errors");
+
+    function showClientErrors(errors) {
+        if (!clientErrorsContainer) return;
+        clientErrorsContainer.innerHTML = "";
+
+        if (!errors.length) {
+        clientErrorsContainer.style.display = "none";
+        return;
+        }
+
+        const ul = document.createElement("ul");
+        errors.forEach((err) => {
+        const li = document.createElement("li");
+        li.textContent = err;
+        ul.appendChild(li);
+        });
+
+        clientErrorsContainer.appendChild(ul);
+        clientErrorsContainer.style.display = "block";
+    }
+
     const form = document.getElementById("register-form");
     if (!form) return;
 
@@ -37,9 +60,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 "Password must contain at least one letter and one digit."
             );
         }
-        if (containsDangerousPattern(password)) {
-            errors.push("Password contains forbidden patterns.");
-        }
     }
 
     function validateRegistrationForm() {
@@ -55,10 +75,12 @@ document.addEventListener("DOMContentLoaded", function () {
         return errors;
     }
 
-    form.addEventListener("submit", function (e) {
+    form.addEventListener("submit", event => {
         const errors = validateRegistrationForm();
         if (errors.length > 0) {
-            alert("Client-side validation errors:\n" + errors.join("\n"));
+            event.preventDefault();
+            showClientErrors(errors);
+            //alert("Client-side validation errors:\n" + errors.join("\n"));
         }
     });
 });

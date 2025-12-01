@@ -33,6 +33,8 @@
   <button type="submit">Register</button>
 </form>
 
+<div id="client-errors" style="color:orange;"></div>
+
 {% if activation_link %}
   <p>Activation link (for lab/testing): <a href="{{ activation_link }}">{{ activation_link }}</a></p>
 {% endif %}
