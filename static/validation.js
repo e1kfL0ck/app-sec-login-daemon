@@ -89,7 +89,9 @@ document.addEventListener("DOMContentLoaded", function () {
     validateEmailField(email, errors);
     validatePasswordFields(password, confirmPassword, errors);
 
-    alert("Client-side validation errors:\n" + errors.join("\n"));
+    if (errors.length > 0) {
+      alert("Client-side validation errors:\n" + errors.join("\n"));
+    }
 
     return errors;
   }

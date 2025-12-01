@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import secrets
 import os
 import uvicorn
+import logging
 
 from flask import Flask, request, render_template, url_for
 from werkzeug.security import generate_password_hash
@@ -12,6 +13,8 @@ from asgiref.wsgi import WsgiToAsgi
 from db import get_db, close_db
 
 app = Flask(__name__)
+
+logger = logging.getLogger(__name__)
 
 app.secret_key = os.environ.get("SECRET_KEY")
 
@@ -139,19 +142,67 @@ def register():
     )
     db.commit()
 
-
-    #TODO: store activation token and send email
+    user_id = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
 
     activation_token = secrets.token_hex(32)
 
+    db.execute(
+        """
+        INSERT INTO activation_tokens (token, user_id, expires_at, created_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            activation_token,
+            user_id,
+            (datetime.now() + timedelta(hours=24)).isoformat(),
+            datetime.now().isoformat(),
+        )
+    )
+    db.commit()
+
+    #TODO: sqlite3.IntegrityError: UNIQUE constraint failed: users.email pas renvoyée
+
     activation_link = url_for("activate", token=activation_token, _external=True)
+
+    db.close()
 
     return render_template(
         "register.html",
-        success=f"Account created. Activate using this link: {activation_link}",
+        # success=f"Account created. Activate using this link: {activation_link}",
         activation_link=activation_link,
         email=email,
     )
+
+@app.route("/activate/<token>")
+def activate(token):
+    db = get_db()
+
+    token_row = db.execute(
+        "SELECT user_id, expires_at FROM activation_tokens WHERE token = ?", (token,)
+    ).fetchone()
+
+    print(token_row)
+    print("Hello", flush=True)
+    logger.info("Activation token row: %s", token_row)
+
+    if not token_row:
+        return "Invalid or expired activation token.", 400
+
+    user_id, expires_at_str = token_row
+    expires_at = datetime.fromisoformat(expires_at_str)
+
+    if datetime.now() > expires_at:
+        return "Activation token has expired.", 400
+
+    db.execute(
+        "UPDATE users SET activated = 1 WHERE id = ?", (user_id,)
+    )
+    # db.execute(
+    #     "DELETE FROM activation_tokens WHERE token = ?", (token,)
+    # )
+    db.commit()
+
+    return "Account successfully activated. You can now log in."
 
 
 asgi_app = WsgiToAsgi(app)
