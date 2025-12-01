@@ -78,7 +78,7 @@ def sanitize_user_input(
         errors.append("User input error.")
         return ""
 
-    return field_value
+    return errors
 
 
 def check_email_format(email: str):
