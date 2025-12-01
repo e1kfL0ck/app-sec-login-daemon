@@ -2,7 +2,7 @@ import os
 import re
 from datetime import datetime, timedelta
 import secrets
-import os
+import sqlite3
 import uvicorn
 import logging
 
@@ -49,17 +49,17 @@ def contains_dangerous_pattern(value: str) -> bool:
 
 
 def validate_safe_simple_field(
-    field_value: str, field_name: str, errors: list[str], max_len: int = 255
+    field_value: str, errors: list[str], max_len: int = 255
 ):
     """
-    Check sof safety and compliance of simple fields (email, pseudo, etc..) :
+    Check for safety and compliance of simple fields (email, pseudo, etc..) :
     - disallow certain characters
     - limit length
     - block some dangerous patterns
     """
 
     if field_value is None:
-        errors.append("User input error: field is empty")
+        errors.append("User input error.")
         return ""
 
     field_value = field_value.strip()
@@ -69,17 +69,17 @@ def validate_safe_simple_field(
         return ""
 
     if contains_dangerous_pattern(field_value):
-        errors.append("User input error: dangerous pattern detected.")
+        errors.append("User input error.")
         return ""
 
     if any(c in DISALLOWED_CHARS_SIMPLE for c in field_value):
-        errors.append("User input error: disallowed characters detected.")
+        errors.append("User input error.")
         return ""
 
     return field_value
 
 
-def validate_registration_input(email: str, password: str, confirm_password: str):
+def sanitize_user_input(email: str, password: str, confirm_password: str):
     """
     Validate registration input fields and returns cleaned email and error list.
     """
@@ -109,7 +109,7 @@ def validate_registration_input(email: str, password: str, confirm_password: str
         if not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
             errors.append("Password must contain at least one letter and one digit.")
 
-    return email, errors
+    return errors
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -118,11 +118,11 @@ def register():
         return render_template("register.html")
 
     # POST
-    raw_email = request.form.get("email", "")
+    email = request.form.get("email", "")
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
 
-    email, errors = validate_registration_input(raw_email, password, confirm_password)
+    errors = sanitize_user_input(email, password, confirm_password)
 
     if errors:
         return render_template("register.html", errors=errors, email=email)
@@ -133,14 +133,19 @@ def register():
     password_hash = generate_password_hash(password)
     created_at = datetime.now()
 
-    db.execute(
-        """
-        INSERT INTO users (email, password_hash, created_at, activated)
-        VALUES (?, ?, ?, ?)
-        """,
-        (email, password_hash, created_at.isoformat(), 0)
-    )
-    db.commit()
+    try:
+        db.execute(
+            """
+            INSERT INTO users (email, password_hash, created_at, activated)
+            VALUES (?, ?, ?, ?)
+            """,
+            (email, password_hash, created_at.isoformat(), 0)
+        )
+        db.commit()
+
+    except sqlite3.IntegrityError:
+        errors.append("Email already registered.")
+        return render_template("register.html", errors=errors, email=email)
 
     user_id = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
 
@@ -168,7 +173,6 @@ def register():
 
     return render_template(
         "register.html",
-        # success=f"Account created. Activate using this link: {activation_link}",
         activation_link=activation_link,
         email=email,
     )
@@ -180,10 +184,6 @@ def activate(token):
     token_row = db.execute(
         "SELECT user_id, expires_at FROM activation_tokens WHERE token = ?", (token,)
     ).fetchone()
-
-    print(token_row)
-    print("Hello", flush=True)
-    logger.info("Activation token row: %s", token_row)
 
     if not token_row:
         return "Invalid or expired activation token.", 400
@@ -197,9 +197,6 @@ def activate(token):
     db.execute(
         "UPDATE users SET activated = 1 WHERE id = ?", (user_id,)
     )
-    # db.execute(
-    #     "DELETE FROM activation_tokens WHERE token = ?", (token,)
-    # )
     db.commit()
 
     return "Account successfully activated. You can now log in."
