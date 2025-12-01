@@ -2,8 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("register-form");
   if (!form) return;
 
-  const clientErrorsContainer = document.getElementById("client-errors");
-
   const dangerousPatterns = [
     /<\s*script/i,
     /on\w+\s*=/i,      // onclick, onerror, etc.
@@ -11,26 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
   ];
 
   const disallowedCharsSimple = /[<>{};&]/;
-
-  function showClientErrors(errors) {
-    if (!clientErrorsContainer) return;
-    clientErrorsContainer.innerHTML = "";
-
-    if (!errors.length) {
-      clientErrorsContainer.style.display = "none";
-      return;
-    }
-
-    const ul = document.createElement("ul");
-    errors.forEach((err) => {
-      const li = document.createElement("li");
-      li.textContent = err;
-      ul.appendChild(li);
-    });
-
-    clientErrorsContainer.appendChild(ul);
-    clientErrorsContainer.style.display = "block";
-  }
 
   function containsDangerousPattern(value) {
     if (!value) return false;
@@ -89,18 +67,13 @@ document.addEventListener("DOMContentLoaded", function () {
     validateEmailField(email, errors);
     validatePasswordFields(password, confirmPassword, errors);
 
-    if (errors.length > 0) {
-      alert("Client-side validation errors:\n" + errors.join("\n"));
-    }
-
     return errors;
   }
 
   form.addEventListener("submit", function (e) {
     const errors = validateRegistrationForm();
     if (errors.length > 0) {
-      e.preventDefault();
-      showClientErrors(errors);
+      alert("Client-side validation errors:\n" + errors.join("\n"));
     }
   });
 });
