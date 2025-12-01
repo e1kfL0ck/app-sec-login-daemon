@@ -48,7 +48,7 @@ def contains_dangerous_pattern(value: str) -> bool:
     return False
 
 
-def validate_safe_simple_field(
+def sanitize_user_input(
     field_value: str, errors: list[str], max_len: int = 255
 ):
     """
@@ -79,36 +79,39 @@ def validate_safe_simple_field(
     return field_value
 
 
-def sanitize_user_input(email: str, password: str, confirm_password: str):
+def check_email_format(email: str, password: str, confirm_password: str):
     """
     Validate registration input fields and returns cleaned email and error list.
     """
 
     errors = []
 
-    email = validate_safe_simple_field(email, "Email", errors, max_len=255)
     email = email.lower()
 
     if not email:
         errors.append("Email is required.")
     elif not EMAIL_REGEX.match(email):
         errors.append("Email format is invalid.")
+    return errors
 
-    # TODO : add password sanitation and strength checks
+def check_password_strength(password: str) -> list[str]:
+    errors = []
+    if len(password) < 8:
+        errors.append("Password must be at least 8 characters long.")
+    if not re.search(r"[A-Z]", password):
+        errors.append("Password must contain at least one uppercase letter.")
+    if not re.search(r"[a-z]", password):
+        errors.append("Password must contain at least one lowercase letter.")
+    if not re.search(r"\d", password):
+        errors.append("Password must contain at least one digit.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        errors.append("Password must contain at least one special character.")
+    return errors
 
-    password = password or ""
-    confirm_password = confirm_password or ""
-
-    if not password or not confirm_password:
-        errors.append("Password and confirmation are required.")
-    else:
-        if password != confirm_password:
-            errors.append("Passwords do not match.")
-        if len(password) < 8:
-            errors.append("Password must be at least 8 characters.")
-        if not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
-            errors.append("Password must contain at least one letter and one digit.")
-
+def check_password_match(password: str, confirm_password: str) -> list[str]:
+    errors = []
+    if password != confirm_password:
+        errors.append("Passwords do not match.")
     return errors
 
 
@@ -122,10 +125,13 @@ def register():
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
 
-    errors = sanitize_user_input(email, password, confirm_password)
+    errors = sanitize_user_input(email)
+    errors += check_email_format(email, password, confirm_password)
+    errors += check_password_strength(password)
+    errors += check_password_match(password, confirm_password)
 
     if errors:
-        return render_template("register.html", errors=errors, email=email)
+        return render_template("register.html", errors=errors)
 
     db = get_db()
 
@@ -145,7 +151,7 @@ def register():
 
     except sqlite3.IntegrityError:
         errors.append("Email already registered.")
-        return render_template("register.html", errors=errors, email=email)
+        return render_template("register.html", errors=errors)
 
     user_id = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
 
@@ -164,8 +170,6 @@ def register():
         )
     )
     db.commit()
-
-    #TODO: sqlite3.IntegrityError: UNIQUE constraint failed: users.email pas renvoyée
 
     activation_link = url_for("activate", token=activation_token, _external=True)
 
@@ -186,20 +190,22 @@ def activate(token):
     ).fetchone()
 
     if not token_row:
-        return "Invalid or expired activation token.", 400
+        return render_template("activation_error.html", message="Invalid activation token."), 400
 
     user_id, expires_at_str = token_row
     expires_at = datetime.fromisoformat(expires_at_str)
 
     if datetime.now() > expires_at:
-        return "Activation token has expired.", 400
+        return render_template("activation_error.html", message="Activation token has expired."), 400
 
     db.execute(
         "UPDATE users SET activated = 1 WHERE id = ?", (user_id,)
     )
     db.commit()
 
-    return "Account successfully activated. You can now log in."
+    return render_template(
+        "activation_success.html",
+    )
 
 
 asgi_app = WsgiToAsgi(app)
