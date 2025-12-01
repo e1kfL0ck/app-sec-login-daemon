@@ -49,7 +49,7 @@ def contains_dangerous_pattern(value: str) -> bool:
 
 
 def sanitize_user_input(
-    field_value: str, errors: list[str], max_len: int = 255
+    field_value: str, max_len: int = 255
 ):
     """
     Check for safety and compliance of simple fields (email, pseudo, etc..) :
@@ -57,6 +57,8 @@ def sanitize_user_input(
     - limit length
     - block some dangerous patterns
     """
+    
+    errors = []
 
     if field_value is None:
         errors.append("User input error.")
@@ -79,7 +81,7 @@ def sanitize_user_input(
     return field_value
 
 
-def check_email_format(email: str, password: str, confirm_password: str):
+def check_email_format(email: str):
     """
     Validate registration input fields and returns cleaned email and error list.
     """
@@ -125,8 +127,9 @@ def register():
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
 
-    errors = sanitize_user_input(email)
-    errors += check_email_format(email, password, confirm_password)
+    errors = []
+    errors += sanitize_user_input(email)
+    errors += check_email_format(email)
     errors += check_password_strength(password)
     errors += check_password_match(password, confirm_password)
 
@@ -135,7 +138,7 @@ def register():
 
     db = get_db()
 
-    # Création de l'utilisateur
+    # User creation
     password_hash = generate_password_hash(password)
     created_at = datetime.now()
 
