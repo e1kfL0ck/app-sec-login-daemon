@@ -73,6 +73,7 @@ check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickrol
 
 - Move all the functions to utils.py
 - Create a src folder and copy only this one to the container
+- Try to use less templates in .html and use more place holders
 
 ---
 
