@@ -5,7 +5,7 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{hyperref}
 \usepackage{enumitem}
-\usepackage{parskip}  
+\usepackage{parskip}
 \usepackage{svg}
 
 \title{Application Security -- Laboratories -- LAB03\\[0.5em]
@@ -142,5 +142,28 @@ The component collects the following data from the user during registration:
 
 \subsection*{Token Validation Process}
 \includegraphics[width=\textwidth]{UML-ValidateToken.pdf}
+
+\section*{Why Validate on Both Frontend and Backend}
+
+Frontend validation provides immediate user feedback, improving UX by catching simple errors like password length or format issues before submission. It reduces unnecessary server requests and guides users to correct their input quickly.
+
+However, frontend checks can be bypassed---attackers can disable JavaScript or manipulate requests directly. Backend validation is our security layer, defending against SQL injection, XSS, and malicious payloads. It enforces business rules and data integrity regardless of client behavior.
+
+For example, our \texttt{validation.js} validates email format client-side:
+\begin{verbatim}
+const re = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+if (!re.test(email)) {
+    errors.push("Email format is invalid.");
+}
+\end{verbatim}
+
+While our \texttt{app.py} backend sanitizes and re-validates server-side:
+\begin{verbatim}
+def sanitize_user_input(field_value: str, max_len: int = 255):
+    if contains_dangerous_pattern(field_value):
+        errors.append("User input error.")
+\end{verbatim}
+
+The frontend enhances usability; the backend ensures security. Both working together create a robust system: fast feedback for legitimate users, strong protection against attackers. Never trust client-side validation alone---our backend is the final authority.
 
 \end{document}
