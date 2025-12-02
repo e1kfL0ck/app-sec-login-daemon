@@ -38,9 +38,10 @@ def teardown_db(exception):
 @app.route("/")
 def index():
     return render_template(
-        "base.html",
+        "index.html",
         title="Home – registration lab"
         ), 200,
+
 
 
 
