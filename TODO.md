@@ -69,6 +69,11 @@ check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickrol
 - Redirection HTTP -> HTTPS. Enforced.
 - Make sure static resources are exposed.
 
+## Modify the architecture
+
+- Move all the functions to utils.py
+- Create a src folder and copy only this one to the container
+
 ---
 
 Notes:
