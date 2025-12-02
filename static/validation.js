@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-
     const clientErrorsContainer = document.getElementById("client-errors");
 
     function showClientErrors(errors) {
@@ -7,15 +6,15 @@ document.addEventListener("DOMContentLoaded", function () {
         clientErrorsContainer.innerHTML = "";
 
         if (!errors.length) {
-        clientErrorsContainer.style.display = "none";
-        return;
+            clientErrorsContainer.style.display = "none";
+            return;
         }
 
         const ul = document.createElement("ul");
         errors.forEach((err) => {
-        const li = document.createElement("li");
-        li.textContent = err;
-        ul.appendChild(li);
+            const li = document.createElement("li");
+            li.textContent = err;
+            ul.appendChild(li);
         });
 
         clientErrorsContainer.appendChild(ul);
@@ -44,20 +43,31 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function validatePasswordFields(password, confirmPassword, errors) {
+        // Matching passwords
         if (!password || !confirmPassword) {
             errors.push("Password and confirmation are required.");
             return;
         }
-
         if (password !== confirmPassword) {
             errors.push("Passwords do not match.");
         }
+
+        // Password complexity
         if (password.length < 8) {
             errors.push("Password must be at least 8 characters.");
         }
-        if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+        if (!/[A-Z]/.test(password)) {
+            errors.push("Password must contain at least one uppercase letter.");
+        }
+        if (!/[a-z]/.test(password)) {
+            errors.push("Password must contain at least one lowercase letter.");
+        }
+        if (!/\d/.test(password)) {
+            errors.push("Password must contain at least one digit.");
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
             errors.push(
-                "Password must contain at least one letter and one digit."
+                "Password must contain at least one special character."
             );
         }
     }
@@ -75,12 +85,11 @@ document.addEventListener("DOMContentLoaded", function () {
         return errors;
     }
 
-    form.addEventListener("submit", event => {
+    form.addEventListener("submit", (event) => {
         const errors = validateRegistrationForm();
         if (errors.length > 0) {
             event.preventDefault();
             showClientErrors(errors);
-            //alert("Client-side validation errors:\n" + errors.join("\n"));
         }
     });
 });
