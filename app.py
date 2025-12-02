@@ -36,7 +36,7 @@ def teardown_db(exception):
 
 @app.route("/")
 def index():
-    return "Home – registration lab"
+    return render_template("index.html")
 
 
 def contains_dangerous_pattern(value: str) -> bool:
