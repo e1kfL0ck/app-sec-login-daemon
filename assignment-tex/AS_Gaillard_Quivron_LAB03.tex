@@ -159,14 +159,14 @@ Here's an example of the potential errors :
   \label{fig:registration_errors}
 \end{figure}
 
-Once the user submits the form, the data is sent via a POST request to the Flask backend at the \texttt{/register} endpoint. The backend performs comprehensive server-side validation to ensure all fields are correct. This includes checking that the email format is valid, it does not contain dangerous patterns (to prevent injection attacks), verifying that the password meets security policies (length, complexity). Then, the backend will try to save this new user in the database, ensuring the email is unique. The database also contains the user activation status. If any validation fails, the backend responds with appropriate error messages, which are then displayed to the user.
+Once the user submits the form, the data is sent via a POST request to the Flask backend at the \texttt{/register} endpoint. The backend performs comprehensive server-side validation to ensure all fields are correct. This includes checking that the email format is valid, that it does not contain dangerous patterns (to prevent attacks), verifying that the password meets security policies (length, complexity). Then, the backend will try to save this new user in the database, ensuring the email is unique. The database also contains the user activation status. If any validation fails, the backend responds with appropriate error messages, which are then displayed to the user.
 
-If the email is already registered here's an example of the error message shown to the user :
+If the email is already registered here's the error message shown to the user :
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.75\textwidth]{img/registration_error_email_exists.png}
-  \caption{Example of error message shown to the user when trying to register with an already registered email.}
+  \caption{Error message shown to the user when trying to register with an already registered email.}
   \label{fig:registration_error_email_exists}
 \end{figure}
 
