@@ -29,6 +29,7 @@ DANGEROUS_PATTERNS = [
 DISALLOWED_CHARS = set("<>{};&")
 
 
+# Ensure database connection is closed after each request
 @app.teardown_appcontext
 def teardown_db(exception):
     close_db()
@@ -180,12 +181,8 @@ def register():
 
     activation_link = url_for("activate", token=activation_token, _external=True)
 
-    db.close()
-
     return render_template(
-        "register.html",
-        activation_link=activation_link,
-        email=email,
+        "register.html", activation_link=activation_link, email=email
     )
 
 
