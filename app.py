@@ -37,12 +37,7 @@ def teardown_db(exception):
 
 @app.route("/")
 def index():
-    return render_template(
-        "index.html",
-        title="Home – registration lab"
-        ), 200,
-
-
+    return render_template("index.html", title="Home – registration lab"), 200
 
 
 def contains_dangerous_pattern(value: str) -> bool:
@@ -163,7 +158,7 @@ def register():
         db.commit()
 
     except sqlite3.IntegrityError:
-        errors.append("Email already registered.")
+        errors.append("An account with this email already exists.")
         return render_template("register.html", errors=errors)
 
     user_id = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
@@ -215,9 +210,7 @@ def activate(token):
     db.execute("UPDATE users SET activated = 1 WHERE id = ?", (user_id,))
     db.commit()
 
-    return render_template(
-        "activation_success.html",
-    )
+    return render_template("activation_success.html")
 
 
 asgi_app = WsgiToAsgi(app)
