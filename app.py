@@ -158,7 +158,7 @@ def register():
         db.commit()
 
     except sqlite3.IntegrityError:
-        errors.append("Email already registered.")
+        errors.append("An account with this email already exists.")
         return render_template("register.html", errors=errors)
 
     user_id = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
