@@ -37,7 +37,7 @@ def teardown_db(exception):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", title="Home – registration lab"), 200
 
 
 def contains_dangerous_pattern(value: str) -> bool:
@@ -210,9 +210,7 @@ def activate(token):
     db.execute("UPDATE users SET activated = 1 WHERE id = ?", (user_id,))
     db.commit()
 
-    return render_template(
-        "activation_success.html",
-    )
+    return render_template("activation_success.html")
 
 
 asgi_app = WsgiToAsgi(app)
