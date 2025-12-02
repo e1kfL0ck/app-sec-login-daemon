@@ -26,7 +26,7 @@ DANGEROUS_PATTERNS = [
     re.compile(r"javascript\s*:", re.IGNORECASE),
 ]
 
-DISALLOWED_CHARS_SIMPLE = set("<>{};&")
+DISALLOWED_CHARS = set("<>{};&")
 
 
 @app.teardown_appcontext
@@ -52,33 +52,33 @@ def contains_dangerous_pattern(value: str) -> bool:
     return False
 
 
-def sanitize_user_input(field_value: str, max_len: int = 255):
+def sanitize_user_input(field_value: str, max_len: int = 255) -> list[str]:
     """
     Check for safety and compliance of simple fields (email, pseudo, etc..) :
-    - disallow certain characters
     - limit length
     - block some dangerous patterns
+    - disallow certain characters
     """
 
     errors = []
 
     if field_value is None:
         errors.append("User input error.")
-        return ""
+        return errors
 
-    field_value = field_value.strip()
+    field_value = field_value.strip()  # Remove leading/trailing whitespace
 
     if len(field_value) > max_len:
         errors.append("User input error.")
-        return ""
+        return errors
 
     if contains_dangerous_pattern(field_value):
         errors.append("User input error.")
-        return ""
+        return errors
 
-    if any(c in DISALLOWED_CHARS_SIMPLE for c in field_value):
+    if any(c in DISALLOWED_CHARS for c in field_value):
         errors.append("User input error.")
-        return ""
+        return errors
 
     return errors
 
