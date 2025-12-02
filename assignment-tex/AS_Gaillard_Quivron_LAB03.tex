@@ -137,15 +137,73 @@ The component collects the following data from the user during registration:
 \end{itemize}
 
 \section*{UML Diagram}
+\subsection*{User Form Filling Process}
+\includegraphics[width=\textwidth]{img/UML_FormFilling.pdf}
+
 \subsection*{User Registration Process}
-\includegraphics[width=\textwidth]{UML-Register.pdf}
+\includegraphics[width=\textwidth]{img/UML_Register.pdf}
 
 \subsection*{Token Validation Process}
-\includegraphics[width=\textwidth]{UML-ValidateToken.pdf}
+\includegraphics[width=\textwidth]{img/UML_ActivationToken.pdf}
+
+\section{User registration flow presented}
+
+When a user wants to register on our platform, they will first access the registration page served by our Flask backend. The user fills out the registration form with their email and password. On the client side, JavaScript performs preliminary validation checks, such as ensuring the email format is correct and the password meets basic strength requirements. This immediate feedback enhances user experience by catching simple errors before submission.
+
+Here's an example of the potential errors :
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/registration_errors_client.png}
+  \caption{Example of validation error messages shown to the user during registration (email format, password strength, and required fields).}
+  \label{fig:registration_errors}
+\end{figure}
+
+Once the user submits the form, the data is sent via a POST request to the Flask backend at the \texttt{/register} endpoint. The backend performs comprehensive server-side validation to ensure all fields are correct. This includes checking that the email format is valid, it does not contain dangerous patterns (to prevent injection attacks), verifying that the password meets security policies (length, complexity). Then, the backend will try to save this new user in the database, ensuring the email is unique. The database also contains the user activation status. If any validation fails, the backend responds with appropriate error messages, which are then displayed to the user.
+
+If the email is already registered here's an example of the error message shown to the user :
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/registration_error_email_exists.png}
+  \caption{Example of error message shown to the user when trying to register with an already registered email.}
+  \label{fig:registration_error_email_exists}
+\end{figure}
+
+Upon successful validation and user creation, the backend generates a unique activation token using Python's \texttt{secrets} module. This token is stored in the database along with an expiration timestamp and the user id associated with it. This token is then displayed in the frontend for demonstration purposes (in a future version, the token will be sent via email, according to the requirements).
+
+Example of token being displayed to the user after successful registration :
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/registration_success_token.png}
+  \caption{Example of activation token displayed to the user after successful registration.}
+  \label{fig:registration_success_token}
+\end{figure}
+
+When the user clicks the activation link, it sends a GET request to the \texttt{/activate/<token>} endpoint on the backend. The backend retrieves the token from the URL, validates it against the database (checking for existence and expiration), and if valid, updates the user's activation status to true. The user is then informed of the successful activation.
+
+Example of successful activation message shown to the user :
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/activation_success.png}
+  \caption{Example of successful activation message shown to the user.}
+  \label{fig:activation_success}
+\end{figure}
+
+If the token is invalid or expired, the backend responds with an error message, which is displayed to the user.
+
+Example of error message shown to the user when trying to activate with an invalid or expired token :
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/invalid_token.png}
+  \caption{Example of error message shown to the user when trying to activate with an invalid or expired token.}
+  \label{fig:activation_error_invalid_token}
+\end{figure}
+
 
 \section*{Why Validate on Both Frontend and Backend}
 
-Frontend validation provides immediate user feedback, improving UX by catching simple errors like password length or format issues before submission. It reduces unnecessary server requests and guides users to correct their input quickly.
+In the user registration process, we implement validation checks on both the frontend (client-side) and backend (server-side) for complementary reasons. Frontend validation provides immediate user feedback, improving UX by catching simple errors like password length or format issues before submission. It reduces unnecessary server requests and guides users to correct their input quickly.
 
 However, frontend checks can be bypassed---attackers can disable JavaScript or manipulate requests directly. Backend validation is our security layer, defending against SQL injection, XSS, and malicious payloads. It enforces business rules and data integrity regardless of client behavior.
 
