@@ -2,18 +2,6 @@
 {% block content %}
 <h2>Register</h2>
 
-{% if errors %}
-  <ul style="color:red;">
-    {% for e in errors %}
-      <li>{{ e }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
-
-{% if success %}
-  <p style="color:green;">{{ success|safe }}</p>
-{% endif %}
-
 <form id="register-form" method="post" action="{{ url_for('register') }}">
   <label>Email:
     <input type="email" name="email" required>
@@ -37,6 +25,18 @@
 </form>
 
 <div id="client-errors" style="color:orange;"></div>
+
+{% if errors %}
+  <ul style="color:red;">
+    {% for e in errors %}
+      <li>{{ e }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if success %}
+  <p style="color:green;">{{ success|safe }}</p>
+{% endif %}
 
 {% if activation_link %}
   <p>Activation link (for lab/testing): <a href="{{ activation_link }}">{{ activation_link }}</a></p>
