@@ -26,7 +26,7 @@ DANGEROUS_PATTERNS = [
     re.compile(r"javascript\s*:", re.IGNORECASE),
 ]
 
-DISALLOWED_CHARS_SIMPLE = set("<>{};&")
+DISALLOWED_CHARS = set("<>{};&")
 
 
 @app.teardown_appcontext
@@ -40,6 +40,10 @@ def index():
 
 
 def contains_dangerous_pattern(value: str) -> bool:
+    """
+    Check if the input contains dangerous patterns.
+    Uses the global DANGEROUS_PATTERNS list.
+    """
     if not value:
         return False
     for pat in DANGEROUS_PATTERNS:
@@ -48,40 +52,38 @@ def contains_dangerous_pattern(value: str) -> bool:
     return False
 
 
-def sanitize_user_input(
-    field_value: str, max_len: int = 255
-):
+def sanitize_user_input(field_value: str, max_len: int = 255) -> list[str]:
     """
     Check for safety and compliance of simple fields (email, pseudo, etc..) :
-    - disallow certain characters
     - limit length
     - block some dangerous patterns
+    - disallow certain characters
     """
-    
+
     errors = []
 
     if field_value is None:
         errors.append("User input error.")
-        return ""
+        return errors
 
-    field_value = field_value.strip()
+    field_value = field_value.strip()  # Remove leading/trailing whitespace
 
     if len(field_value) > max_len:
-        errors.append("User input error: field is too long")
-        return ""
+        errors.append("User input error.")
+        return errors
 
     if contains_dangerous_pattern(field_value):
         errors.append("User input error.")
-        return ""
+        return errors
 
-    if any(c in DISALLOWED_CHARS_SIMPLE for c in field_value):
+    if any(c in DISALLOWED_CHARS for c in field_value):
         errors.append("User input error.")
-        return ""
+        return errors
 
     return errors
 
 
-def check_email_format(email: str):
+def check_email_format(email: str) -> list[str]:
     """
     Validate registration input fields and returns cleaned email and error list.
     """
@@ -96,6 +98,7 @@ def check_email_format(email: str):
         errors.append("Email format is invalid.")
     return errors
 
+
 def check_password_strength(password: str) -> list[str]:
     errors = []
     if len(password) < 8:
@@ -109,6 +112,7 @@ def check_password_strength(password: str) -> list[str]:
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
         errors.append("Password must contain at least one special character.")
     return errors
+
 
 def check_password_match(password: str, confirm_password: str) -> list[str]:
     errors = []
@@ -148,7 +152,7 @@ def register():
             INSERT INTO users (email, password_hash, created_at, activated)
             VALUES (?, ?, ?, ?)
             """,
-            (email, password_hash, created_at.isoformat(), 0)
+            (email, password_hash, created_at.isoformat(), 0),
         )
         db.commit()
 
@@ -170,7 +174,7 @@ def register():
             user_id,
             (datetime.now() + timedelta(hours=24)).isoformat(),
             datetime.now().isoformat(),
-        )
+        ),
     )
     db.commit()
 
@@ -184,6 +188,7 @@ def register():
         email=email,
     )
 
+
 @app.route("/activate/<token>")
 def activate(token):
     db = get_db()
@@ -193,17 +198,19 @@ def activate(token):
     ).fetchone()
 
     if not token_row:
-        return render_template("activation_error.html", message="Invalid activation token."), 400
+        return render_template(
+            "activation_error.html", message="Invalid activation token."
+        ), 400
 
     user_id, expires_at_str = token_row
     expires_at = datetime.fromisoformat(expires_at_str)
 
     if datetime.now() > expires_at:
-        return render_template("activation_error.html", message="Activation token has expired."), 400
+        return render_template(
+            "activation_error.html", message="Activation token has expired."
+        ), 400
 
-    db.execute(
-        "UPDATE users SET activated = 1 WHERE id = ?", (user_id,)
-    )
+    db.execute("UPDATE users SET activated = 1 WHERE id = ?", (user_id,))
     db.commit()
 
     return render_template(
