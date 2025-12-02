@@ -21,24 +21,32 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function validatePasswordFields(password, confirmPassword, errors) {
+        // Matching passwords
         if (!password || !confirmPassword) {
             errors.push("Password and confirmation are required.");
             return;
         }
-
         if (password !== confirmPassword) {
             errors.push("Passwords do not match.");
         }
+
+        // Password complexity
         if (password.length < 8) {
             errors.push("Password must be at least 8 characters.");
         }
-        if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-            errors.push(
-                "Password must contain at least one letter and one digit."
-            );
+        if (!/[A-Z]/.test(password)) {
+            errors.push("Password must contain at least one uppercase letter.");
         }
-        if (containsDangerousPattern(password)) {
-            errors.push("Password contains forbidden patterns.");
+        if (!/[a-z]/.test(password)) {
+            errors.push("Password must contain at least one lowercase letter.");
+        }
+        if (!/\d/.test(password)) {
+            errors.push("Password must contain at least one digit.");
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            errors.push(
+                "Password must contain at least one special character."
+            );
         }
     }
 
@@ -58,7 +66,29 @@ document.addEventListener("DOMContentLoaded", function () {
     form.addEventListener("submit", function (e) {
         const errors = validateRegistrationForm();
         if (errors.length > 0) {
-            alert("Client-side validation errors:\n" + errors.join("\n"));
+            // alert("Client-side validation errors:\n" + errors.join("\n"));
+            showClientErrors(errors);
+            e.preventDefault();
         }
     });
+
+    function showClientErrors(errors) {
+        if (!clientErrorsContainer) return;
+        clientErrorsContainer.innerHTML = "";
+
+        if (!errors.length) {
+            clientErrorsContainer.style.display = "none";
+            return;
+        }
+
+        const ul = document.createElement("ul");
+        errors.forEach((err) => {
+            const li = document.createElement("li");
+            li.textContent = err;
+            ul.appendChild(li);
+        });
+
+        clientErrorsContainer.appendChild(ul);
+        clientErrorsContainer.style.display = "block";
+    }
 });
