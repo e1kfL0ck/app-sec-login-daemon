@@ -21,7 +21,7 @@ session.clear()
 
 ## Login
 
-- Description: Handle user login and create a new session.
+- Description: Handle user login and create a new session, check that the user is activated (=1)
 - Inputs: email and password (hashing/verification happens server-side).
 - Behavior:
   - On failure: increment `nb_failed_logins` for the user.
@@ -58,12 +58,12 @@ password_reset(email) -> email_sent_if_mail_in_DB
 - security events logging
 - MFA
 - HTTPS
-- PYTHONBUFFERD is used ?
+- Create an error page
+- Password field copy/paste
 
 ## Utilitarian functions
 
 - `update_last_login(user_id) -> None`
-
 
 ## Nginx (deployment)
 
@@ -78,7 +78,6 @@ password_reset(email) -> email_sent_if_mail_in_DB
 - Check if the user's fingerprint is the same at registration and token validation. If not, error out explicitly.
 - `fingerprint` to be defined (method, fields, TTL...)
 - `check_fingerprint() -> fingerprint_errors`
-
 
 ## Chore for a cleaner project
 
