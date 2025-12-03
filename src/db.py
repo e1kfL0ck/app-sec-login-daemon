@@ -1,5 +1,6 @@
 import sqlite3
 from flask import g
+
 DATABASE = "/data/app.db"
 
 def get_db():
