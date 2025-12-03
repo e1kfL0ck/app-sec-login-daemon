@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import sqlite3
 
-DB_FILE = "data/app.db"
+DB_FILE = "/data/app.db"
+
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)
@@ -64,6 +65,7 @@ def init_db():
     conn.commit()
     conn.close()
     print(f"Database initialized successfully: {DB_FILE}")
+
 
 if __name__ == "__main__":
     init_db()
