@@ -54,6 +54,7 @@ password_reset(email) -> email_sent_if_mail_in_DB
 
 - Create a table token, with an extra column : type (registration, activation, password_reset)
 - CSRF
+- Modify the frontend, when connected, register and login disappear
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
 - MFA

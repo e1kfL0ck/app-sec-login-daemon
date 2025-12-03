@@ -10,10 +10,15 @@
     <h1>User registration lab</h1>
     <nav>
       <a href="{{ url_for('index') }}">Home</a> |
-      <a href="{{ url_for('register') }}">Register</a> |
-      <a href="{{ url_for('login') }}">Login</a>
+
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('dashboard') }}">Dashboard</a> |
+        <a href="{{ url_for('logout') }}">Logout</a>
+      {% else %}
+        <a href="{{ url_for('register') }}">Register</a> |
+        <a href="{{ url_for('login') }}">Login</a> 
+      {% endif %}
     </nav>
-    <hr>
   </header>
 
   {% block content %}{% endblock %}

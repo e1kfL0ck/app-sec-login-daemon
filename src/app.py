@@ -202,6 +202,12 @@ def login():
     #TODO: fix, we are still on /login
     return render_template("dashboard.html", user={"email": email}), 200
 
+@app.route("/logout")
+@login_required
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
