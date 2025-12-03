@@ -29,19 +29,20 @@ def init_db():
     # ================================
     # ACTIVATION TOKENS TABLE
     # ================================
-    cur.execute("""DROP TABLE IF EXISTS activation_tokens;""")
+    cur.execute("""DROP TABLE IF EXISTS tokens;""")
 
     cur.execute("""
-    CREATE TABLE activation_tokens (
+    CREATE TABLE tokens (
         token TEXT PRIMARY KEY,
         user_id INTEGER NOT NULL,
         expires_at DATETIME NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        type TEXT NOT NULL CHECK (type IN ('activation', 'password_reset')),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     """)
 
-    cur.execute("CREATE INDEX idx_tokens_user_id ON activation_tokens(user_id);")
+    cur.execute("CREATE INDEX idx_tokens_user_id ON tokens(user_id);")
 
     # ================================
     # OPTIONAL SECURITY EVENTS TABLE

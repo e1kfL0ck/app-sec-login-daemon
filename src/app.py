@@ -75,8 +75,8 @@ def register():
 
     db.execute(
         """
-        INSERT INTO activation_tokens (token, user_id, expires_at, created_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO tokens (token, user_id, expires_at, created_at, type)
+        VALUES (?, ?, ?, ?, 'activation')
         """,
         (
             activation_token,
@@ -123,7 +123,7 @@ def activate(token):
         ), 400
 
     token_row = db.execute(
-        "SELECT user_id, expires_at FROM activation_tokens WHERE token = ?", (token,)
+        "SELECT user_id, expires_at FROM tokens WHERE token = ? AND type = 'activation'", (token,)
     ).fetchone()
 
     if not token_row:
@@ -143,6 +143,69 @@ def activate(token):
     db.commit()
 
     return render_template("activation_success.html")
+
+
+def password_reset():
+    if request.method == "GET":
+        return render_template("password_reset.html")
+
+    # POST
+    email = request.form.get("email", "")
+
+    errors = []
+    errors += field_utils.sanitize_user_input(email)
+    errors += field_utils.check_email_format(email)
+
+    if errors:
+        return render_template("password_reset.html", errors=errors)
+
+    db = get_db()
+    user = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+
+    if user is None:
+        errors.append(
+            "If the email exists in our system, a password reset link has been sent."
+        )
+        return render_template("password_reset.html", errors=errors)
+
+    user_id = user[0]
+    reset_token = secrets.token_hex(32)
+
+    db.execute(
+        """
+        INSERT INTO tokens (token, user_id, expires_at, created_at, type)
+        VALUES (?, ?, ?, ?, 'password_reset')
+        """,
+        (
+            reset_token,
+            user_id,
+            (datetime.now() + timedelta(hours=1)).isoformat(),
+            datetime.now().isoformat(),
+        ),
+    )
+    db.commit()
+
+    reset_link = url_for("reset_password", token=reset_token, _external=True)
+    # Attempt to send password reset email (logged on failure)
+    mail_sent = False
+    try:
+        mail_sent = mail_handler.send_password_reset_email(email, reset_link)
+    except Exception:
+        # logging is useless here, as mail_handler already logs exceptions
+        mail_sent = False
+
+    if not mail_sent:
+        # Show reset link on page if email sending fails or is skipped
+        return render_template(
+            "password_reset.html",
+            reset_link=reset_link,
+            email=email,
+            mail_sent=False,
+        )
+
+    # Successful password reset message (email was sent)
+    return render_template("password_reset.html", email=email, mail_sent=True)
+    # message="If the email exists in our system, a password reset link has been sent."
 
 
 asgi_app = WsgiToAsgi(app)
