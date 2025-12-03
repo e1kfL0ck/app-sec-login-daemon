@@ -83,7 +83,7 @@ def create_initial_user(conn: sqlite3.Connection) -> None:
         (
             1,
             "user@domain.org",
-            "scrypt:32768:8:1$NceELjQR63XBNVyz$9017671978053c3bcfdb4eb82d619511a8c06c2f46bd0569a15d9f9cff8abe667d975b33c01b0d1a4375d101489b2e8b10fa1f233a5493978a8260c0f28687f9",
+            "scrypt:32768:8:1$0iGmdM53ifrZnXpX$78413db3ee07ba0fd89bcc2cd5ac9b8bcbe75c83eb8021a07be951887fd0848d5f0e711f484f2c8da25c8810fb9eaf7f24085b00a0bad3a6b10e451d1c01c2c6",
             "2025-12-03T13:01:23.267399",
             1,
         ),
