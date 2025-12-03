@@ -6,7 +6,7 @@ if [ -n "$INIT_DB" ]; then
   case "$INIT_DB" in
     1|true|True|TRUE|yes|Yes)
       echo "INIT_DB is enabled — initializing database..."
-      python3 init_db.py
+      python3 /workspace/init_db.py
       ;;
     *)
       echo "INIT_DB not enabled (value='$INIT_DB'), skipping DB init."

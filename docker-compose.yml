@@ -5,15 +5,15 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
-      # - ./data:/app/data # production
+      # - .:/app
+      - ./src:/workspace
+      - ./data:/data
     environment:
-      - PYTHONUNBUFFERED=1
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_FROM=${MAIL_FROM}
       - MAIL_SERVER=${MAIL_SERVER}
       - MAIL_PORT=${MAIL_PORT}
-      - INIT_DB=True # destructive: re-initializes the database on each container start
       - SECRET_KEY=${SECRET_KEY}
+      - INIT_DB=True # destructive: re-initializes the database on each container start
     restart: unless-stopped
