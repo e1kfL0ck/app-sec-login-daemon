@@ -63,9 +63,34 @@ def init_db():
     cur.execute("CREATE INDEX idx_events_user_id ON security_events(user_id);")
     """
 
+    # Create an initial user for testing
+    create_initial_user(conn)
+    print("Initial user created.")
+    print("Email: user@domain.org")
+    print("Password: Bonjour123!")
+
     conn.commit()
     conn.close()
     print(f"Database initialized successfully: {DB_FILE}")
+
+
+def create_initial_user(conn: sqlite3.Connection) -> None:
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO users (id, email, password_hash, created_at, activated)
+        VALUES (?, ?, ?, ?, ?);
+        """,
+        (
+            1,
+            "user@domain.org",
+            "scrypt:32768:8:1$0iGmdM53ifrZnXpX$78413db3ee07ba0fd89bcc2cd5ac9b8bcbe75c83eb8021a07be951887fd0848d5f0e711f484f2c8da25c8810fb9eaf7f24085b00a0bad3a6b10e451d1c01c2c6",
+            "2025-12-03T13:01:23.267399",
+            1,
+        ),
+    )
+    conn.commit()
+
 
 
 if __name__ == "__main__":

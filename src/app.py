@@ -3,10 +3,13 @@ from datetime import datetime, timedelta
 import secrets
 import sqlite3
 import uvicorn
+import logging
 
-from flask import Flask, request, render_template, url_for
-from werkzeug.security import generate_password_hash
+from flask import Flask, request, render_template, url_for, session, redirect
+from werkzeug.security import generate_password_hash, check_password_hash
 from asgiref.wsgi import WsgiToAsgi
+from functools import wraps
+
 
 from db import get_db, close_db
 
@@ -18,6 +21,14 @@ app = Flask(__name__)
 
 app.secret_key = os.environ.get("SECRET_KEY")
 
+logger = logging.getLogger(__name__)
+
+# TODO: add if else for debug
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s:     %(name)s - %(message)s",
+)
+
 
 # Ensure database connection is closed after each request
 @app.teardown_appcontext
@@ -25,9 +36,20 @@ def teardown_db(exception):
     close_db()
 
 
+# Ensure the user is logged in
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
 @app.route("/")
 def index():
-    return render_template("index.html", title="Home – registration lab"), 200
+    return render_template("index.html"), 200
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -123,7 +145,8 @@ def activate(token):
         ), 400
 
     token_row = db.execute(
-        "SELECT user_id, expires_at FROM tokens WHERE token = ? AND type = 'activation'", (token,)
+        "SELECT user_id, expires_at FROM tokens WHERE token = ? AND type = 'activation'",
+        (token,),
     ).fetchone()
 
     if not token_row:
@@ -145,6 +168,7 @@ def activate(token):
     return render_template("activation_success.html")
 
 
+@app.route("/password_reset", methods=["GET", "POST"])
 def password_reset():
     if request.method == "GET":
         return render_template("password_reset.html")
@@ -206,6 +230,56 @@ def password_reset():
     # Successful password reset message (email was sent)
     return render_template("password_reset.html", email=email, mail_sent=True)
     # message="If the email exists in our system, a password reset link has been sent."
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "GET":
+        return render_template("login.html"), 200
+
+    # POST
+    email = request.form.get("email", "")
+    password = request.form.get("password", "")
+
+    if field_utils.sanitize_user_input(email):
+        return render_template("login.html", errors=True)
+
+    db = get_db()
+
+    user_row = db.execute(
+        "SELECT id, password_hash, activated FROM users WHERE email = ?", (email,)
+    ).fetchone()
+
+    if not user_row:
+        return render_template("login.html", errors=True)
+
+    user_id, db_password_hash, activated = user_row
+
+    logging.info(f"User login attempt: {email}, activated: {activated}")
+    logging.info(f"Stored password hash: {db_password_hash}")
+
+    if not check_password_hash(db_password_hash, password) or not activated:
+        return render_template("login.html", errors=True)
+
+    # Login successful
+    session["user_id"] = user_id
+    session["email"] = email
+
+    # TODO: fix, we are still on /login
+    return render_template("dashboard.html", user={"email": email}), 200
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html", user={"email": session.get("email")}), 200
 
 
 asgi_app = WsgiToAsgi(app)

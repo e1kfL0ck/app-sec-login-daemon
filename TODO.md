@@ -2,9 +2,26 @@
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
+## Sessions management skeleton
+
+```python
+from flask import Flask, session
+from flask_session import Session
+
+app = Flask(__name__)
+app.secret_key = "clé-secrète"
+
+app.config["SESSION_TYPE"] = "filesystem"  # ou 'sqlalchemy', 'redis', etc.
+Session(app)
+
+session["user_id"] = user["id"]
+user_id = session.get("user_id")
+session.clear()
+```
+
 ## Login
 
-- Description: Handle user login.
+- Description: Handle user login and create a new session, check that the user is activated (=1)
 - Inputs: email and password (hashing/verification happens server-side).
 - Behavior:
   - On failure: increment `nb_failed_logins` for the user.
@@ -13,31 +30,6 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 ```python
 login(email, password) -> login_template(success)
-```
-
-## Register
-
-- Description: Handle user registration.
-- Inputs: `username`, `email`, `password`, `confirm_password`.
-- Validation rules:
-  - `email` must not already exist in the database.
-  - `email` must be a valid format.
-  - `email` must pass blacklist/whitelist checks (domain checks).
-  - `password` must meet security requirements and match `confirm_password`.
-- Post-action: send an activation token via email (currently printed to console in dev).
-- Signature:
-
-```python
-register(username, email, password, confirm_password) -> register_template(errors, username, email)
-```
-
-## Validate Token
-
-- Description: Activate an account using an activation token provided in an email link.
-- Signature:
-
-```python
-validate_token(token) -> token_template(valid)
 ```
 
 ## Check Failed Logins
@@ -49,19 +41,32 @@ validate_token(token) -> token_template(valid)
 check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickroll
 ```
 
+## Password Reset
+
+- Description: Allow a user to modify his password if frogotten. The server will send the token if the mail exist in the DB.
+- Signature
+
+```python
+password_reset(email) -> email_sent_if_mail_in_DB
+```
+
+## Optional features TODO
+
+- Create a table token, with an extra column : type (registration, activation, password_reset)
+- CSRF
+- Modify the frontend, when connected, register and login disappear
+- Rate limiting / Captcha (simple maths ? / retype something ?)
+- security events logging
+- MFA
+- HTTPS
+- Create an error page
+- Password field copy/paste
+- Fix le double welcome link sur le register
+- Session Fixation, when login create a new session
+
 ## Utilitarian functions
 
-- `sanitize_user_input(value) -> sanitized_value`
-- `check_password_strength(password) -> strength_errors`
-- `check_email_format(email) -> email_format_errors`
-- `check_email_domain(email) -> blacklist_errors | whitelist_errors`
 - `update_last_login(user_id) -> None`
-
-## Optional
-
-- Check if the user's fingerprint is the same at registration and token validation. If not, error out explicitly.
-- `fingerprint` to be defined (method, fields, TTL...)
-- `check_fingerprint() -> fingerprint_errors`
 
 ## Nginx (deployment)
 
@@ -69,7 +74,15 @@ check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickrol
 - Redirection HTTP -> HTTPS. Enforced.
 - Make sure static resources are exposed.
 
-## Modify the architecture
+## Optional features TODO from past iterations
+
+- Password strength meter
+- Email domain whitelist/blacklist
+- Check if the user's fingerprint is the same at registration and token validation. If not, error out explicitly.
+- `fingerprint` to be defined (method, fields, TTL...)
+- `check_fingerprint() -> fingerprint_errors`
+
+## Chore for a cleaner project
 
 - Move all the functions to utils.py
 - Create a src folder and copy only this one to the container
