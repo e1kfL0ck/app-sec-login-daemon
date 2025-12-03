@@ -23,7 +23,7 @@ app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    format="%(levelname)s:     %(name)s - %(message)s",
 )
 
 app.secret_key = os.environ.get("SECRET_KEY")
