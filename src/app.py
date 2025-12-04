@@ -193,15 +193,24 @@ def login():
     db = get_db()
 
     user_row = db.execute(
-        "SELECT id, password_hash, activated FROM users WHERE email = ?", (email,)
+        "SELECT id, password_hash, nb_failed_logins, activated FROM users WHERE email = ?", (email,)
     ).fetchone()
 
     if not user_row:
         return render_template("login.html", errors=True)
 
-    user_id, db_password_hash, activated = user_row
+    user_id, db_password_hash, nb_failed_logins, activated = user_row
+
+    # If password failed more than 3 times, you must change it
+    if nb_failed_logins >= 3 :
+        return render_template("login.html", errors=False, reset=True)
 
     if not check_password_hash(db_password_hash, password) or not activated:
+        db.execute(
+            "UPDATE users SET nb_failed_logins = nb_failed_logins + 1 WHERE id = ? ",
+            (user_id,)
+        )
+        db.commit()
         return render_template("login.html", errors=True)
 
     #Update last connexion time

@@ -16,6 +16,12 @@
   <button type="submit">Login</button>
 </form>
 
+{% if reset %}
+<div style="color:red;">
+    <p>Potential attack on your password. Please reset it.</p>
+</div>
+{% endif %}
+
 <a href="{{ url_for('password_reset') }}">Password reset</a>
 
 {% if errors %}
@@ -24,8 +30,5 @@
 </div>
 {% endif %}
 
-{% if success %}
-<p style="color:green;">{{ success|safe }}</p>
-{% endif %}
 
 {% endblock %}
