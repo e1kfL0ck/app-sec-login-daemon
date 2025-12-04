@@ -54,19 +54,14 @@ password_reset(email) -> email_sent_if_mail_in_DB
 
 - Create a table token, with an extra column : type (registration, activation, password_reset)
 - CSRF
-- Modify the frontend, when connected, register and login disappear
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
 - MFA
 - HTTPS
-- Create an error page
-- Password field copy/paste
+- Customize html error templates
 - Fix le double welcome link sur le register
 - Session Fixation, when login create a new session
-
-## Utilitarian functions
-
-- `update_last_login(user_id) -> None`
+- utiliser app.logger.exception("test") plutôt que de réimporter logging ?0
 
 ## Nginx (deployment)
 
