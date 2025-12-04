@@ -58,14 +58,11 @@ password_reset(email) -> email_sent_if_mail_in_DB
 - security events logging
 - MFA
 - HTTPS
-- Create an error page
+- Customize html error templates
 - Password field copy/paste
 - Fix le double welcome link sur le register
 - Session Fixation, when login create a new session
-
-## Utilitarian functions
-
-- `update_last_login(user_id) -> None`
+- utiliser app.logger.exception("test") plutôt que de réimporter logging ?0
 
 ## Nginx (deployment)
 

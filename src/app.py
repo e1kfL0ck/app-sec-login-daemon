@@ -51,8 +51,17 @@ def already_logged_in(view):
         if "user_id" in session:
             return redirect(url_for("dashboard"))
         return view(*args, **kwargs)
-
     return wrapped
+
+@app.errorhandler(404)
+def internal_error(e):
+    return render_template("404.html"), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    app.logger.exception("Internal server error")
+    app.logger.exception(e)
+    return render_template("500.html"), 500
 
 @app.route("/")
 @already_logged_in
