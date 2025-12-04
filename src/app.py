@@ -45,13 +45,23 @@ def login_required(view):
 
     return wrapped
 
+def already_logged_in(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" in session:
+            return redirect(url_for("dashboard"))
+        return view(*args, **kwargs)
+
+    return wrapped
 
 @app.route("/")
+@already_logged_in
 def index():
     return render_template("index.html"), 200
 
 
 @app.route("/register", methods=["GET", "POST"])
+@already_logged_in
 def register():
     if request.method == "GET":
         return render_template("register.html")
@@ -133,6 +143,7 @@ def register():
 
 
 @app.route("/activate/<token>")
+@already_logged_in
 def activate(token):
     db = get_db()
 
@@ -167,6 +178,7 @@ def activate(token):
 
 
 @app.route("/login", methods=["GET", "POST"])
+@already_logged_in
 def login():
     if request.method == "GET":
         return render_template("login.html"), 200
@@ -189,11 +201,12 @@ def login():
 
     user_id, db_password_hash, activated = user_row
 
-    logging.info(f"User login attempt: {email}, activated: {activated}")
-    logging.info(f"Stored password hash: {db_password_hash}")
-
     if not check_password_hash(db_password_hash, password) or not activated:
         return render_template("login.html", errors=True)
+
+    #Update last connexion time
+    db.execute("UPDATE users SET last_login = ? WHERE id = ?", (datetime.now().isoformat(), user_id))
+    db.commit()
 
     # Login successful
     session["user_id"] = user_id
