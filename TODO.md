@@ -59,7 +59,6 @@ password_reset(email) -> email_sent_if_mail_in_DB
 - MFA
 - HTTPS
 - Customize html error templates
-- Fix le double welcome link sur le register
 - Session Fixation, when login create a new session
 - utiliser app.logger.exception("test") plutôt que de réimporter logging ?0
 
