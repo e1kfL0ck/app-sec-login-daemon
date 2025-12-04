@@ -97,3 +97,8 @@ Notes:
 
 Modify the UML to implement user interactions. Register should be in the frontend.
 Finish the implementation of the app, and have it ready for next session.
+
+December 3:
+
+- Session fixation? How do we mitigate this?
+- Handle multiple clicks on the "token validation" link received by mail. (if already validated, then error out)

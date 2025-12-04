@@ -38,10 +38,6 @@
 <p style="color:green;">{{ success|safe }}</p>
 {% endif %}
 
-{% if activation_link %}
-<p>Activation link (for lab/testing): <a href="{{ activation_link }}">{{ activation_link }}</a></p>
-{% endif %}
-
 {% if mail_sent %}
 <p style="color:green;">An activation email has been sent to {{ email }}. Check your inbox.</p>
 {% elif activation_link %}
