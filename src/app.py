@@ -214,7 +214,7 @@ def forgotten_password():
     db.commit()
 
     # TODO: build front for password reset
-    reset_link = url_for("forgotten_password", token=reset_token, _external=True)
+    reset_link = url_for("password_reset", token=reset_token, _external=True)
     # Attempt to send password reset email (logged on failure)
     mail_sent = False
     try:
@@ -236,6 +236,89 @@ def forgotten_password():
     # Successful password reset message (email was sent)
     return render_template("forgotten_password.html", email=email, mail_sent=True)
     # message="If the email exists in our system, a password reset link has been sent."
+
+
+@app.route("/password_reset/<token>", methods=["GET", "POST"])
+def password_reset(token):
+    """
+    Upon being requested by a token that the user received by mail, provides the password reset form :
+    - checks password strength
+    - checks that both password and password_confirmation match
+    - replaces the account password in the database
+    - displays a confirmation to the user
+    """
+
+    errors = field_utils.sanitize_user_input(token, max_len=64)
+
+    db = get_db()
+
+    if request.method == "GET":
+        if errors:
+            return render_template(
+                "password_reset.html", message="Invalid activation token"
+            ), 400
+
+        token_row = db.execute(
+            "SELECT user_id, expires_at FROM tokens WHERE token = ? AND type = 'password_reset'",
+            (token,),
+        ).fetchone()
+
+        if not token_row:
+            return render_template(
+                "password_reset.html", message="Invalid activation token."
+            ), 400
+
+        user_id, expires_at_str = token_row
+        expires_at = datetime.fromisoformat(expires_at_str)
+
+        if datetime.now() > expires_at:
+            return render_template(
+                "password_reset.html", message="Activation token has expired."
+            ), 400
+
+        return render_template("password_reset.html")
+
+        # TODO: expire token ?
+
+    # POST
+    password = request.form.get("password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    errors = []
+    errors += field_utils.check_password_strength(password)
+    errors += field_utils.check_password_match(password, confirm_password)
+
+    if errors:
+        return render_template("password_reset.html", errors=errors)
+
+    password_hash = generate_password_hash(password)
+    # TODO: add field to track last password reset date?
+
+    try:
+        user_id = db.execute(
+            "SELECT user_id FROM tokens WHERE token = ? AND type = 'password_reset'",
+            (token,),
+        ).fetchone()
+
+        db.execute(
+            """
+            UPDATE users
+            SET password = ?
+            WHERE id = ?           
+            """,
+            (password_hash, user_id),
+        )
+        db.commit()
+
+    except sqlite3.IntegrityError:
+        logger.exception("Password database insertion failed.")
+        message="Password couldn't be updated due to an internal error."
+        return render_template("register.html", message=message)
+
+    db.commit()
+
+    # Successful password reset message
+    return render_template("password_reset.html", success=True)
 
 
 @app.route("/login", methods=["GET", "POST"])
