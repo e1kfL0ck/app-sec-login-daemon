@@ -55,7 +55,7 @@ def already_logged_in(view):
     return wrapped
 
 @app.errorhandler(404)
-def internal_error(e):
+def not_found_error(e):
     return render_template("404.html"), 404
 
 @app.errorhandler(500)
