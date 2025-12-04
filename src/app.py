@@ -168,10 +168,17 @@ def activate(token):
     return render_template("activation_success.html")
 
 
-@app.route("/password_reset", methods=["GET", "POST"])
-def password_reset():
+@app.route("/forgotten_password", methods=["GET", "POST"])
+def forgotten_password():
+    """
+    Following the click of the user on "I forgot my password":
+    - queries user for an email
+    - display confirmation message
+    - if email is valid, sends a password reset token
+    """
+    # TODO: add check for the token in the GET method
     if request.method == "GET":
-        return render_template("password_reset.html")
+        return render_template("forgotten_password.html")
 
     # POST
     email = request.form.get("email", "")
@@ -181,16 +188,13 @@ def password_reset():
     errors += field_utils.check_email_format(email)
 
     if errors:
-        return render_template("password_reset.html", errors=errors)
+        return render_template("forgotten_password.html", errors=errors)
 
     db = get_db()
     user = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
 
     if user is None:
-        errors.append(
-            "If the email exists in our system, a password reset link has been sent."
-        )
-        return render_template("password_reset.html", errors=errors)
+        return render_template("forgotten_password.html", mail_sent=False)
 
     user_id = user[0]
     reset_token = secrets.token_hex(32)
@@ -209,7 +213,8 @@ def password_reset():
     )
     db.commit()
 
-    reset_link = url_for("reset_password", token=reset_token, _external=True)
+    # TODO: build front for password reset
+    reset_link = url_for("forgotten_password", token=reset_token, _external=True)
     # Attempt to send password reset email (logged on failure)
     mail_sent = False
     try:
@@ -219,16 +224,17 @@ def password_reset():
         mail_sent = False
 
     if not mail_sent:
+        # TODO: remove once dev is done
         # Show reset link on page if email sending fails or is skipped
         return render_template(
-            "password_reset.html",
+            "forgotten_password.html",
             reset_link=reset_link,
             email=email,
             mail_sent=False,
         )
 
     # Successful password reset message (email was sent)
-    return render_template("password_reset.html", email=email, mail_sent=True)
+    return render_template("forgotten_password.html", email=email, mail_sent=True)
     # message="If the email exists in our system, a password reset link has been sent."
 
 
