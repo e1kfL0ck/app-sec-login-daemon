@@ -10,7 +10,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from asgiref.wsgi import WsgiToAsgi
 from functools import wraps
 
-
 from db import get_db, close_db
 
 # Custom modules
@@ -46,23 +45,28 @@ def login_required(view):
 
     return wrapped
 
+
 def already_logged_in(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if "user_id" in session:
             return redirect(url_for("dashboard"))
         return view(*args, **kwargs)
+
     return wrapped
+
 
 @app.errorhandler(404)
 def not_found_error(e):
     return render_template("404.html"), 404
+
 
 @app.errorhandler(500)
 def internal_error(e):
     app.logger.exception("Internal server error")
     app.logger.exception(e)
     return render_template("500.html"), 500
+
 
 @app.route("/")
 @already_logged_in
@@ -332,7 +336,7 @@ def password_reset(token):
 
     except sqlite3.IntegrityError:
         logger.exception("Password database insertion failed.")
-        message="Password couldn't be updated due to an internal error."
+        message = "Password couldn't be updated due to an internal error."
         return render_template("register.html", message=message)
 
     db.commit()
@@ -357,7 +361,8 @@ def login():
     db = get_db()
 
     user_row = db.execute(
-        "SELECT id, password_hash, nb_failed_logins, activated FROM users WHERE email = ?", (email,)
+        "SELECT id, password_hash, nb_failed_logins, activated FROM users WHERE email = ?",
+        (email,),
     ).fetchone()
 
     if not user_row:
@@ -366,19 +371,22 @@ def login():
     user_id, db_password_hash, nb_failed_logins, activated = user_row
 
     # If password failed more than 3 times, you must change it
-    if nb_failed_logins >= 3 :
+    if nb_failed_logins >= 3:
         return render_template("login.html", errors=False, reset=True)
 
     if not check_password_hash(db_password_hash, password) or not activated:
         db.execute(
             "UPDATE users SET nb_failed_logins = nb_failed_logins + 1 WHERE id = ? ",
-            (user_id,)
+            (user_id,),
         )
         db.commit()
         return render_template("login.html", errors=True)
 
-    #Update last connexion time
-    db.execute("UPDATE users SET last_login = ? WHERE id = ?", (datetime.now().isoformat(), user_id))
+    # Update last connexion time
+    db.execute(
+        "UPDATE users SET last_login = ? WHERE id = ?",
+        (datetime.now().isoformat(), user_id),
+    )
     db.commit()
 
     # Login successful
