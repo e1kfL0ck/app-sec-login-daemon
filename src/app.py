@@ -271,7 +271,8 @@ def password_reset(token):
     if request.method == "GET":
         if errors:
             return render_template(
-                "password_reset.html", message="Invalid activation token"
+                "password_reset.html", message="Invalid activation token",
+                token=token
             ), 400
 
         token_row = db.execute(
@@ -281,7 +282,8 @@ def password_reset(token):
 
         if not token_row:
             return render_template(
-                "password_reset.html", message="Invalid activation token."
+                "password_reset.html", message="Invalid activation token.",
+                token=token
             ), 400
 
         user_id, expires_at_str = token_row
@@ -289,10 +291,11 @@ def password_reset(token):
 
         if datetime.now() > expires_at:
             return render_template(
-                "password_reset.html", message="Activation token has expired."
+                "password_reset.html", message="Activation token has expired.",
+                token=token
             ), 400
 
-        return render_template("password_reset.html")
+        return render_template("password_reset.html", token=token)
 
     # POST
     password = request.form.get("password", "")
@@ -303,21 +306,23 @@ def password_reset(token):
     errors += field_utils.check_password_match(password, confirm_password)
 
     if errors:
-        return render_template("password_reset.html", errors=errors)
+        return render_template("password_reset.html", errors=errors, token=token)
 
     password_hash = generate_password_hash(password)
     # TODO: add field to track last password reset date?
 
     try:
-        user_id = db.execute(
+        user_row = db.execute(
             "SELECT user_id FROM tokens WHERE token = ? AND type = 'password_reset'",
             (token,),
         ).fetchone()
+        
+        user_id = user_row[0]
 
         db.execute(
             """
             UPDATE users
-            SET password = ?
+            SET password_hash = ?
             WHERE id = ?
             """,
             (password_hash, user_id),
@@ -326,11 +331,11 @@ def password_reset(token):
 
     except sqlite3.IntegrityError:
         app.logger.exception("Password database insertion failed.")
-        return render_template("register.html", success=False)
+        return render_template("password_reset.html", success=False, token=token)
 
     db.commit()
 
-    return render_template("password_reset.html", success=True)
+    return render_template("password_reset.html", success=True, token=token)
 
 
 @app.route("/login", methods=["GET", "POST"])
