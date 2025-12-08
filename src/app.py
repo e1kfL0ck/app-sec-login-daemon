@@ -5,7 +5,7 @@ import sqlite3
 import uvicorn
 import logging
 
-from flask import Flask, request, render_template, url_for, session, redirect, abort
+from flask import Flask, request, render_template, url_for, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from asgiref.wsgi import WsgiToAsgi
 from functools import wraps
