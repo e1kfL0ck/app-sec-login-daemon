@@ -294,8 +294,6 @@ def password_reset(token):
 
         return render_template("password_reset.html")
 
-        # TODO: expire token ?
-
     # POST
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
