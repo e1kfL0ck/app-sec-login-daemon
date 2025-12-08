@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import secrets
 import sqlite3
 import uvicorn
-import logging
 
 from flask import Flask, request, render_template, url_for, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -28,12 +27,6 @@ csrf.init_app(app)
 
 # Logging configuration
 debug_mode = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
-# if debug_mode:
-#     logger = logging.getLogger(__name__)
-#     logging.basicConfig(
-#         level=logging.INFO,
-#         format="%(levelname)s:     %(name)s - %(message)s",
-#     )
 
 
 # Ensure database connection is closed after each request
@@ -252,16 +245,13 @@ def forgotten_password():
         mail_sent = mail_handler.send_password_reset_email(email, reset_link)
     except Exception:
         # logging is useless here, as mail_handler already logs exceptions
-        mail_sent = False
+        pass
 
     if not mail_sent and debug_mode:
         app.logger.info("Password reset link for %s: %s", email, reset_link)
-        return render_template(
-            "forgotten_password.html",
-            email=email,
-        )
+        return render_template("forgotten_password.html", email=email, mail_sent=False)
 
-    return render_template("forgotten_password.html", email=email)
+    return render_template("forgotten_password.html", email=email, mail_sent=True)
 
 
 @app.route("/password_reset/<token>", methods=["GET", "POST"])

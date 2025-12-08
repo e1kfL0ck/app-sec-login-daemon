@@ -34,7 +34,7 @@
 
 {% if mail_sent %}
 <p style="color:green;">An activation email has been sent to {{ email }}. Check your inbox.</p>
-{% else %}
+{% elif mail_sent is false%}
 <p style="color:orange;">
   There was an issue while sending the activation link. Please check your email. If the issue persists, contact support.
 </p>
