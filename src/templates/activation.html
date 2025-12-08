@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
+{% if success %}
 <h2>Activation successful</h2>
 <p style="color:green;">Your account has been successfully activated. You can now leave this page</p>
+{% elif success is false %}
+<h2>Activation error</h2>
+<p style="color:red;">{{ message }}</p>
+{% endif %}
 {% endblock %}

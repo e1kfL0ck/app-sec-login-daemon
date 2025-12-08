@@ -8,7 +8,7 @@ DANGEROUS_PATTERNS = [
     re.compile(r"javascript\s*:", re.IGNORECASE),
 ]
 
-DISALLOWED_CHARS = set("<>{};&")
+DISALLOWED_CHARS = set("<>{};&'")
 
 
 def check_password_match(password: str, confirm_password: str) -> list[str]:
