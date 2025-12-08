@@ -2,3 +2,4 @@ flask
 uvicorn
 werkzeug
 asgiref
+Flask-WTF

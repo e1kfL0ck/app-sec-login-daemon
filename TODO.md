@@ -23,13 +23,11 @@ password_reset(email) -> email_sent_if_mail_in_DB
 ## Optional features TODO
 
 - Create a table token, with an extra column : type (registration, activation, password_reset)
-- CSRF
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
 - MFA
 - HTTPS
 - Customize html error templates
-- Fix le double welcome link sur le register
 - Session Fixation, when login create a new session
 - utiliser app.logger.exception("test") plutôt que de réimporter logging ?0
 

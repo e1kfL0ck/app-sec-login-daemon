@@ -3,6 +3,7 @@
 <h2>Register</h2>
 
 <form id="register-form" method="post" action="{{ url_for('register') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>Email:
     <input type="email" name="email" required>
   </label>

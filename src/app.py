@@ -5,10 +5,12 @@ import sqlite3
 import uvicorn
 import logging
 
-from flask import Flask, request, render_template, url_for, session, redirect
+from flask import Flask, request, render_template, url_for, session, redirect, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from asgiref.wsgi import WsgiToAsgi
 from functools import wraps
+from flask_wtf import CSRFProtect
+
 
 from db import get_db, close_db
 
@@ -17,8 +19,9 @@ import mail_handler
 import field_utils
 
 app = Flask(__name__)
-
 app.secret_key = os.environ.get("SECRET_KEY")
+
+csrf = CSRFProtect(app)
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +70,11 @@ def internal_error(e):
     app.logger.exception(e)
     return render_template("500.html"), 500
 
+def validate_csrf():
+    session_token = session.get("csrf_token")
+    form_token = request.form.get("csrf_token")
+    if not session_token or not form_token or session_token != form_token:
+        abort(400)
 
 @app.route("/")
 @already_logged_in
@@ -81,6 +89,7 @@ def register():
         return render_template("register.html")
 
     # POST
+    validate_csrf()
     email = request.form.get("email", "")
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
@@ -205,6 +214,7 @@ def forgotten_password():
         return render_template("forgotten_password.html")
 
     # POST
+    validate_csrf()
     email = request.form.get("email", "")
 
     errors = []
@@ -305,6 +315,7 @@ def password_reset(token):
         # TODO: expire token ?
 
     # POST
+    validate_csrf()
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
 
@@ -328,7 +339,7 @@ def password_reset(token):
             """
             UPDATE users
             SET password = ?
-            WHERE id = ?           
+            WHERE id = ?
             """,
             (password_hash, user_id),
         )
@@ -352,6 +363,7 @@ def login():
         return render_template("login.html"), 200
 
     # POST
+    validate_csrf()
     email = request.form.get("email", "")
     password = request.form.get("password", "")
 
