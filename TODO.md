@@ -32,7 +32,6 @@ This file lists high-level tasks and function contracts for the login/registrati
 ## Chore for a cleaner project
 
 - Move all the functions to utils.py
-- Create a src folder and copy only this one to the container
 
 ---
 

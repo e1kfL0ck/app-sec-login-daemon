@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>MFA setup</h2>
+{% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+<img src="{{ qr }}" alt="QR code"><br>
+<p>Totp secret: {{ secret }}</p>
+<form method="post" action="{{ url_for('mfa.confirm') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="secret" value="{{ secret }}">
+  <label>OTP: <input name="otp" required></label>
+  <button type="submit">Confirm</button>
+</form>
+{% endblock %}

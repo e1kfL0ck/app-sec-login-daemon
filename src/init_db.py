@@ -22,7 +22,10 @@ def init_db():
         last_login DATETIME,
         nb_failed_logins INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        activated INTEGER DEFAULT 0 CHECK (activated IN (0,1))
+        activated INTEGER DEFAULT 0 CHECK (activated IN (0,1)),
+        mfa_enabled INTEGER DEFAULT 0,
+        mfa_secret TEXT,
+        backup_codes TEXT
     );
     """)
 
@@ -79,19 +82,26 @@ def init_db():
 
 def create_initial_user(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
+
     cur.execute(
         """
-        INSERT OR IGNORE INTO users (id, email, password_hash, last_login, nb_failed_logins, created_at, activated)
-        VALUES (?, ?, ?, ?, ?, ?, ?);
+        INSERT OR IGNORE INTO users (
+            id, email, password_hash, last_login, nb_failed_logins,
+            created_at, activated, mfa_enabled, mfa_secret, backup_codes
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """,
         (
             1,
             "user@domain.org",
             "scrypt:32768:8:1$0iGmdM53ifrZnXpX$78413db3ee07ba0fd89bcc2cd5ac9b8bcbe75c83eb8021a07be951887fd0848d5f0e711f484f2c8da25c8810fb9eaf7f24085b00a0bad3a6b10e451d1c01c2c6",
-            None,
+            "2025-12-08T20:10:12.482998",
             0,
             "2025-12-03T13:01:23.267399",
             1,
+            1,
+            "YOZSSE4QXLPRNCELINUIH6O2BXWLJVO4",
+            '["e3aba907b83b", "ab237fb50db5", "3e1a0b59417c", "09cac10f2169", "ae8715439a60", "ec37c00a9217", "1cfdca3194bf", "a37cc97d5610"]',
         ),
     )
     conn.commit()
