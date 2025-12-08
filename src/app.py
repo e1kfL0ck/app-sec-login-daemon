@@ -383,8 +383,7 @@ def login():
     session["user_id"] = user_id
     session["email"] = email
 
-    # TODO: fix, we are still on /login
-    return render_template("dashboard.html", user={"email": email}), 200
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/logout")
