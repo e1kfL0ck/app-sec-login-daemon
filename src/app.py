@@ -165,9 +165,7 @@ def activate(token):
     errors = field_utils.sanitize_user_input(token, max_len=64)
 
     if errors:
-        return render_template(
-            "activation_error.html", message="Invalid activation token."
-        ), 400
+        return render_template("activation.html", success=False), 400
 
     token_row = db.execute(
         "SELECT user_id, expires_at FROM tokens WHERE token = ? AND type = 'activation'",
@@ -175,22 +173,18 @@ def activate(token):
     ).fetchone()
 
     if not token_row:
-        return render_template(
-            "activation_error.html", message="Invalid activation token."
-        ), 400
+        return render_template("activation.html", success=False), 400
 
     user_id, expires_at_str = token_row
     expires_at = datetime.fromisoformat(expires_at_str)
 
     if datetime.now() > expires_at:
-        return render_template(
-            "activation_error.html", message="Activation token has expired."
-        ), 400
+        return render_template("activation.html", success=False), 400
 
     db.execute("UPDATE users SET activated = 1 WHERE id = ?", (user_id,))
     db.commit()
 
-    return render_template("activation_success.html")
+    return render_template("activation.html", success=True)
 
 
 @app.route("/forgotten_password", methods=["GET", "POST"])

@@ -5,14 +5,15 @@ This file lists high-level tasks and function contracts for the login/registrati
 ## Optional features TODO
 
 - Create a table token, with an extra column : type (registration, activation, password_reset)
-- CSRF ok, a mettre ds le header 
+- CSRF ok, a mettre ds le header
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
 - MFA
 - HTTPS
 - Customize html error templates
 - Session Fixation, when login create a new session
-- utiliser app.logger.exception("test") plutôt que de réimporter logging ?0
+- utiliser app.logger.exception("test") plutôt que de réimporter logging ?
+- le temps du mail est trop rapide si mauvais mail
 
 ## Nginx (deployment)
 
@@ -32,7 +33,6 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 - Move all the functions to utils.py
 - Create a src folder and copy only this one to the container
-- Try to use less templates in .html and use more place holders
 
 ---
 
