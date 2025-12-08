@@ -70,11 +70,13 @@ def internal_error(e):
     app.logger.exception(e)
     return render_template("500.html"), 500
 
+
 def validate_csrf():
     session_token = session.get("csrf_token")
     form_token = request.form.get("csrf_token")
     if not session_token or not form_token or session_token != form_token:
         abort(400)
+
 
 @app.route("/")
 @already_logged_in

@@ -2,24 +2,6 @@
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
-## Check Failed Logins
-
-- Description: Check if a user exceeded the allowed number of failed login attempts and act accordingly.
-- Signature / possible outcomes:
-
-```python
-check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickroll
-```
-
-## Password Reset
-
-- Description: Allow a user to modify his password if frogotten. The server will send the token if the mail exist in the DB.
-- Signature
-
-```python
-password_reset(email) -> email_sent_if_mail_in_DB
-```
-
 ## Optional features TODO
 
 - Create a table token, with an extra column : type (registration, activation, password_reset)
