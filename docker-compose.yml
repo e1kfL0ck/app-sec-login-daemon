@@ -15,5 +15,6 @@ services:
       - MAIL_SERVER=${MAIL_SERVER}
       - MAIL_PORT=${MAIL_PORT}
       - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
       - INIT_DB=True # destructive: re-initializes the database on each container start
     restart: unless-stopped

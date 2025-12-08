@@ -170,14 +170,16 @@ If the email is already registered here's the error message shown to the user :
   \label{fig:registration_error_email_exists}
 \end{figure}
 
-Upon successful validation and user creation, the backend generates a unique activation token using Python's \texttt{secrets} module. This token is stored in the database along with an expiration timestamp and the user id associated with it. This token is then displayed in the frontend for demonstration purposes (in a future version, the token will be sent via email, according to the requirements).
+Upon successful validation and user creation, the backend generates a unique activation token using Python's \texttt{secrets} module. 
+This token is stored in the database along with an expiration timestamp and the user id associated with it. 
+This token is then sent to the user by email in order to provide the activation workflow.
 
 Example of token being displayed to the user after successful registration :
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.75\textwidth]{img/registration_success_token.png}
-  \caption{Example of activation token displayed to the user after successful registration.}
-  \label{fig:registration_success_token}
+  \includegraphics[width=0.75\textwidth]{img/registration_success_mail.png}
+  \caption{Example of registration confirmation message upon successful registration.}
+  \label{fig:registration_success_mail}
 \end{figure}
 
 When the user clicks the activation link, it sends a GET request to the \texttt{/activate/<token>} endpoint on the backend. The backend retrieves the token from the URL, validates it against the database (checking for existence and expiration), and if valid, updates the user's activation status to true. The user is then informed of the successful activation.

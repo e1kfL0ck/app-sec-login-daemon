@@ -3,9 +3,8 @@ from datetime import datetime, timedelta
 import secrets
 import sqlite3
 import uvicorn
-import logging
 
-from flask import Flask, request, render_template, url_for, session, redirect, abort
+from flask import Flask, request, render_template, url_for, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from asgiref.wsgi import WsgiToAsgi
 from functools import wraps
@@ -18,18 +17,16 @@ from db import get_db, close_db
 import mail_handler
 import field_utils
 
+# Create app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
 
+# CSRF Protection
 csrf = CSRFProtect(app)
+csrf.init_app(app)
 
-logger = logging.getLogger(__name__)
-
-# TODO: add if else for debug
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s:     %(name)s - %(message)s",
-)
+# Logging configuration
+debug_mode = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
 
 
 # Ensure database connection is closed after each request
@@ -48,17 +45,22 @@ def login_required(view):
 
     return wrapped
 
+
 def already_logged_in(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if "user_id" in session:
             return redirect(url_for("dashboard"))
         return view(*args, **kwargs)
+
     return wrapped
 
+
+# Error handlers
 @app.errorhandler(404)
 def not_found_error(e):
     return render_template("404.html"), 404
+
 
 @app.errorhandler(500)
 def internal_error(e):
@@ -66,12 +68,8 @@ def internal_error(e):
     app.logger.exception(e)
     return render_template("500.html"), 500
 
-def validate_csrf():
-    session_token = session.get("csrf_token")
-    form_token = request.form.get("csrf_token")
-    if not session_token or not form_token or session_token != form_token:
-        abort(400)
 
+# Routes
 @app.route("/")
 @already_logged_in
 def index():
@@ -85,7 +83,6 @@ def register():
         return render_template("register.html")
 
     # POST
-    validate_csrf()
     email = request.form.get("email", "")
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
@@ -145,14 +142,13 @@ def register():
         mail_sent = mail_handler.send_activation_email(email, activation_link)
     except Exception:
         # loggin is useless here, as mail_handler already logs exceptions
-        # logger.exception("Unexpected error while sending activation email to %s", email)
         mail_sent = False
 
-    if not mail_sent:
-        # Show activation link on page if email sending fails or is skipped
+    if not mail_sent and debug_mode:
+        # log the activation link if email sending fails
+        app.logger.info("Activation link for %s: %s", email, activation_link)
         return render_template(
             "register.html",
-            activation_link=activation_link,
             email=email,
             mail_sent=False,
         )
@@ -205,12 +201,10 @@ def forgotten_password():
     - display confirmation message
     - if email is valid, sends a password reset token
     """
-    # TODO: add check for the token in the GET method
     if request.method == "GET":
         return render_template("forgotten_password.html")
 
     # POST
-    validate_csrf()
     email = request.form.get("email", "")
 
     errors = []
@@ -243,29 +237,21 @@ def forgotten_password():
     )
     db.commit()
 
-    # TODO: build front for password reset
     reset_link = url_for("password_reset", token=reset_token, _external=True)
+
     # Attempt to send password reset email (logged on failure)
     mail_sent = False
     try:
         mail_sent = mail_handler.send_password_reset_email(email, reset_link)
     except Exception:
         # logging is useless here, as mail_handler already logs exceptions
-        mail_sent = False
+        pass
 
-    if not mail_sent:
-        # TODO: remove once dev is done
-        # Show reset link on page if email sending fails or is skipped
-        return render_template(
-            "forgotten_password.html",
-            reset_link=reset_link,
-            email=email,
-            mail_sent=False,
-        )
+    if not mail_sent and debug_mode:
+        app.logger.info("Password reset link for %s: %s", email, reset_link)
+        return render_template("forgotten_password.html", email=email, mail_sent=False)
 
-    # Successful password reset message (email was sent)
     return render_template("forgotten_password.html", email=email, mail_sent=True)
-    # message="If the email exists in our system, a password reset link has been sent."
 
 
 @app.route("/password_reset/<token>", methods=["GET", "POST"])
@@ -308,10 +294,7 @@ def password_reset(token):
 
         return render_template("password_reset.html")
 
-        # TODO: expire token ?
-
     # POST
-    validate_csrf()
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
 
@@ -342,13 +325,11 @@ def password_reset(token):
         db.commit()
 
     except sqlite3.IntegrityError:
-        logger.exception("Password database insertion failed.")
-        message="Password couldn't be updated due to an internal error."
-        return render_template("register.html", message=message)
+        app.logger.exception("Password database insertion failed.")
+        return render_template("register.html", success=False)
 
     db.commit()
 
-    # Successful password reset message
     return render_template("password_reset.html", success=True)
 
 
@@ -359,7 +340,6 @@ def login():
         return render_template("login.html"), 200
 
     # POST
-    validate_csrf()
     email = request.form.get("email", "")
     password = request.form.get("password", "")
 
@@ -369,7 +349,8 @@ def login():
     db = get_db()
 
     user_row = db.execute(
-        "SELECT id, password_hash, nb_failed_logins, activated FROM users WHERE email = ?", (email,)
+        "SELECT id, password_hash, nb_failed_logins, activated FROM users WHERE email = ?",
+        (email,),
     ).fetchone()
 
     if not user_row:
@@ -378,27 +359,29 @@ def login():
     user_id, db_password_hash, nb_failed_logins, activated = user_row
 
     # If password failed more than 3 times, you must change it
-    if nb_failed_logins >= 3 :
+    if nb_failed_logins >= 3:
         return render_template("login.html", errors=False, reset=True)
 
     if not check_password_hash(db_password_hash, password) or not activated:
         db.execute(
             "UPDATE users SET nb_failed_logins = nb_failed_logins + 1 WHERE id = ? ",
-            (user_id,)
+            (user_id,),
         )
         db.commit()
         return render_template("login.html", errors=True)
 
-    #Update last connexion time
-    db.execute("UPDATE users SET last_login = ? WHERE id = ?", (datetime.now().isoformat(), user_id))
+    # Update last connexion time
+    db.execute(
+        "UPDATE users SET last_login = ? WHERE id = ?",
+        (datetime.now().isoformat(), user_id),
+    )
     db.commit()
 
     # Login successful
     session["user_id"] = user_id
     session["email"] = email
 
-    # TODO: fix, we are still on /login
-    return render_template("dashboard.html", user={"email": email}), 200
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/logout")
