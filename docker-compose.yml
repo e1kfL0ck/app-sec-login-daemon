@@ -1,16 +1,19 @@
 services:
   web:
     build: .
-    container_name: flask
+    container_name: appsec-login-daemon
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
-      - ./data:/app/data
+      # - .:/app
+      - ./src:/workspace
+      - ./data:/data
     environment:
-      - PYTHONUNBUFFERED=1
-      - SECRET_KEY='c08c0daf2d56cec64970aff25efd527ec7559747b9eb6cec713c890d7f2bea46'
-      - INIT_DB=True
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM=${MAIL_FROM}
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - SECRET_KEY=${SECRET_KEY}
+      - INIT_DB=True # destructive: re-initializes the database on each container start
     restart: unless-stopped
-    # command: [ "python3", "init_db.py", "&&", "uvicorn", "app:asgi_app", "--host", "0.0.0.0", "--port", "8000" ]
-

@@ -424,6 +424,7 @@ FodyWeavers.xsd
 *.fls
 *.fdb_latexmk
 *.log
+assignment-tex/Lab3/AS_Gaillard_Quivron_LAB03.pdf
 
 # Database files for the Docker environment
 data/app.db

@@ -2,44 +2,6 @@
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
-## Login
-
-- Description: Handle user login.
-- Inputs: email and password (hashing/verification happens server-side).
-- Behavior:
-  - On failure: increment `nb_failed_logins` for the user.
-  - On success: reset `nb_failed_logins` and update the `last_login` timestamp.
-- Signature:
-
-```python
-login(email, password) -> login_template(success)
-```
-
-## Register
-
-- Description: Handle user registration.
-- Inputs: `username`, `email`, `password`, `confirm_password`.
-- Validation rules:
-  - `email` must not already exist in the database.
-  - `email` must be a valid format.
-  - `email` must pass blacklist/whitelist checks (domain checks).
-  - `password` must meet security requirements and match `confirm_password`.
-- Post-action: send an activation token via email (currently printed to console in dev).
-- Signature:
-
-```python
-register(username, email, password, confirm_password) -> register_template(errors, username, email)
-```
-
-## Validate Token
-
-- Description: Activate an account using an activation token provided in an email link.
-- Signature:
-
-```python
-validate_token(token) -> token_template(valid)
-```
-
 ## Check Failed Logins
 
 - Description: Check if a user exceeded the allowed number of failed login attempts and act accordingly.
@@ -49,25 +11,47 @@ validate_token(token) -> token_template(valid)
 check_failed_logins(userID) -> error_template(too_many_failed_logins) or rickroll
 ```
 
-## Utilitarian functions
+## Password Reset
 
-- `sanitize_user_input(value) -> sanitized_value`
-- `check_password_strength(password) -> strength_errors`
-- `check_email_format(email) -> email_format_errors`
-- `check_email_domain(email) -> blacklist_errors | whitelist_errors`
-- `update_last_login(user_id) -> None`
+- Description: Allow a user to modify his password if frogotten. The server will send the token if the mail exist in the DB.
+- Signature
 
-## Optional
+```python
+password_reset(email) -> email_sent_if_mail_in_DB
+```
 
-- Check if the user's fingerprint is the same at registration and token validation. If not, error out explicitly.
-- `fingerprint` to be defined (method, fields, TTL...)
-- `check_fingerprint() -> fingerprint_errors`
+## Optional features TODO
+
+- Create a table token, with an extra column : type (registration, activation, password_reset)
+- CSRF
+- Rate limiting / Captcha (simple maths ? / retype something ?)
+- security events logging
+- MFA
+- HTTPS
+- Customize html error templates
+- Fix le double welcome link sur le register
+- Session Fixation, when login create a new session
+- utiliser app.logger.exception("test") plutôt que de réimporter logging ?0
 
 ## Nginx (deployment)
 
 - Rate limiting (IP / endpoint).
 - Redirection HTTP -> HTTPS. Enforced.
 - Make sure static resources are exposed.
+
+## Optional features TODO from past iterations
+
+- Password strength meter
+- Email domain whitelist/blacklist
+- Check if the user's fingerprint is the same at registration and token validation. If not, error out explicitly.
+- `fingerprint` to be defined (method, fields, TTL...)
+- `check_fingerprint() -> fingerprint_errors`
+
+## Chore for a cleaner project
+
+- Move all the functions to utils.py
+- Create a src folder and copy only this one to the container
+- Try to use less templates in .html and use more place holders
 
 ---
 
@@ -78,3 +62,13 @@ Notes:
   - email validation
   - password rules
   - activation flux (tokens)
+
+---
+
+Modify the UML to implement user interactions. Register should be in the frontend.
+Finish the implementation of the app, and have it ready for next session.
+
+December 3:
+
+- Session fixation? How do we mitigate this?
+- Handle multiple clicks on the "token validation" link received by mail. (if already validated, then error out)
