@@ -125,8 +125,8 @@ The component collects the following data from the user during registration:
   \item SQLite3: local file-based relational database accessed using Python's built-in \texttt{sqlite3} module.
   \item Example tables and columns:
         \begin{itemize}
-          \item \texttt{users}: \texttt{id}, \texttt{email}, \texttt{password\_hash}, \texttt{created\_at}, \texttt{activated} (boolean)
-          \item \texttt{activation\_tokens}: \texttt{token}, \texttt{user\_id}, \texttt{expires\_at}
+          \item \texttt{users}: \texttt{id}, \texttt{email}, \texttt{password\_hash}, \texttt{last\_login}, \texttt{nb\_failed\_logins}, \texttt{created\_at}, \texttt{activated} (0/1)
+          \item \texttt{tokens}: \texttt{token}, \texttt{user\_id}, \texttt{expires\_at}, \texttt{created\_at}, \texttt{type} (``activation'' / ``password\_reset'')
         \end{itemize}
   \item Constraints should ensure unique emails, token expiration rules, and referential integrity.
 \end{itemize}
@@ -223,5 +223,130 @@ def sanitize_user_input(field_value: str, max_len: int = 255):
 \end{verbatim}
 
 The frontend enhances usability; the backend ensures security. Both working together create a robust system: fast feedback for legitimate users, strong protection against attackers. Never trust client-side validation alone---our backend is the final authority.
+
+\sectionTitle{Login and Session Management Module}
+
+\section*{Component Short Description}
+The login and session management module extends the registration system by enabling authenticated user access and secure password recovery.
+Its primary purpose is to verify user credentials, establish and maintain secure sessions, and provide a mechanism for users to securely reset forgotten passwords.
+
+\subsection*{Collected data}
+The component collects the following data from the user during login:
+\begin{itemize}
+  \item Email address -- used as the unique identifier for the account and for authentication.
+  \item Password -- chosen by the user to authenticate and establish a session.
+\end{itemize}
+
+\subsection*{Security assumptions and objectives}
+\begin{itemize}
+  \item The server is assumed to operate over a secure HTTPS channel to ensure confidentiality during transmission.
+  \item All data submitted by users is considered untrusted and must be validated server-side to prevent injection attacks, malformed input, or exploitation attempts.
+  \item Passwords must never be stored in plain text; they are protected using a secure one-way hashing function with salting.
+  \item User sessions must be managed securely using server-side session tokens with appropriate expiration policies.
+  \item Authentication credentials (email and password) must be verified against stored hashed values without exposing timing vulnerabilities.
+  \item Password reset tokens must be cryptographically secure, single-use, and time-limited to prevent unauthorized account access.
+  \item The module supports error handling and defensive measures throughout the process, including input validation, session management, password verification, storage integrity constraints, and optional security hardening (rate limiting, CAPTCHA, and event logging).
+\end{itemize}
+
+\section*{Component Requirements}
+\subsection*{Functional Requirements}
+\begin{description}
+  \item [FR-01] The system must provide a user login form for entering email and password.
+  \item [FR-02] The server must validate all submitted login credentials for correctness and format.
+  \item [FR-03] The system must verify submitted credentials against stored hashed passwords.
+  \item [FR-04] The system must generate a secure session token upon successful authentication.
+  \item [FR-05] The system must store session tokens server-side with appropriate expiration times.
+  \item [FR-06] The system must validate session tokens on protected routes and endpoints.
+  \item [FR-07] The system must provide a logout mechanism that invalidates the current session.
+  \item [FR-08] The system must provide a password reset request form accepting email address.
+  \item [FR-09] The system must generate a unique, time-limited password reset token.
+  \item [FR-10] The system must send a password reset link containing the token to the user's email.
+  \item [FR-11] The system must validate password reset tokens before allowing password changes.
+  \item [FR-12] The system must allow users to set a new password using a valid reset token.
+  \item [FR-13] The system must invalidate password reset tokens after successful use or expiration.
+  \item [FR-14] The system must handle invalid login attempts with generic error messages.
+  \item [FR-15] The system must handle expired or invalid sessions by redirecting to login.
+\end{description}
+
+\subsection*{Optional Functional Requirements (Bonus Features)}
+\begin{description}
+  \item [OFR-01] The system may implement rate limiting on login attempts per IP address or user account.
+  \item [OFR-02] The system may implement CAPTCHA verification after a threshold of failed login attempts.
+  \item [OFR-03] The system may log successful and failed authentication events for security auditing.
+  \item [OFR-04] The system may implement "remember me" functionality with secure long-lived tokens.
+  \item [OFR-05] The system may notify users via email of successful login from new devices or locations.
+  \item [OFR-06] The system may implement multi-factor authentication (MFA) for enhanced security.
+  \item [OFR-07] The system may enforce password expiration policies requiring periodic password changes.
+  \item [OFR-08] The system may implement account lockout after consecutive failed login attempts.
+\end{description}
+
+\subsection*{Non-Functional Requirements}
+\paragraph{Security Requirements}
+\begin{description}
+  \item [NFR-S01] Passwords must be stored using secure, modern cryptographic hashingitemize.
+  \item [NFR-S02] Sensitive information (passwords, tokens) must not be logged.
+  \item [NFR-S03] All communication between client and server should use HTTPS.
+\end{description}
+
+\paragraph{Usability Requirements}
+\begin{description}
+  \item [NFR-U01] Error and validation messages from the frontend must be clear and user-friendly.
+  \item [NFR-U02] Login should require no more than one user interaction step.
+\end{description}
+
+\paragraph{Performance Requirements}
+\begin{description}
+  \item [NFR-P01]: Login requests should be processed with low latency.
+  \item [NFR-P02]: The system should scale to the required number of concurrent logins.
+\end{description}
+
+\paragraph{Reliability Requirements}
+\begin{description}
+  \item [NFR-R01]: Duplicate account creation with the same email must be prevented.
+  \item [NFR-R02]: Activation tokens must have a configurable expiration period.
+  \item [NFR-R03]: Token validation must fail safely in cases of expiration or tampering.
+\end{description}
+
+\paragraph{Maintainability Requirements}
+\begin{description}
+  \item [NFR-M01]: The module must be structured with separate layers for validation, logic, and data access.
+  \item [NFR-M02]: Configuration values must be stored in an accessible JSON configuration file.
+\end{description}
+
+\section*{Tech Stack}
+\subsection*{Frontend}
+\begin{itemize}
+  \item HTML5 and CSS3: For building the registration and activation pages.
+  \item JavaScript: Handles client-side input validation (email format, password strength meter, etc.).
+  \item Optional: Bootstrap or TailwindCSS for quick UI styling and responsive layouts.
+\end{itemize}
+
+\subsection*{Backend}
+\begin{itemize}
+  \item Python 3: Core application logic and registration workflows run here.
+  \item Flask: Web framework for routing (e.g., \texttt{POST /register} and \texttt{GET /activate/<token>}), input validation, and returning HTML or JSON responses.
+\end{itemize}
+
+\subsection*{Security \& Cryptography}
+\begin{itemize}
+  \item \texttt{bcrypt}: For secure password hashing with salt.
+  \item \texttt{secrets} (Python standard library): For generating secure random activation tokens.
+\end{itemize}
+
+\subsection*{Database}
+\begin{itemize}
+  \item SQLite3: local file-based relational database accessed using Python's built-in \texttt{sqlite3} module.
+  \item Example tables and columns:
+        \begin{itemize}
+          \item \texttt{users}: \texttt{id}, \texttt{email}, \texttt{password\_hash}, \texttt{last\_login}, \texttt{nb\_failed\_logins}, \texttt{created\_at}, \texttt{activated} (0/1)
+          \item \texttt{tokens}: \texttt{token}, \texttt{user\_id}, \texttt{expires\_at}, \texttt{created\_at}, \texttt{type} (``activation'' / ``password\_reset'')
+        \end{itemize}
+  \item Constraints should ensure unique emails, token expiration rules, and referential integrity.
+\end{itemize}
+
+\subsection*{Web Server}
+\begin{itemize}
+  \item \texttt{nginx} as reverse proxy to the Python application (via Gunicorn); serves static files and handles TLS termination.
+\end{itemize}
 
 \end{document}
