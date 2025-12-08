@@ -5,12 +5,21 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s:     %(name)s - %(message)s",
-)
+# Set up logging
+debug_mode = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
+if debug_mode:
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s:     %(name)s - %(message)s",
+    )
 
+# Read mail configuration from environment variables
+mail_username = os.environ.get("MAIL_USERNAME")
+mail_password = os.environ.get("MAIL_PASSWORD")
+mail_from = os.environ.get("MAIL_FROM", mail_username)
+smtp_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+smtp_port = int(os.environ.get("MAIL_PORT", 587))
 
 def send_activation_email(to_email: str, activation_link: str) -> bool:
     """
@@ -23,11 +32,6 @@ def send_activation_email(to_email: str, activation_link: str) -> bool:
     - MAIL_SERVER: optional SMTP server (defaults to smtp.gmail.com)
     - MAIL_PORT: optional SMTP port (defaults to 587)
     """
-    mail_username = os.environ.get("MAIL_USERNAME")
-    mail_password = os.environ.get("MAIL_PASSWORD")
-    mail_from = os.environ.get("MAIL_FROM", mail_username)
-    smtp_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-    smtp_port = int(os.environ.get("MAIL_PORT", 587))
 
     if not mail_username or not mail_password:
         logger.warning(
@@ -89,11 +93,6 @@ def send_password_reset_email(to_email: str, reset_link: str) -> bool:
     - MAIL_SERVER: optional SMTP server (defaults to smtp.gmail.com)
     - MAIL_PORT: optional SMTP port (defaults to 587)
     """
-    mail_username = os.environ.get("MAIL_USERNAME")
-    mail_password = os.environ.get("MAIL_PASSWORD")
-    mail_from = os.environ.get("MAIL_FROM", mail_username)
-    smtp_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-    smtp_port = int(os.environ.get("MAIL_PORT", 587))
 
     if not mail_username or not mail_password:
         logger.warning(

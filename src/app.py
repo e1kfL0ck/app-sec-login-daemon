@@ -26,13 +26,14 @@ app.secret_key = os.environ.get("SECRET_KEY")
 csrf = CSRFProtect(app)
 csrf.init_app(app)
 
-logger = logging.getLogger(__name__)
-
-# TODO: add if else for debug
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s:     %(name)s - %(message)s",
-)
+# Logging configuration
+debug_mode = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
+# if debug_mode:
+#     logger = logging.getLogger(__name__)
+#     logging.basicConfig(
+#         level=logging.INFO,
+#         format="%(levelname)s:     %(name)s - %(message)s",
+#     )
 
 
 # Ensure database connection is closed after each request
@@ -62,6 +63,7 @@ def already_logged_in(view):
     return wrapped
 
 
+# Error handlers
 @app.errorhandler(404)
 def not_found_error(e):
     return render_template("404.html"), 404
@@ -74,6 +76,7 @@ def internal_error(e):
     return render_template("500.html"), 500
 
 
+# Routes
 @app.route("/")
 @already_logged_in
 def index():
@@ -146,14 +149,13 @@ def register():
         mail_sent = mail_handler.send_activation_email(email, activation_link)
     except Exception:
         # loggin is useless here, as mail_handler already logs exceptions
-        # logger.exception("Unexpected error while sending activation email to %s", email)
         mail_sent = False
 
-    if not mail_sent:
-        # Show activation link on page if email sending fails or is skipped
+    if not mail_sent and debug_mode:
+        # log the activation link if email sending fails
+        app.logger.info("Activation link for %s: %s", email, activation_link)
         return render_template(
             "register.html",
-            activation_link=activation_link,
             email=email,
             mail_sent=False,
         )
@@ -206,7 +208,6 @@ def forgotten_password():
     - display confirmation message
     - if email is valid, sends a password reset token
     """
-    # TODO: add check for the token in the GET method
     if request.method == "GET":
         return render_template("forgotten_password.html")
 
@@ -243,8 +244,8 @@ def forgotten_password():
     )
     db.commit()
 
-    # TODO: build front for password reset
     reset_link = url_for("password_reset", token=reset_token, _external=True)
+
     # Attempt to send password reset email (logged on failure)
     mail_sent = False
     try:
@@ -253,19 +254,14 @@ def forgotten_password():
         # logging is useless here, as mail_handler already logs exceptions
         mail_sent = False
 
-    if not mail_sent:
-        # TODO: remove once dev is done
-        # Show reset link on page if email sending fails or is skipped
+    if not mail_sent and debug_mode:
+        app.logger.info("Password reset link for %s: %s", email, reset_link)
         return render_template(
             "forgotten_password.html",
-            reset_link=reset_link,
             email=email,
-            mail_sent=False,
         )
 
-    # Successful password reset message (email was sent)
-    return render_template("forgotten_password.html", email=email, mail_sent=True)
-    # message="If the email exists in our system, a password reset link has been sent."
+    return render_template("forgotten_password.html", email=email)
 
 
 @app.route("/password_reset/<token>", methods=["GET", "POST"])
@@ -341,13 +337,11 @@ def password_reset(token):
         db.commit()
 
     except sqlite3.IntegrityError:
-        logger.exception("Password database insertion failed.")
-        message = "Password couldn't be updated due to an internal error."
-        return render_template("register.html", message=message)
+        app.logger.exception("Password database insertion failed.")
+        return render_template("register.html", success=False)
 
     db.commit()
 
-    # Successful password reset message
     return render_template("password_reset.html", success=True)
 
 

@@ -10,14 +10,11 @@
   <br>
 
   <label>Password:
-    <!-- <input type="password" name="password" minlength="8" required> -->
     <input type="password" name="password" required>
-
   </label>
   <br>
 
   <label>Confirm password:
-    <!-- <input type="password" name="confirm_password" minlength="8" required> -->
     <input type="password" name="confirm_password" required>
   </label>
   <br>
@@ -35,16 +32,11 @@
 </ul>
 {% endif %}
 
-{% if success %}
-<p style="color:green;">{{ success|safe }}</p>
-{% endif %}
-
 {% if mail_sent %}
 <p style="color:green;">An activation email has been sent to {{ email }}. Check your inbox.</p>
-{% elif activation_link %}
+{% else %}
 <p style="color:orange;">
-  We could not send an email. Use this activation link to activate your account:
-  <a href="{{ activation_link }}">{{ activation_link }}</a>
+  There was an issue while sending the activation link. Please check your email. If the issue persists, contact support.
 </p>
 {% endif %}
 
