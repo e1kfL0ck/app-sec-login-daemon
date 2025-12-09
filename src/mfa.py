@@ -72,6 +72,7 @@ def verify():
         session.clear()
         session["user_id"] = user_id
         session["email"] = email
+        session["user_id"] = session.pop("pre_auth_user_id")
         return redirect(url_for("dashboard"))
 
     # check backup codes
