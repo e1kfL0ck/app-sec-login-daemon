@@ -49,7 +49,11 @@ def confirm():
             (secret, json.dumps(backup_codes), user_id),
         )
         db.commit()
-        return render_template("activation.html", mfa_success=True, backup_codes=backup_codes)
+        response = current_app.make_response(render_template("activation.html", mfa_success=True, backup_codes=backup_codes))
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
     return render_template("mfa_setup.html", error="Invalid code", secret=secret)
 
 @mfa_bp.route("/verify", methods=["GET", "POST"])
