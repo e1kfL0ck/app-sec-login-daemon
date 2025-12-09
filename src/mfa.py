@@ -10,11 +10,13 @@ from db import get_db
 
 mfa_bp = Blueprint("mfa", __name__, url_prefix="/mfa")
 
+
 @mfa_bp.before_request
 def _require_login_for_mfa():
     # allow pre-auth flow for verify route (when coming from login)
     if "user_id" not in session and "pre_auth_user_id" not in session:
         return redirect(url_for("login", next=request.path))
+
 
 @mfa_bp.after_request
 def _no_cache(response):
@@ -24,11 +26,13 @@ def _no_cache(response):
     response.headers["Expires"] = "0"
     return response
 
+
 def _qr_datauri(provisioning_uri):
     img = qrcode.make(provisioning_uri)
     buf = io.BytesIO()
     img.save(buf, "PNG")
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
 
 @mfa_bp.route("/setup", methods=["GET"])
 def setup():
@@ -36,9 +40,12 @@ def setup():
         return redirect(url_for("login"))
     user_email = session.get("email")
     secret = pyotp.random_base32()
-    provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=user_email, issuer_name="AppSec")
+    provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(
+        name=user_email, issuer_name="AppSec"
+    )
     qr = _qr_datauri(provisioning_uri)
     return render_template("mfa_setup.html", secret=secret, qr=qr)
+
 
 @mfa_bp.route("/confirm", methods=["POST"])
 def confirm():
@@ -57,8 +64,11 @@ def confirm():
             (secret, json.dumps(backup_codes), user_id),
         )
         db.commit()
-        return render_template("activation.html", mfa_success=True, backup_codes=backup_codes)
+        return render_template(
+            "activation.html", mfa_success=True, backup_codes=backup_codes
+        )
     return render_template("mfa_setup.html", error="Invalid code", secret=secret)
+
 
 @mfa_bp.route("/verify", methods=["GET", "POST"])
 def verify():
@@ -71,7 +81,9 @@ def verify():
     if not user_id:
         return redirect(url_for("login"))
     db = get_db()
-    row = db.execute("SELECT email, mfa_secret, backup_codes FROM users WHERE id = ?", (user_id,)).fetchone()
+    row = db.execute(
+        "SELECT email, mfa_secret, backup_codes FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
     if not row:
         return redirect(url_for("login"))
     email, secret, backup_json = row

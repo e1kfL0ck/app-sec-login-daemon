@@ -265,8 +265,7 @@ def password_reset(token):
     if request.method == "GET":
         if errors:
             return render_template(
-                "password_reset.html", message="Invalid activation token",
-                token=token
+                "password_reset.html", message="Invalid activation token", token=token
             ), 400
 
         token_row = db.execute(
@@ -276,8 +275,7 @@ def password_reset(token):
 
         if not token_row:
             return render_template(
-                "password_reset.html", message="Invalid activation token.",
-                token=token
+                "password_reset.html", message="Invalid activation token.", token=token
             ), 400
 
         user_id, expires_at_str = token_row
@@ -285,8 +283,9 @@ def password_reset(token):
 
         if datetime.now() > expires_at:
             return render_template(
-                "password_reset.html", message="Activation token has expired.",
-                token=token
+                "password_reset.html",
+                message="Activation token has expired.",
+                token=token,
             ), 400
 
         return render_template("password_reset.html", token=token)
@@ -310,7 +309,7 @@ def password_reset(token):
             "SELECT user_id FROM tokens WHERE token = ? AND type = 'password_reset'",
             (token,),
         ).fetchone()
-        
+
         user_id = user_row[0]
 
         db.execute(
@@ -378,8 +377,10 @@ def login():
 
     # Login successful
     # Enter MFA flow if enabled
-    session.clear() # mitigate session fixation
-    mfa_enabled = db.execute("SELECT mfa_enabled FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+    session.clear()  # mitigate session fixation
+    mfa_enabled = db.execute(
+        "SELECT mfa_enabled FROM users WHERE id = ?", (user_id,)
+    ).fetchone()[0]
     if mfa_enabled:
         session["pre_auth_user_id"] = user_id
         return redirect(url_for("mfa.verify"))
