@@ -19,7 +19,7 @@ def _require_login_for_mfa():
 def _qr_datauri(provisioning_uri):
     img = qrcode.make(provisioning_uri)
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    img.save(buf, "PNG")
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 @mfa_bp.route("/setup", methods=["GET"])
