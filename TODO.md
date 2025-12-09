@@ -8,6 +8,8 @@ This file lists high-level tasks and function contracts for the login/registrati
 - It seems some kind of user data remains in the database when restarting the app, altough init_db is set to true. Why is that? (upon login, the old session is still valid, altough the account doesn't exist?)
 - Implement a mitigation to prevent password-reset mail requests spam
 - Implement a mitigation to prevent bruteforce on 2FA? (or test if by default it works)
+- Add documentation for MFA
+- Prevent injection on MFA, by using already implemented utils.
 
 ## Optional features TODO
 
