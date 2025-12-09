@@ -39,3 +39,21 @@ docker compose up --build
 ```
 
 Console logs will be displayed on stdout. In order to exit, use the standard `^c`.
+
+## MFA (or 2FA, 2-factor authentication)
+
+In `app.py`, the line `if mfa_enabled:` is a conditional statement that branches the login flow based on whether the user has multi-factor authentication (MFA) enabled on their account.
+
+### What It Does
+
+After a successful login, the code queries the database to retrieve the `mfa_enabled` flag for the authenticated user. This boolean value indicates whether the user has opted into MFA protection. The `if` statement then evaluates this flag to determine which authentication path to follow.
+
+### The Two Paths
+
+**If MFA is enabled** (`True`): The application stores the user's ID in the session as `pre_auth_user_id` and redirects them to the MFA verification page. This is a temporary, partial authentication state—the user has proven their identity but hasn't yet completed the second authentication factor (like a TOTP code or security key).
+
+**If MFA is disabled** (`False`): The code skips this block and proceeds directly to the next lines, where it sets `user_id` and `email` in the session as fully authenticated credentials, then redirects to the dashboard.
+
+### Security Consideration
+
+Notice that `session.clear()` is called *before* this check. This mitigates **session fixation attacks** by invalidating any pre-existing session data. Then the code selectively populates the session with either partial credentials (for MFA flow) or full credentials (for direct login), ensuring a clean state either way.
