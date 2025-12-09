@@ -1,86 +1,121 @@
+/**
+ * Form Validation Script for User Registration Lab
+ * Handles client-side validation for all forms
+ */
+
 document.addEventListener("DOMContentLoaded", function () {
-    const clientErrorsContainer = document.getElementById("client-errors");
+    // Initialize validation for different forms
+    initRegisterFormValidation();
+    initLoginFormValidation();
+    initPasswordResetFormValidation();
+    initForgottenPasswordFormValidation();
+});
 
-    function showClientErrors(errors) {
-        if (!clientErrorsContainer) return;
-        clientErrorsContainer.innerHTML = "";
+/**
+ * Utility function to show client-side errors
+ */
+function showClientErrors(containerId, errors) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-        if (!errors.length) {
-            clientErrorsContainer.style.display = "none";
-            return;
-        }
+    container.innerHTML = "";
 
-        const ul = document.createElement("ul");
-        errors.forEach((err) => {
-            const li = document.createElement("li");
-            li.textContent = err;
-            ul.appendChild(li);
-        });
-
-        clientErrorsContainer.appendChild(ul);
-        clientErrorsContainer.style.display = "block";
+    if (!errors.length) {
+        container.style.display = "none";
+        container.classList.add("hidden");
+        return;
     }
 
+    const ul = document.createElement("ul");
+    ul.className = "list-disc list-inside space-y-1";
+    
+    errors.forEach((err) => {
+        const li = document.createElement("li");
+        li.textContent = err;
+        ul.appendChild(li);
+    });
+
+    container.appendChild(ul);
+    container.style.display = "block";
+    container.classList.remove("hidden");
+}
+
+/**
+ * Email validation
+ */
+function validateEmailField(email, errors) {
+    email = email.trim().toLowerCase();
+
+    if (!email) {
+        errors.push("Email is required.");
+        return;
+    }
+
+    const re = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!re.test(email)) {
+        errors.push("Email format is invalid.");
+    }
+
+    if (email.length > 255) {
+        errors.push("Email is too long (max 255 characters).");
+    }
+}
+
+/**
+ * Password strength validation
+ */
+function validatePasswordStrength(password, errors) {
+    if (!password) {
+        errors.push("Password is required.");
+        return;
+    }
+
+    if (password.length < 8) {
+        errors.push("Password must be at least 8 characters.");
+    }
+    if (!/[A-Z]/.test(password)) {
+        errors.push("Password must contain at least one uppercase letter.");
+    }
+    if (!/[a-z]/.test(password)) {
+        errors.push("Password must contain at least one lowercase letter.");
+    }
+    if (!/\d/.test(password)) {
+        errors.push("Password must contain at least one digit.");
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        errors.push("Password must contain at least one special character.");
+    }
+}
+
+/**
+ * Password match validation
+ */
+function validatePasswordMatch(password, confirmPassword, errors) {
+    if (!password || !confirmPassword) {
+        errors.push("Password and confirmation are required.");
+        return;
+    }
+    if (password !== confirmPassword) {
+        errors.push("Passwords do not match.");
+    }
+}
+
+/**
+ * Registration form validation
+ */
+function initRegisterFormValidation() {
     const form = document.getElementById("register-form");
     if (!form) return;
 
-    function validateEmailField(email, errors) {
-        email = email.trim().toLowerCase();
-
-        if (!email) {
-            errors.push("Email is required.");
-            return;
-        }
-
-        const re = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-        if (!re.test(email)) {
-            errors.push("Email format is invalid.");
-        }
-
-        if (email.length > 255) {
-            errors.push("Email is too long.");
-        }
-    }
-
-    function validatePasswordFields(password, confirmPassword, errors) {
-        // Matching passwords
-        if (!password || !confirmPassword) {
-            errors.push("Password and confirmation are required.");
-            return;
-        }
-        if (password !== confirmPassword) {
-            errors.push("Passwords do not match.");
-        }
-
-        // Password complexity
-        if (password.length < 8) {
-            errors.push("Password must be at least 8 characters.");
-        }
-        if (!/[A-Z]/.test(password)) {
-            errors.push("Password must contain at least one uppercase letter.");
-        }
-        if (!/[a-z]/.test(password)) {
-            errors.push("Password must contain at least one lowercase letter.");
-        }
-        if (!/\d/.test(password)) {
-            errors.push("Password must contain at least one digit.");
-        }
-        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-            errors.push(
-                "Password must contain at least one special character."
-            );
-        }
-    }
-
     function validateRegistrationForm() {
         const errors = [];
-
         const email = form.email.value;
         const password = form.password.value;
         const confirmPassword = form.confirm_password.value;
 
         validateEmailField(email, errors);
-        validatePasswordFields(password, confirmPassword, errors);
+        validatePasswordStrength(password, errors);
+        validatePasswordMatch(password, confirmPassword, errors);
 
         return errors;
     }
@@ -89,7 +124,156 @@ document.addEventListener("DOMContentLoaded", function () {
         const errors = validateRegistrationForm();
         if (errors.length > 0) {
             event.preventDefault();
-            showClientErrors(errors);
+            showClientErrors("client-errors", errors);
+            // Scroll to errors
+            document.getElementById("client-errors").scrollIntoView({ behavior: "smooth", block: "center" });
         }
     });
-});
+
+    // Real-time validation feedback
+    const passwordInput = form.password;
+    const confirmPasswordInput = form.confirm_password;
+    
+    if (passwordInput) {
+        passwordInput.addEventListener("blur", () => {
+            const errors = [];
+            validatePasswordStrength(passwordInput.value, errors);
+            if (errors.length > 0) {
+                showClientErrors("client-errors", errors);
+            }
+        });
+    }
+    
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener("blur", () => {
+            if (passwordInput.value && confirmPasswordInput.value) {
+                const errors = [];
+                validatePasswordMatch(passwordInput.value, confirmPasswordInput.value, errors);
+                if (errors.length > 0) {
+                    showClientErrors("client-errors", errors);
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Login form validation
+ */
+function initLoginFormValidation() {
+    const form = document.getElementById("login-form");
+    if (!form) return;
+
+    function validateLoginForm() {
+        const errors = [];
+        const email = form.email.value;
+        const password = form.password.value;
+
+        validateEmailField(email, errors);
+        
+        if (!password) {
+            errors.push("Password is required.");
+        }
+
+        return errors;
+    }
+
+    form.addEventListener("submit", (event) => {
+        const errors = validateLoginForm();
+        if (errors.length > 0) {
+            event.preventDefault();
+            showClientErrors("client-errors", errors);
+            // Scroll to errors
+            const errorContainer = document.getElementById("client-errors");
+            if (errorContainer) {
+                errorContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+    });
+}
+
+/**
+ * Password reset form validation
+ */
+function initPasswordResetFormValidation() {
+    const form = document.getElementById("password-reset-form");
+    if (!form) return;
+
+    function validatePasswordResetForm() {
+        const errors = [];
+        const password = form.password.value;
+        const confirmPassword = form.confirm_password.value;
+
+        validatePasswordStrength(password, errors);
+        validatePasswordMatch(password, confirmPassword, errors);
+
+        return errors;
+    }
+
+    form.addEventListener("submit", (event) => {
+        const errors = validatePasswordResetForm();
+        if (errors.length > 0) {
+            event.preventDefault();
+            showClientErrors("client-errors", errors);
+            // Scroll to errors
+            document.getElementById("client-errors").scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    });
+
+    // Real-time validation feedback
+    const passwordInput = form.password;
+    const confirmPasswordInput = form.confirm_password;
+    
+    if (passwordInput) {
+        passwordInput.addEventListener("blur", () => {
+            const errors = [];
+            validatePasswordStrength(passwordInput.value, errors);
+            if (errors.length > 0) {
+                showClientErrors("client-errors", errors);
+            }
+        });
+    }
+    
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener("blur", () => {
+            if (passwordInput.value && confirmPasswordInput.value) {
+                const errors = [];
+                validatePasswordMatch(passwordInput.value, confirmPasswordInput.value, errors);
+                if (errors.length > 0) {
+                    showClientErrors("client-errors", errors);
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Forgotten password form validation
+ */
+function initForgottenPasswordFormValidation() {
+    const form = document.getElementById("forgotten-password-form");
+    if (!form) return;
+
+    function validateForgottenPasswordForm() {
+        const errors = [];
+        const email = form.email.value;
+
+        validateEmailField(email, errors);
+
+        return errors;
+    }
+
+    form.addEventListener("submit", (event) => {
+        const errors = validateForgottenPasswordForm();
+        if (errors.length > 0) {
+            event.preventDefault();
+            showClientErrors("client-errors", errors);
+            // Scroll to errors
+            const errorContainer = document.getElementById("client-errors");
+            if (errorContainer) {
+                errorContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+    });
+}
+
