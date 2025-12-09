@@ -4,7 +4,7 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 ## Urgent
 
-- Find a way to keep the user from going back when registering 2FA (currently, going ack is possible so you can setup twice)
+- Find a way to keep the user from going back when registering 2FA (currently, going ack is possible so you can setup twice). If the user goes back, the token is already invalid, but the page is still served. The totp secret is still displayed, altough the qr code isnt.
 
 ## Optional features TODO
 
