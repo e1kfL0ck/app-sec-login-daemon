@@ -23,7 +23,7 @@ def init_db():
         nb_failed_logins INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         activated INTEGER DEFAULT 0 CHECK (activated IN (0,1)),
-        mfa_enabled INTEGER DEFAULT 0,
+        mfa_enabled INTEGER DEFAULT 0 CHECK (mfa_enabled IN (0,1)),
         mfa_secret TEXT,
         backup_codes TEXT
     );
