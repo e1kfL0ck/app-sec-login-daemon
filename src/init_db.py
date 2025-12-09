@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sqlite3
+import os
 
 DB_FILE = "/data/app.db"
 
@@ -70,12 +71,13 @@ def init_db():
 
     conn.commit()
 
-    # Create an initial user for testing
-    create_initial_user(conn)
-    print("Initial user created.")
-    print("Email: user@domain.org")
-    print("Password: Bonjour123!")
-
+    # Create an initial user for testing if DEBUG mode is set to True
+    if os.environ.get("DEBUG", "False").lower() in ("true", "1", "t"):
+        create_initial_user(conn)
+        print("Initial user created.")
+        print("Email: user@domain.org")
+        print("Password: Bonjour123!")
+        print("MFA Secret: YOZSSE4QXLPRNCELINUIH6O2BXWLJVO4")
     conn.close()
     print(f"Database initialized successfully: {DB_FILE}")
 
