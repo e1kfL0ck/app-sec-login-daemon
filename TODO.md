@@ -2,6 +2,10 @@
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
+## Urgent
+
+- Find a way to keep the user from going back when registering 2FA (currently, going ack is possible so you can setup twice)
+
 ## Optional features TODO
 
 - Create a table token, with an extra column : type (registration, activation, password_reset)
