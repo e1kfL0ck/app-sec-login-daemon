@@ -295,6 +295,17 @@ The component collects the following data from the user during login:
   \item [OFR-08] The system may implement account lockout after consecutive failed login attempts.
 \end{description}
 
+\subsection*{Implementation of the 2FA module}
+We have implemented a basic Multi-Factor Authentication (MFA) module using Time-based One-Time Passwords (TOTP) as an optional bonus feature (OFR-06).
+When a user enables MFA in their account settings, the system generates a unique TOTP secret key for that user using the \texttt{pyotp} library.
+This secret is then presented to the user as a QR code (using the \texttt{qrcode} library) that they can scan with an authenticator app (e.g., Google Authenticator, Authy).
+During login, after the user successfully enters their email and password, if MFA is enabled for their account, they are prompted to enter the current TOTP code from their authenticator app.
+The server verifies the submitted TOTP code against the expected value generated from the stored secret.
+If the code is valid, the user is granted access; otherwise, an error message is shown.
+We also provide backup codes that users can use to access their account if they lose access to their authenticator app.
+These backup codes are generated during MFA setup and can be used once each.
+This implementation enhances account security by requiring a second factor of authentication beyond just the password.
+
 \subsection*{Non functional Requirements}
 All non-functional requirements from the user registration module apply here as well. They were omitted for brevity.
 
