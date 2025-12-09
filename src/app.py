@@ -10,16 +10,16 @@ from asgiref.wsgi import WsgiToAsgi
 from functools import wraps
 from flask_wtf import CSRFProtect
 
-
-from db import get_db, close_db
-
 # Custom modules
 import mail_handler
 import field_utils
+from mfa import mfa_bp
+from db import get_db, close_db
 
 # Create app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
+app.register_blueprint(mfa_bp)
 
 # CSRF Protection
 csrf = CSRFProtect(app)
@@ -377,9 +377,14 @@ def login():
     db.commit()
 
     # Login successful
+    # Enter MFA flow if enabled
+    session.clear() # mitigate session fixation
+    mfa_enabled = db.execute("SELECT mfa_enabled FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+    if mfa_enabled:
+        session["pre_auth_user_id"] = user_id
+        return redirect(url_for("mfa.verify"))
     session["user_id"] = user_id
     session["email"] = email
-
     return redirect(url_for("dashboard"))
 
 

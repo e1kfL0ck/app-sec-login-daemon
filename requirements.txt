@@ -3,3 +3,5 @@ uvicorn
 werkzeug
 asgiref
 Flask-WTF
+pyotp
+qrcode[pil]
