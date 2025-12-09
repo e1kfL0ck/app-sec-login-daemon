@@ -2,6 +2,15 @@
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
+## Urgent
+
+- Find a way to keep the user from going back when registering 2FA (currently, going ack is possible so you can setup twice). If the user goes back, the token is already invalid, but the page is still served. The totp secret is still displayed, altough the qr code isnt.
+- It seems some kind of user data remains in the database when restarting the app, altough init_db is set to true. Why is that? (upon login, the old session is still valid, altough the account doesn't exist?)
+- Implement a mitigation to prevent password-reset mail requests spam
+- Implement a mitigation to prevent bruteforce on 2FA? (or test if by default it works)
+- Add documentation for MFA
+- Prevent injection on MFA, by using already implemented utils.
+
 ## Optional features TODO
 
 - Create a table token, with an extra column : type (registration, activation, password_reset)
