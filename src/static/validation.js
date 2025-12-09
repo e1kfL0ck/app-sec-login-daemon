@@ -125,36 +125,17 @@ function initRegisterFormValidation() {
         if (errors.length > 0) {
             event.preventDefault();
             showClientErrors("client-errors", errors);
-            // Scroll to errors
-            document.getElementById("client-errors").scrollIntoView({ behavior: "smooth", block: "center" });
+            // Scroll to errors with reduced motion support
+            const errorContainer = document.getElementById("client-errors");
+            if (errorContainer) {
+                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                errorContainer.scrollIntoView({ 
+                    behavior: prefersReducedMotion ? "auto" : "smooth", 
+                    block: "center" 
+                });
+            }
         }
     });
-
-    // Real-time validation feedback
-    const passwordInput = form.password;
-    const confirmPasswordInput = form.confirm_password;
-    
-    if (passwordInput) {
-        passwordInput.addEventListener("blur", () => {
-            const errors = [];
-            validatePasswordStrength(passwordInput.value, errors);
-            if (errors.length > 0) {
-                showClientErrors("client-errors", errors);
-            }
-        });
-    }
-    
-    if (confirmPasswordInput) {
-        confirmPasswordInput.addEventListener("blur", () => {
-            if (passwordInput.value && confirmPasswordInput.value) {
-                const errors = [];
-                validatePasswordMatch(passwordInput.value, confirmPasswordInput.value, errors);
-                if (errors.length > 0) {
-                    showClientErrors("client-errors", errors);
-                }
-            }
-        });
-    }
 }
 
 /**
@@ -183,10 +164,14 @@ function initLoginFormValidation() {
         if (errors.length > 0) {
             event.preventDefault();
             showClientErrors("client-errors", errors);
-            // Scroll to errors
+            // Scroll to errors with reduced motion support
             const errorContainer = document.getElementById("client-errors");
             if (errorContainer) {
-                errorContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                errorContainer.scrollIntoView({ 
+                    behavior: prefersReducedMotion ? "auto" : "smooth", 
+                    block: "center" 
+                });
             }
         }
     });
@@ -215,36 +200,17 @@ function initPasswordResetFormValidation() {
         if (errors.length > 0) {
             event.preventDefault();
             showClientErrors("client-errors", errors);
-            // Scroll to errors
-            document.getElementById("client-errors").scrollIntoView({ behavior: "smooth", block: "center" });
+            // Scroll to errors with reduced motion support
+            const errorContainer = document.getElementById("client-errors");
+            if (errorContainer) {
+                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                errorContainer.scrollIntoView({ 
+                    behavior: prefersReducedMotion ? "auto" : "smooth", 
+                    block: "center" 
+                });
+            }
         }
     });
-
-    // Real-time validation feedback
-    const passwordInput = form.password;
-    const confirmPasswordInput = form.confirm_password;
-    
-    if (passwordInput) {
-        passwordInput.addEventListener("blur", () => {
-            const errors = [];
-            validatePasswordStrength(passwordInput.value, errors);
-            if (errors.length > 0) {
-                showClientErrors("client-errors", errors);
-            }
-        });
-    }
-    
-    if (confirmPasswordInput) {
-        confirmPasswordInput.addEventListener("blur", () => {
-            if (passwordInput.value && confirmPasswordInput.value) {
-                const errors = [];
-                validatePasswordMatch(passwordInput.value, confirmPasswordInput.value, errors);
-                if (errors.length > 0) {
-                    showClientErrors("client-errors", errors);
-                }
-            }
-        });
-    }
 }
 
 /**
@@ -268,10 +234,14 @@ function initForgottenPasswordFormValidation() {
         if (errors.length > 0) {
             event.preventDefault();
             showClientErrors("client-errors", errors);
-            // Scroll to errors
+            // Scroll to errors with reduced motion support
             const errorContainer = document.getElementById("client-errors");
             if (errorContainer) {
-                errorContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                errorContainer.scrollIntoView({ 
+                    behavior: prefersReducedMotion ? "auto" : "smooth", 
+                    block: "center" 
+                });
             }
         }
     });
