@@ -4,11 +4,10 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 ## Urgent
 
-- Find a way to keep the user from going back when registering 2FA (currently, going ack is possible so you can setup twice). If the user goes back, the token is already invalid, but the page is still served. The totp secret is still displayed, altough the qr code isnt.
 - It seems some kind of user data remains in the database when restarting the app, altough init_db is set to true. Why is that? (upon login, the old session is still valid, altough the account doesn't exist?)
 - Implement a mitigation to prevent password-reset mail requests spam
 - Implement a mitigation to prevent bruteforce on 2FA? (or test if by default it works)
-- Add documentation for MFA
+- Add documentation for MFA (docstring)
 - Prevent injection on MFA, by using already implemented utils.
 - Expire activation token upon use. (mail account activation)
 
@@ -24,6 +23,7 @@ This file lists high-level tasks and function contracts for the login/registrati
 - Session Fixation, when login create a new session
 - utiliser app.logger.exception("test") plutôt que de réimporter logging ?
 - le temps du mail est trop rapide si mauvais mail
+- keep the user from going backward into the 2FA process (or even better, make it so that once enrolled, the user doesn't have access to the MFA anymore, unless he gets a token by email - like password reset)
 
 ## Nginx (deployment)
 

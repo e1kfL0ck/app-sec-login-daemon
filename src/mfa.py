@@ -6,6 +6,8 @@ import base64
 import json
 import secrets
 
+# custom imports
+import field_utils
 from db import get_db
 
 mfa_bp = Blueprint("mfa", __name__, url_prefix="/mfa")
@@ -20,7 +22,7 @@ def _require_login_for_mfa():
 
 @mfa_bp.after_request
 def _no_cache(response):
-    # Empêche le navigateur de mettre en cache les pages MFA
+    # Prevent caching of MFA pages
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
@@ -53,9 +55,19 @@ def confirm():
         return redirect(url_for("login"))
     secret = request.form.get("secret", "")
     code = request.form.get("otp", "")
-    user_id = session["user_id"]
+
+    errors = []
+    errors += field_utils.sanitize_user_input(secret)
+    errors += field_utils.sanitize_user_input(code)
+    if errors:
+        return render_template(
+            "mfa_setup.html", error="Secret or code invalid", secret=secret
+        )
+
     if not secret or not code:
         return render_template("mfa_setup.html", error="Missing fields", secret=secret)
+
+    user_id = session["user_id"]
     if pyotp.TOTP(secret).verify(code, valid_window=1):
         db = get_db()
         backup_codes = [secrets.token_hex(6) for _ in range(8)]
@@ -75,11 +87,16 @@ def verify():
     # Called when session is in pre-auth state (session['pre_auth_user_id'])
     if request.method == "GET":
         return render_template("mfa_verify.html")
-
+    
     code = request.form.get("otp", "")
     user_id = session.get("pre_auth_user_id")
     if not user_id:
         return redirect(url_for("login"))
+    # TODO: is this needed? @emile
+    # errors = []
+    # errors += field_utils.sanitize_user_input(code)
+    # if errors:
+    #     return render_template("mfa_verify.html", error="Code invalid")
     db = get_db()
     row = db.execute(
         "SELECT email, mfa_secret, backup_codes FROM users WHERE id = ?", (user_id,)
@@ -92,9 +109,9 @@ def verify():
         session.clear()
         session["user_id"] = user_id
         session["email"] = email
-        # session["user_id"] = session.pop("pre_auth_user_id")
         return redirect(url_for("dashboard"))
 
+    # TODO: what's that? @emile
     # check backup codes
     # if backup_json:
     #     backups = json.loads(backup_json)
