@@ -42,6 +42,7 @@ def setup():
         return redirect(url_for("login"))
     user_email = session.get("email")
     secret = pyotp.random_base32()
+    session["mfa_setup_secret"] = secret
     provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(
         name=user_email, issuer_name="AppSec"
     )
@@ -53,20 +54,18 @@ def setup():
 def confirm():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    # TODO: check why secret is here
-    secret = request.form.get("secret", "")
-    code = request.form.get("otp", "")
 
+    code = request.form.get("otp", "")
     errors = []
-    errors += field_utils.sanitize_user_input(secret)
     errors += field_utils.sanitize_user_input(code)
+
+    secret = session.get("mfa_setup_secret", "")
+
     if errors:
-        return render_template(
-            "mfa_setup.html", error="Secret or code invalid", secret=secret
-        )
+        return render_template("mfa_setup.html", error="Secret code invalid")
 
     if not secret or not code:
-        return render_template("mfa_setup.html", error="Missing fields", secret=secret)
+        return render_template("mfa_setup.html", error="Missing fields")
 
     user_id = session["user_id"]
     if pyotp.TOTP(secret).verify(code, valid_window=1):
@@ -88,16 +87,11 @@ def verify():
     # Called when session is in pre-auth state (session['pre_auth_user_id'])
     if request.method == "GET":
         return render_template("mfa_verify.html")
-    
+
     code = request.form.get("otp", "")
     user_id = session.get("pre_auth_user_id")
     if not user_id:
         return redirect(url_for("login"))
-    # TODO: is this needed? @emile
-    # errors = []
-    # errors += field_utils.sanitize_user_input(code)
-    # if errors:
-    #     return render_template("mfa_verify.html", error="Code invalid")
     db = get_db()
     row = db.execute(
         "SELECT email, mfa_secret, backup_codes FROM users WHERE id = ?", (user_id,)
@@ -112,17 +106,15 @@ def verify():
         session["email"] = email
         return redirect(url_for("dashboard"))
 
-    # TODO: what's that? @emile
-    # check backup codes
-    # if backup_json:
-    #     backups = json.loads(backup_json)
-    #     if code in backups:
-    #         backups.remove(code)
-    #         db.execute("UPDATE users SET backup_codes = ? WHERE id = ?", (json.dumps(backups), user_id))
-    #         db.commit()
-    #         session.clear()
-    #         session["user_id"] = user_id
-    #         email = db.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()[0]
-    #         session["email"] = email
-    #         return redirect(url_for("dashboard"))
+    if backup_json:
+        backups = json.loads(backup_json)
+        if code in backups:
+            backups.remove(code)
+            db.execute("UPDATE users SET backup_codes = ? WHERE id = ?", (json.dumps(backups), user_id))
+            db.commit()
+            session.clear()
+            session["user_id"] = user_id
+            email = db.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+            session["email"] = email
+            return redirect(url_for("dashboard"))
     return render_template("mfa_verify.html", error="Invalid code"), 400
