@@ -47,9 +47,32 @@ def setup():
         name=user_email, issuer_name="AppSec"
     )
     qr = _qr_datauri(provisioning_uri)
-    return render_template("mfa_setup.html", secret=secret, qr=qr)
+    return render_template("mfa_setup.html", qr=qr)
 
 
+"""
+Handle MFA confirmation and setup completion.
+
+This route processes the OTP code submitted by the user during MFA setup.
+It verifies the code against the temporary secret stored in the session,
+and if valid, enables MFA for the user and generates backup codes.
+
+Returns:
+    Response: Redirects to login if user is not authenticated.
+              Renders mfa_setup.html with error message if:
+                - OTP code contains invalid characters
+                - Secret or code is missing
+                - OTP code verification fails
+              Renders activation.html with success message and backup codes
+              if MFA setup is successful.
+
+Notes:
+    - Expects 'user_id' and 'mfa_setup_secret' in session
+    - Expects 'otp' field in POST form data
+    - Uses valid_window=1 for TOTP verification (30-second tolerance)
+    - Generates 8 backup codes (12 character hex strings)
+    - Stores backup codes as JSON in database
+"""
 @mfa_bp.route("/confirm", methods=["POST"])
 def confirm():
     if "user_id" not in session:
@@ -82,6 +105,38 @@ def confirm():
     return render_template("mfa_setup.html", error="Invalid code", secret=secret)
 
 
+"""
+Handle MFA verification for users in pre-authentication state.
+
+This route handles both GET and POST requests for MFA verification:
+- GET: Displays the MFA verification form
+- POST: Verifies the submitted OTP code or backup code
+
+The function checks the user's TOTP secret or backup codes to authenticate.
+Upon successful verification, the user is logged in and redirected to the dashboard.
+
+Returns:
+    GET: Rendered template for MFA verification form
+    POST (success): Redirect to dashboard after successful verification
+    POST (failure): Rendered template with error message and 400 status code
+
+Redirects:
+    - To login page if no pre_auth_user_id in session or user not found
+    - To dashboard after successful MFA verification
+
+Session Requirements:
+    - pre_auth_user_id: User ID set during initial login before MFA verification
+
+Session Updates:
+    On successful verification:
+    - Clears pre-authentication session data
+    - Sets user_id and email in session
+
+Notes:
+    - TOTP codes are verified with a valid_window of 1 (allows ±30 seconds)
+    - Backup codes are single-use and removed after successful verification
+    - Used backup codes trigger a database update to remove them from the list
+"""
 @mfa_bp.route("/verify", methods=["GET", "POST"])
 def verify():
     # Called when session is in pre-auth state (session['pre_auth_user_id'])
