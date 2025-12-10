@@ -1,5 +1,43 @@
-Chef, y'a rien à voir ici !
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="form-container p-12 text-center">
+    <div class="mb-8">
+      <h1 class="text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+        404
+      </h1>
+      <h2 class="text-3xl font-bold text-gray-800 mt-4 mb-2">Page Not Found</h2>
+      <p class="text-gray-600">
+        Oops! The page you're looking for doesn't exist.
+      </p>
+    </div>
 
-Error 404 - Page Not Found
+    <div class="mb-8">
+      <svg class="w-64 h-64 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strok <div class="mb-8">
+          e-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15
+          10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+    </div>
 
-<!--Add a rick roll-->
+    <div class="space-y-4">
+      <p class="text-gray-600">
+        The page you're trying to access might have been moved, deleted, or never existed.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+        <a href="{{ url_for('index') }}"
+          class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
+          Back to Home
+        </a>
+        {% if not session.get('user_id') %}
+        <a href="{{ url_for('login') }}"
+          class="inline-block bg-white border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
+          Login
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
