@@ -53,6 +53,7 @@ def setup():
 def confirm():
     if "user_id" not in session:
         return redirect(url_for("login"))
+    # TODO: check why secret is here
     secret = request.form.get("secret", "")
     code = request.form.get("otp", "")
 
