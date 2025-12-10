@@ -1,26 +1,69 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
-  <title>{{ title or "User registration lab" }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "User Registration Lab" }}</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+  <!-- Custom JavaScript -->
   <script src="{{ url_for('static', filename='validation.js') }}"></script>
 </head>
-<body>
-  <header>
-    <h1>User registration lab</h1>
-    <nav>
-      <a href="{{ url_for('index') }}">Home</a> |
 
-      {% if session.get('user_id') %}
-        <a href="{{ url_for('dashboard') }}">Dashboard</a> |
-        <a href="{{ url_for('logout') }}">Logout</a>
-      {% else %}
-        <a href="{{ url_for('register') }}">Register</a> |
-        <a href="{{ url_for('login') }}">Login</a> 
-      {% endif %}
-    </nav>
+<body class="min-h-screen">
+  <!-- Header with Navigation -->
+  <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <h1 class="text-3xl font-bold mb-4 md:mb-0">
+          <a href="{{ url_for('index') }}" class="hover:text-indigo-200 transition">
+            🔐 User Registration Lab
+          </a>
+        </h1>
+
+        <nav class="flex space-x-1 md:space-x-2">
+          <a href="{{ url_for('index') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+            Home
+          </a>
+
+          {% if session.get('user_id') %}
+          <a href="{{ url_for('dashboard') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+            Dashboard
+          </a>
+          <a href="{{ url_for('logout') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+            Logout
+          </a>
+          {% else %}
+          <a href="{{ url_for('register') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+            Register
+          </a>
+          <a href="{{ url_for('login') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+            Login
+          </a>
+          {% endif %}
+        </nav>
+      </div>
+    </div>
   </header>
 
-  {% block content %}{% endblock %}
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+    <!-- TODO: cleanup -->
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white text-center py-4 mt-auto">
+    <div class="container mx-auto px-4">
+      <p class="text-sm">&copy; 2025 Théo Gaillard & Emile Quivron. All rights reserved.</p>
+    </div>
+  </footer>
 </body>
+
 </html>
