@@ -6,23 +6,16 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 - Implement a mitigation to prevent password-reset mail requests spam
 - Implement a mitigation to prevent bruteforce on 2FA? (or test if by default it works)
-- Add documentation for MFA (docstring)
-- Prevent injection on MFA, by using already implemented utils.
 - Expire activation token upon use. (mail account activation)
 
 ## Optional features TODO
 
-- Create a table token, with an extra column : type (registration, activation, password_reset)
 - CSRF ok, a mettre ds le header
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
-- MFA
 - HTTPS
-- Customize html error templates
-- Session Fixation, when login create a new session
 - utiliser app.logger.exception("test") plutôt que de réimporter logging ?
 - le temps du mail est trop rapide si mauvais mail
-- keep the user from going backward into the 2FA process (or even better, make it so that once enrolled, the user doesn't have access to the MFA anymore, unless he gets a token by email - like password reset)
 
 ## Nginx (deployment)
 
@@ -37,10 +30,6 @@ This file lists high-level tasks and function contracts for the login/registrati
 - Check if the user's fingerprint is the same at registration and token validation. If not, error out explicitly.
 - `fingerprint` to be defined (method, fields, TTL...)
 - `check_fingerprint() -> fingerprint_errors`
-
-## Chore for a cleaner project
-
-- Move all the functions to utils.py
 
 ---
 
