@@ -160,6 +160,7 @@ def verify():
         session.clear()
         session["user_id"] = user_id
         session["email"] = email
+        #TODO: update last login
         return redirect(url_for("dashboard"))
 
     if backup_json:
@@ -172,6 +173,7 @@ def verify():
             session["user_id"] = user_id
             email = db.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()[0]
             session["email"] = email
+            #TODO: update last login
             return redirect(url_for("dashboard"))
         
     #TODO: increment failed logins
