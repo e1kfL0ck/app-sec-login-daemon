@@ -1,5 +1,76 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Welcome</h2>
-<p>Welcome to the registration lab. To create an account, go to the register page.</p>
+<div class="max-w-4xl mx-auto">
+  <div class="form-container p-8 md:p-12 text-center">
+    <div class="mb-8">
+      <div class="inline-block p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mb-4">
+        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+        </svg>
+      </div>
+      <h2 class="text-4xl font-bold text-gray-800 mb-4">Welcome to the Registration Lab</h2>
+      <p class="text-lg text-gray-600 mb-8">
+        A secure authentication system with email verification and password management.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-8">
+      <div class="card p-6 border-2 border-gray-200 rounded-lg">
+        <div class="text-indigo-600 mb-3">
+          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">New User?</h3>
+        <p class="text-gray-600 mb-4">Create an account to get started with secure authentication.</p>
+        <a href="{{ url_for('register') }}" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
+          Register Now
+        </a>
+      </div>
+
+      <div class="card p-6 border-2 border-gray-200 rounded-lg">
+        <div class="text-purple-600 mb-3">
+          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Have an Account?</h3>
+        <p class="text-gray-600 mb-4">Sign in to access your secure dashboard.</p>
+        <a href="{{ url_for('login') }}" class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition">
+          Login
+        </a>
+      </div>
+    </div>
+
+    <div class="mt-12 pt-8 border-t border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Features</h3>
+      <div class="grid md:grid-cols-4 gap-4 text-sm text-gray-600">
+        <div class="flex items-start space-x-2">
+          <svg class="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Email Verification</span>
+        </div>
+        <div class="flex items-start space-x-2">
+          <svg class="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Secure Password Storage</span>
+        </div>
+        <div class="flex items-start space-x-2">
+          <svg class="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Password Recovery</span>
+        </div>
+        <div class="flex items-start space-x-2">
+          <svg class="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Two-Factor Authentication</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
