@@ -173,4 +173,6 @@ def verify():
             email = db.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()[0]
             session["email"] = email
             return redirect(url_for("dashboard"))
+        
+    #TODO: increment failed logins
     return render_template("mfa_verify.html", error="Invalid code"), 400
