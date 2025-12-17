@@ -47,7 +47,7 @@ def setup():
         name=user_email, issuer_name="AppSec"
     )
     qr = _qr_datauri(provisioning_uri)
-    return render_template("mfa_setup.html", qr=qr)
+    return render_template("mfa_setup.html", qr=qr, secret=secret)
 
 
 """

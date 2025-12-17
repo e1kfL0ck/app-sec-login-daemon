@@ -6,7 +6,6 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 - Implement a mitigation to prevent password-reset mail requests spam
 - Implement a mitigation to prevent bruteforce on 2FA? (or test if by default it works)
-- Expire activation token upon use. (mail account activation)
 
 ## Optional features TODO
 
