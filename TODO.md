@@ -14,7 +14,6 @@ This file lists high-level tasks and function contracts for the login/registrati
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
 - HTTPS
-- utiliser app.logger.exception("test") plutôt que de réimporter logging ?
 - le temps du mail est trop rapide si mauvais mail
 
 ## Nginx (deployment)
