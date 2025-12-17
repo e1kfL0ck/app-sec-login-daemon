@@ -9,11 +9,11 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 ## Optional features TODO
 
-- CSRF ok, a mettre ds le header
+- CSRF ok, to be added directly into headers.
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
 - HTTPS
-- le temps du mail est trop rapide si mauvais mail
+- mail sending delay is different if the mail is sent or not
 
 ## Nginx (deployment)
 
