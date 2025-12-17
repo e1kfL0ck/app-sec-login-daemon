@@ -36,14 +36,14 @@
           <a href="{{ url_for('dashboard') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
             Dashboard
           </a>
-          <a href="{{ url_for('logout') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+          <a href="{{ url_for('auth.logout') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
             Logout
           </a>
           {% else %}
-          <a href="{{ url_for('register') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+          <a href="{{ url_for('auth.register') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
             Register
           </a>
-          <a href="{{ url_for('login') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+          <a href="{{ url_for('auth.login') }}" class="nav-link px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-20">
             Login
           </a>
           {% endif %}

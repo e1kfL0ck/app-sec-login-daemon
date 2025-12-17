@@ -42,7 +42,7 @@
     <div id="client-errors"
       class="alert hidden bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-6 rounded"></div>
 
-    <form id="login-form" method="post" action="{{ url_for('login') }}" class="space-y-6">
+    <form id="login-form" method="post" action="{{ url_for('auth.login') }}" class="space-y-6">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div>
@@ -70,7 +70,7 @@
     </form>
 
     <div class="mt-6 text-center">
-      <a href="{{ url_for('forgotten_password') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+      <a href="{{ url_for('auth.forgotten_password') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
         Forgot your password?
       </a>
     </div>
@@ -78,7 +78,7 @@
     <div class="mt-6 pt-6 border-t border-gray-200 text-center">
       <p class="text-gray-600">
         Don't have an account?
-        <a href="{{ url_for('register') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+        <a href="{{ url_for('auth.register') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
           Register here
         </a>
       </p>

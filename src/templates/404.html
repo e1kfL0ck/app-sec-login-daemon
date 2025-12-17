@@ -31,7 +31,7 @@
           Back to Home
         </a>
         {% if not session.get('user_id') %}
-        <a href="{{ url_for('login') }}"
+        <a href="{{ url_for('auth.login') }}"
           class="inline-block bg-white border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
           Login
         </a>
