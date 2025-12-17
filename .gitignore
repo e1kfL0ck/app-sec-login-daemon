@@ -424,6 +424,7 @@ FodyWeavers.xsd
 *.fls
 *.fdb_latexmk
 *.log
+*.toc
 
 # Latex output report
 **/AS_Gaillard_Quivron_LAB03+04.pdf

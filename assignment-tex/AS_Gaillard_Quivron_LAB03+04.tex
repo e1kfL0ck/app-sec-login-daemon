@@ -7,6 +7,7 @@
 \usepackage{enumitem}
 \usepackage{parskip}
 \usepackage{svg}
+\usepackage{float}
 
 \title{Application Security -- Laboratories\\[0.4em]
 \large LAB-03 and LAB-04}
@@ -18,18 +19,18 @@ Supervisor: Michał Apolinarski, Ph.D. \\ Politechnika Poznańska}
 
 \begin{document}
 \maketitle
+\tableofcontents
+\newpage
 
-This document consists of two main parts:
-\begin{itemize}
-  \item LAB-03: user registration process.
-  \item LAB-04: login and session management module.
-\end{itemize}
+This report documents the implemented Flask + SQLite prototype, covering requirements, flows, and supporting assets for LAB-03 (registration) and LAB-04 (login/session).
 
-\section*{Component Short Description}
+\part{Lab-03: User Registration Module}
+\chapter{Component Overview}
+\section{Component Short Description}
 The user registration module is a secure software component responsible for creating new user accounts within the system.
 Its primary purpose is to allow new users to provide personal and authentication information, validate that information securely on the server side, and store the finalized account data in the application database.
 
-\subsection*{Collected data}
+\subsection{Collected data}
 The component collects the following data from the user during registration:
 \begin{itemize}
   \item Email address -- used as the unique identifier for the account and for sending activation tokens.
@@ -46,7 +47,9 @@ The component collects the following data from the user during registration:
   \item The module supports error handling and defensive measures throughout the process, including input validation, token verification, storage integrity constraints, and optional security hardening (rate limiting, advanced password policies, and event logging).
 \end{itemize}
 
-\section*{Component Requirements}
+\subsection{Security assumptions and objectives}
+
+\section{Component Requirements}
 \subsection*{Functional Requirements}
 \begin{description}
   \item [FR-01] The system must provide a user registration form for entering required data.
@@ -61,7 +64,7 @@ The component collects the following data from the user during registration:
   \item [FR-10] The system should log validation or activation errors.
 \end{description}
 
-\subsection*{Optional Functional Requirements (Bonus Features)}
+\subsection{Optional Functional Requirements (Bonus Features)}
 \begin{description}
   \item [OFR-01] Display a password strength meter during user input.
   \item [OFR-02] Enforce an advanced password policy (length, complexity, blacklist, etc.).
@@ -73,88 +76,88 @@ The component collects the following data from the user during registration:
   \item [OFR-08] Log successful and failed registration attempts as security events.
 \end{description}
 
-\subsection*{Non-Functional Requirements}
-\paragraph{Security Requirements}
+\subsection{Non-Functional Requirements}
+\subsubsection{Security Requirements}
 \begin{description}
-  \item [NFR-S01] Passwords must be stored using secure, modern cryptographic hashingitemize.
+  \item [NFR-S01] Passwords must be stored using secure, modern cryptographic hashing algorithms.
   \item [NFR-S02] Sensitive information (passwords, tokens) must not be logged.
   \item [NFR-S03] All communication between client and server should use HTTPS.
 \end{description}
 
-\paragraph{Usability Requirements}
+\subsubsection{Usability Requirements}
 \begin{description}
   \item [NFR-U01] Error and validation messages from the frontend must be clear and user-friendly.
   \item [NFR-U02] Registration should require no more than one user interaction step before activation.
 \end{description}
 
-\paragraph{Performance Requirements}
+\subsubsection{Performance Requirements}
 \begin{description}
   \item [NFR-P01]: Registration requests should be processed with low latency.
   \item [NFR-P02]: The system should scale to the required number of concurrent registrations.
 \end{description}
 
-\paragraph{Reliability Requirements}
+\subsubsection{Reliability Requirements}
 \begin{description}
   \item [NFR-R01]: Duplicate account creation with the same email must be prevented.
   \item [NFR-R02]: Activation tokens must have a configurable expiration period.
   \item [NFR-R03]: Token validation must fail safely in cases of expiration or tampering.
 \end{description}
 
-\paragraph{Maintainability Requirements}
+\subsubsection{Maintainability Requirements}
 \begin{description}
   \item [NFR-M01]: The module must be structured with separate layers for validation, logic, and data access.
   \item [NFR-M02]: Configuration values must be stored in an accessible JSON configuration file.
 \end{description}
 
-\section*{Tech Stack}
-\subsection*{Frontend}
+\section{Tech Stack}
+\subsection{Frontend}
 \begin{itemize}
   \item HTML5 and CSS3: For building the registration and activation pages.
   \item JavaScript: Handles client-side input validation (email format, password strength meter, etc.).
   \item Optional: Bootstrap or TailwindCSS for quick UI styling and responsive layouts.
 \end{itemize}
 
-\subsection*{Backend}
+\subsection{Backend}
 \begin{itemize}
   \item Python 3: Core application logic and registration workflows run here.
   \item Flask: Web framework for routing (e.g., \texttt{POST /register} and \texttt{GET /activate/<token>}), input validation, and returning HTML or JSON responses.
 \end{itemize}
 
-\subsection*{Security \& Cryptography}
+\subsection{Security \& Cryptography}
 \begin{itemize}
   \item \texttt{bcrypt}: For secure password hashing with salt.
   \item \texttt{secrets} (Python standard library): For generating secure random activation tokens.
 \end{itemize}
 
-\subsection*{Database}
+\subsection{Database}
 \begin{itemize}
   \item SQLite3: local file-based relational database accessed using Python's built-in \texttt{sqlite3} module.
   \item Example tables and columns:
         \begin{itemize}
           \item \texttt{users}: \\
-                exttt{id}, \texttt{email}, \texttt{password\_hash}, \\
-                exttt{last\_login}, \texttt{nb\_failed\_logins}, \\
-                exttt{created\_at}, \texttt{activated} (0/1)
+                \texttt{id}, \texttt{email}, \texttt{password\_hash}, \\
+                \texttt{last\_login}, \texttt{nb\_failed\_logins}, \\
+                \texttt{created\_at}, \texttt{activated} (0/1)
           \item \texttt{tokens}: \\
-                exttt{token}, \texttt{user\_id}, \texttt{expires\_at}, \\
-                exttt{created\_at}, \texttt{type} (``activation'' / ``password\_reset'')
+                \texttt{token}, \texttt{user\_id}, \texttt{expires\_at}, \\
+                \texttt{created\_at}, \texttt{type} (``activation'' / ``password\_reset'')
         \end{itemize}
   \item Constraints should ensure unique emails, token expiration rules, and referential integrity.
 \end{itemize}
 
-\subsection*{Web Server}
+\subsection{Web Server}
 \begin{itemize}
   \item \texttt{nginx} as reverse proxy to the Python application (via Gunicorn); serves static files and handles TLS termination.
 \end{itemize}
 
-\section*{UML Diagrams}
-\subsection*{User Form Filling Process}
+\section{UML Diagrams}
+\subsection{User Form Filling Process}
 \includegraphics[width=\textwidth]{img/UML_FormFilling.pdf}
 
-\subsection*{User Registration Process}
+\subsection{User Registration Process}
 \includegraphics[width=\textwidth]{img/UML_Register.pdf}
 
-\subsection*{Token Validation Process}
+\subsection{Token Validation Process}
 \includegraphics[width=\textwidth]{img/UML_ActivationToken.pdf}
 
 \section{User registration flow presented}
@@ -163,7 +166,7 @@ When a user wants to register on our platform, they will first access the regist
 
 Here's an example of the potential errors :
 
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{img/registration_errors_client.png}
   \caption{Example of validation error messages shown to the user during registration (email format, password strength, and required fields).}
@@ -174,7 +177,7 @@ Once the user submits the form, the data is sent via a POST request to the Flask
 
 If the email is already registered here's the error message shown to the user :
 
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{img/registration_error_email_exists.png}
   \caption{Error message shown to the user when trying to register with an already registered email.}
@@ -186,7 +189,7 @@ This token is stored in the database along with an expiration timestamp and the 
 This token is then sent to the user by email in order to provide the activation workflow.
 
 Example of token being displayed to the user after successful registration :
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{img/registration_success_mail.png}
   \caption{Example of registration confirmation message upon successful registration.}
@@ -196,7 +199,7 @@ Example of token being displayed to the user after successful registration :
 When the user clicks the activation link, it sends a GET request to the \texttt{/activate/<token>} endpoint on the backend. The backend retrieves the token from the URL, validates it against the database (checking for existence and expiration), and if valid, updates the user's activation status to true. The user is then informed of the successful activation.
 
 Example of successful activation message shown to the user :
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{img/activation_success.png}
   \caption{Example of successful activation message shown to the user.}
@@ -206,7 +209,7 @@ Example of successful activation message shown to the user :
 If the token is invalid or expired, the backend responds with an error message, which is displayed to the user.
 
 Example of error message shown to the user when trying to activate with an invalid or expired token :
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{img/invalid_token.png}
   \caption{Example of error message shown to the user when trying to activate with an invalid or expired token.}
@@ -214,7 +217,7 @@ Example of error message shown to the user when trying to activate with an inval
 \end{figure}
 
 
-\section*{Why do we perform both frontend and backend validation?}
+\section{Why do we perform both frontend and backend validation?}
 
 In the user registration process, we implement validation checks on both the frontend (client-side) and backend (server-side) for complementary reasons. Frontend validation provides immediate user feedback, improving UX by catching simple errors like password length or format issues before submission. It reduces unnecessary server requests and guides users to correct their input quickly.
 
@@ -239,20 +242,20 @@ The frontend enhances usability; the backend ensures security. Both working toge
 
 \noindent\rule{\textwidth}{1pt}
 
-\section*{Login and Session Management Module (LAB-04)}
-
-\subsection*{Component Short Description}
+\part{Lab-04: Login and Session Management Module}
+\chapter{Component Overview}
+\section{Component Short Description}
 The login and session management module extends the registration system by enabling authenticated user access and secure password recovery.
 Its primary purpose is to verify user credentials, establish and maintain secure sessions, and provide a mechanism for users to securely reset forgotten passwords.
 
-\subsection*{Collected data}
+\subsection{Collected data}
 The component collects the following data from the user during login:
 \begin{itemize}
   \item Email address: used as the unique identifier for the account and for authentication.
   \item Password: used by the user to authenticate and establish a session.
 \end{itemize}
 
-\subsection*{Security assumptions and objectives}
+\subsection{Security assumptions and objectives}
 \begin{itemize}
   \item The server is assumed to operate over a secure HTTPS channel to ensure confidentiality during transmission.
   \item All data submitted by users is once again considered untrusted and must be validated server-side to prevent injection attacks, malformed input, or exploitation attempts.
@@ -263,8 +266,8 @@ The component collects the following data from the user during login:
   \item The module supports error handling and defensive measures throughout the process, including input validation, session management, password verification, storage integrity constraints, and optional security hardening (rate limiting, CAPTCHA, and event logging).
 \end{itemize}
 
-\section*{Component Requirements}
-\subsection*{Functional Requirements}
+\section{Component Requirements}
+\subsection{Functional Requirements}
 \begin{description}
   \item [FR-01] The system must provide a user login form for entering email and password.
   \item [FR-02] The server must validate all submitted login credentials for correctness and format.
@@ -283,7 +286,7 @@ The component collects the following data from the user during login:
   \item [FR-15] The system must handle expired or invalid sessions by redirecting to login.
 \end{description}
 
-\subsection*{Optional Functional Requirements (Bonus Features)}
+\subsection{Optional Functional Requirements (Bonus Features)}
 \begin{description}
   \item [OFR-01] The system may implement rate limiting on login attempts per IP address or user account.
   \item [OFR-02] The system may implement CAPTCHA verification after a threshold of failed login attempts.
@@ -295,59 +298,83 @@ The component collects the following data from the user during login:
   \item [OFR-08] The system may implement account lockout after consecutive failed login attempts.
 \end{description}
 
-\subsection*{Implementation of the 2FA module}
-We have implemented a basic Multi-Factor Authentication (MFA) module using Time-based One-Time Passwords (TOTP) as an optional bonus feature (OFR-06).
-When a user enables MFA in their account settings, the system generates a unique TOTP secret key for that user using the \texttt{pyotp} library.
-This secret is then presented to the user as a QR code (using the \texttt{qrcode} library) that they can scan with an authenticator app (e.g., Google Authenticator, Authy).
-During login, after the user successfully enters their email and password, if MFA is enabled for their account, they are prompted to enter the current TOTP code from their authenticator app.
-The server verifies the submitted TOTP code against the expected value generated from the stored secret.
-If the code is valid, the user is granted access; otherwise, an error message is shown.
-We also provide backup codes that users can use to access their account if they lose access to their authenticator app.
-These backup codes are generated during MFA setup and can be used once each.
-This implementation enhances account security by requiring a second factor of authentication beyond just the password.
-
-\subsection*{Non functional Requirements}
+\subsection{Non functional Requirements}
 All non-functional requirements from the user registration module apply here as well. They were omitted for brevity.
 
-\section*{Tech Stack}
+\section{Tech Stack}
 All technologies from the user registration module apply here as well. They were also omitted for brevity.
 
-\section*{UML Diagrams}
-\subsection*{Login Process}
+\section{Extra Features}
+\subsection{Multi-Factor Authentication (MFA)}
+
+Once a user enables Multi-Factor Authentication (MFA) from their account settings, the backend generates a unique Time-based One-Time Password (TOTP) secret using the \texttt{pyotp} library. This secret is then converted into a QR code using the \texttt{qrcode} library and displayed to the user, allowing them to enroll their account in an authenticator application such as Google Authenticator or Authy.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{img/front_mfa_setup.png}
+  \caption{MFA setup page displaying the QR code for enrollment in an authenticator application.}
+  \label{fig:mfa_setup}
+\end{figure}
+
+During the login process, after the user successfully submits their email and password, the backend checks whether MFA is enabled for the account. If so, the user is redirected to a dedicated MFA verification page and prompted to enter the current TOTP code generated by their authenticator application.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{img/front_mfa.png}
+  \caption{MFA verification page prompting the user to enter a TOTP code.}
+  \label{fig:mfa_verification}
+\end{figure}
+
+The submitted code is sent to the backend, which verifies it against the expected value generated from the stored TOTP secret. If the code is valid, the authentication process is completed and access is granted. If the verification fails, an error message is returned and displayed to the user.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{img/front_mfa_error.png}
+  \caption{Error message shown when an invalid MFA code is submitted.}
+  \label{fig:mfa_error}
+\end{figure}
+
+To ensure account recovery, the system also generates a set of single-use backup codes during the MFA setup process. These codes can be used as an alternative authentication method if the user loses access to their authenticator application. Overall, this process strengthens account security by adding a second authentication factor beyond the password.
+
+\subsection{Handling unwanted interactions}
+\begin{itemize}
+  \item Tokens are expired after a short duration if unused.
+  \item Tokens are invalidated immediately after use to prevent replay attacks.
+  \item Session cookies are invalidated on logout and rotated after authentication.
+  \item Password-reset and activation tokens are single-use and expire quickly to reduce replay risk.
+  \item Generic error messages are provided for failed login attempts.
+\end{itemize}
+
+\section{UML Diagrams}
+\subsection{Login Process}
 \includegraphics[width=\textwidth]{img/UML_Login.pdf}
 
-\subsection*{Forgotten Password Process}
+\subsection{Forgotten Password Process}
 \includegraphics[width=\textwidth]{img/UML_ForgottenPassword.pdf}
 
-\subsection*{Password Reset Process}
+\subsection{Password Reset Process}
 \includegraphics[width=\textwidth]{img/UML_PasswordReset.pdf}
 
-\subsection*{MFA Setup Process}
+\subsection{MFA Setup Process}
 \includegraphics[width=\textwidth]{img/UML_SetupMFA.pdf}
 
-\subsection*{MFA Verification Process}
+\subsection{MFA Verification Process}
 \includegraphics[width=\textwidth]{img/UML_Login.pdf}
 
-\section*{Front-End Screens}
-\subsection*{Welcome Screen}
+\section{Front-End Screens}
+\subsection{Welcome Screen}
 \includegraphics[width=\textwidth]{img/front_welcome.png}
 
-\subsection*{Dashboard}
+\subsection{Dashboard}
 \includegraphics[width=\textwidth]{img/front_dashboard.png}
 
-\subsection*{Registration}
+\subsection{Registration}
 \includegraphics[width=\textwidth]{img/front_register.png}
 
-\subsection*{Login With Error}
+\subsection{Login With Error}
 \includegraphics[width=\textwidth]{img/front_login_with_error.png}
 
-\subsection*{Password Reset Request}
+\subsection{Password Reset Request}
 \includegraphics[width=\textwidth]{img/front_forgotten_password.png}
-
-\subsection*{MFA Setup}
-\includegraphics[width=\textwidth]{img/front_mfa_setup.png}
-
-\subsection*{MFA Verification}
-\includegraphics[width=\textwidth]{img/front_mfa.png}
 
 \end{document}
