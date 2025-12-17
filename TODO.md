@@ -2,6 +2,36 @@
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
+## New features TODO
+
+- Role Based Access Control (RBAC)
+- Text Upload
+- File Upload
+
+- Admin dashboard (to later validate post)
+  - Delete / hide 
+    - posts
+    - comments / ratings
+    - users
+
+- User dashboard
+  - Delete / edit his posts
+
+- Page forum.html
+  - List des posts (+ rating)
+  - recherche
+  - pagination (si y'a le temps)
+
+- Page create_post.html (onys for users)
+  - Formulaire de création de post (title, content)
+  - Validation des entrées
+  - Soumission du post
+
+- Page post/<post_id>.html
+  - Affichage du post
+  - Commentaires associés
+  - Formulaire d'ajout de commentaire/rating (only for users)
+
 ## Urgent
 
 - Implement a mitigation to prevent password-reset mail requests spam
@@ -40,11 +70,3 @@ Notes:
   - activation flux (tokens)
 
 ---
-
-Modify the UML to implement user interactions. Register should be in the frontend.
-Finish the implementation of the app, and have it ready for next session.
-
-December 3:
-
-- Session fixation? How do we mitigate this?
-- Handle multiple clicks on the "token validation" link received by mail. (if already validated, then error out)
