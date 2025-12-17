@@ -1,16 +1,12 @@
 import os
-from datetime import datetime, timedelta
-
+from flask import Flask, render_template, session
 import uvicorn
 
-from flask import Flask, request, render_template, url_for, session, redirect
-from werkzeug.security import generate_password_hash, check_password_hash
 from asgiref.wsgi import WsgiToAsgi
-from functools import wraps
 from flask_wtf import CSRFProtect
 
 # Custom modules
-from mfa.routes import mfa_bp
+from auth.mfa import mfa_bp
 from db import close_db
 from auth.routes import auth_bp
 from session_helpers import login_required, already_logged_in
