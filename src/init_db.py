@@ -40,6 +40,7 @@ def init_db():
     cur.execute("""
     CREATE TABLE tokens (
         token TEXT PRIMARY KEY,
+        used INTEGER DEFAULT 0 CHECK (used IN (0,1)),
         user_id INTEGER NOT NULL,
         expires_at DATETIME NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

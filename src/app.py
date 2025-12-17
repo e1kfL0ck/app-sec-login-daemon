@@ -168,20 +168,24 @@ def activate(token):
         return render_template("activation.html", success=False), 400
 
     token_row = db.execute(
-        "SELECT user_id, expires_at FROM tokens WHERE token = ? AND type = 'activation'",
+        "SELECT user_id, used, expires_at FROM tokens WHERE token = ? AND type = 'activation'",
         (token,),
     ).fetchone()
 
     if not token_row:
         return render_template("activation.html", success=False), 400
 
-    user_id, expires_at_str = token_row
+    user_id, used, expires_at_str = token_row
     expires_at = datetime.fromisoformat(expires_at_str)
 
     if datetime.now() > expires_at:
         return render_template("activation.html", success=False), 400
+    
+    if used:
+        return render_template("activation.html", success=False), 400
 
     db.execute("UPDATE users SET activated = 1 WHERE id = ?", (user_id,))
+    db.execute("UPDATE tokens SET used = 1 WHERE token = ?", (token,))
     db.commit()
 
     return render_template("activation.html", success=True)
