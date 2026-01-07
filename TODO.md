@@ -9,7 +9,7 @@ This file lists high-level tasks and function contracts for the login/registrati
 - File Upload
 
 - Admin dashboard (to later validate post)
-  - Delete / hide 
+  - Delete / hide
     - posts
     - comments / ratings
     - users
