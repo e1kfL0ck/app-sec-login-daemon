@@ -52,6 +52,40 @@ def init_db():
     cur.execute("CREATE INDEX idx_tokens_user_id ON tokens(user_id);")
 
     # ================================
+    # POSTS TABLE
+    # ================================
+    cur.execute("DROP TABLE IF EXISTS posts;")
+
+    cur.execute("""
+        CREATE TABLE posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        author_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        is_public INTEGER DEFAULT 1,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+    );
+    """)
+
+    # ================================
+    # COMMENTS TABLE
+    # ================================
+    cur.execute("DROP TABLE IF EXISTS comments;")
+    cur.execute("""
+        CREATE TABLE comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            author_id INTEGER NOT NULL,
+            post_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            created_at DATETIME NOT NULL,
+            FOREIGN KEY (author_id) REFERENCES users(id),
+            FOREIGN KEY (post_id) REFERENCES posts(id)
+        );
+    """)
+
+    # ================================
     # OPTIONAL SECURITY EVENTS TABLE
     # Uncomment to enable logs
     # ================================
@@ -108,7 +142,6 @@ def create_initial_user(conn: sqlite3.Connection) -> None:
         ),
     )
     conn.commit()
-
 
 
 if __name__ == "__main__":
