@@ -51,6 +51,11 @@ def search_posts(query, limit=50):
     return PostRepository.search(query, limit=limit)
 
 
+def get_by_post(post_id):
+    """Get all comments for a post."""
+    return CommentRepository.get_by_post(post_id)
+
+
 def edit_post(post_id, user_id, title, body, is_public=True):
     """Edit a post (with permission check)."""
     if not permissions.can_edit_post(user_id, post_id):
