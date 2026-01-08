@@ -7,7 +7,6 @@ from session_helpers import login_required
 
 from . import services, content_bp
 
-
 @content_bp.route("/feed")
 def feed():
     """Display public feed."""
