@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <!-- Back to Feed Link -->
+  <div class="mb-6">
+    <a href="{{ url_for('content.feed') }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+      ← Back to Feed
+    </a>
+  </div>
+
+  <!-- Post Container -->
+  <article class="bg-white rounded-lg shadow-lg p-8 border-l-4 border-indigo-600 mb-8">
+    <!-- Post Header -->
+    <header class="mb-6 pb-6 border-b-2 border-gray-200">
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">{{ post.title }}</h1>
+      
+      <div class="flex items-center text-sm text-gray-600 space-x-4">
+        <div>
+          <span class="font-semibold">{{ post.author_email }}</span>
+        </div>
+        <div>
+          <time datetime="{{ post.created_at }}">
+            {{ post.created_at }}
+          </time>
+        </div>
+        {% if not post.is_public %}
+        <div>
+          <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+            Private
+          </span>
+        </div>
+        {% endif %}
+      </div>
+    </header>
+
+    <!-- Post Body -->
+    <div class="prose prose-lg max-w-none mb-8">
+      <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ post.body }}</p>
+    </div>
+
+    <!-- Edit/Delete Options (if user is author) -->
+    {% if session.get('user_id') == post.author_id %}
+    <div class="flex gap-2 pt-6 border-t-2 border-gray-200">
+      <a href="{{ url_for('content.edit_post', post_id=post.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+        Edit
+      </a>
+      <form action="{{ url_for('content.delete_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('Are you sure?');" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+          Delete
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </article>
+
+  <!-- Comments Section -->
+  <section class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Comments</h2>
+
+    {% if comments %}
+    <div class="space-y-4 mb-8">
+      {% for comment in comments %}
+      <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-600">
+        <div class="flex justify-between items-start mb-2">
+          <div class="font-semibold text-gray-900">{{ comment.author_email }}</div>
+          <time datetime="{{ comment.created_at }}" class="text-sm text-gray-500">
+            {{ comment.created_at }}
+          </time>
+        </div>
+        <p class="text-gray-700 leading-relaxed">{{ comment.text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-50 rounded-lg p-6 mb-8 text-center">
+      <p class="text-gray-600">No comments yet. Be the first to comment!</p>
+    </div>
+    {% endif %}
+
+    <!-- Add Comment Form (if logged in) -->
+    {% if session.get('user_id') %}
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-600">
+      <h3 class="text-xl font-bold text-gray-900 mb-4">Leave a Comment</h3>
+      <form method="POST" action="{{ url_for('content.add_comment', post_id=post.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="mb-4">
+          <textarea
+            name="text"
+            placeholder="Share your thoughts..."
+            rows="4"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+          ></textarea>
+        </div>
+
+        <button
+          type="submit"
+          class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold"
+        >
+          Post Comment
+        </button>
+      </form>
+    </div>
+    {% else %}
+    <div class="bg-blue-50 rounded-lg p-6 border-l-4 border-blue-600 text-center">
+      <p class="text-gray-700 mb-3">
+        <a href="{{ url_for('auth.login') }}" class="text-blue-600 hover:text-blue-800 font-semibold">Log in</a>
+        to leave a comment
+      </p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
