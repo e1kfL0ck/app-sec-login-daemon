@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h2 class="text-4xl font-bold text-gray-900 mb-2">Public Feed</h2>
+    <p class="text-gray-600">Discover posts from the community</p>
+  </div>
+
+  <!-- Create Post Button (if logged in) -->
+  {% if session.get('user_id') %}
+  <div class="mb-8">
+    <a href="{{ url_for('content.create_post') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+      + Create a Post
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Posts List -->
+  {% if posts %}
+  <div class="space-y-4">
+    {% for post in posts %}
+    <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-6 border-l-4 border-indigo-600">
+      <div class="flex justify-between items-start mb-3">
+        <div class="flex-1">
+          <h3 class="text-2xl font-bold text-gray-900 hover:text-indigo-600">
+            <a href="{{ url_for('content.view_post', post_id=post.id) }}">
+              {{ post.title }}
+            </a>
+          </h3>
+        </div>
+      </div>
+
+      <div class="flex items-center text-sm text-gray-500 mb-3">
+        <span class="font-semibold">{{ post.author_email }}</span>
+        <span class="mx-2">•</span>
+        <time datetime="{{ post.created_at }}">
+          {{ post.created_at if post.created_at else 'N/A' }}
+        </time>
+        {% if not post.is_public %}
+        <span class="ml-4 inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+          Private
+        </span>
+        {% endif %}
+      </div>
+
+      <p class="text-gray-700 leading-relaxed line-clamp-3">{{ post.body }}</p>
+
+      <div class="mt-4">
+        <a href="{{ url_for('content.view_post', post_id=post.id) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+          Read More →
+        </a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-center items-center gap-4 mt-8">
+    {% if page > 1 %}
+    <a href="{{ url_for('content.feed', page=page-1) }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+      ← Previous
+    </a>
+    {% endif %}
+
+    <span class="text-gray-600 font-semibold">
+      Page {{ page }}
+    </span>
+
+    <a href="{{ url_for('content.feed', page=page+1) }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+      Next →
+    </a>
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="text-center py-16">
+    <div class="text-6xl mb-4">📭</div>
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">No posts yet</h3>
+    <p class="text-gray-600 mb-6">Be the first to share something with the community!</p>
+    {% if session.get('user_id') %}
+    <a href="{{ url_for('content.create_post') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+      Create a Post
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
