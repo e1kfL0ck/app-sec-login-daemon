@@ -3,12 +3,9 @@ Content module - encapsulates posts, comments, and content management.
 Exposes a blueprint to be registered with the Flask app.
 """
 
-from flask import Blueprint
-from . import routes  # noqa: F401
+from . import routes
 
-# Create the content blueprint
-content_bp = Blueprint("content", __name__, template_folder="templates")
-
-# Import routes to register them with the blueprint
+# Export the blueprint
+content_bp = routes.content_bp
 
 __all__ = ["content_bp"]

@@ -2,10 +2,14 @@
 Content routes - posts, comments, search, feed.
 """
 
-from flask import render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from session_helpers import login_required
 
-from . import services, content_bp
+from . import services
+
+content_bp = Blueprint(
+    "content", __name__, url_prefix="/content", template_folder="templates"
+)
 
 
 @content_bp.route("/feed")
