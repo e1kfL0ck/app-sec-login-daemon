@@ -15,7 +15,7 @@ from session_helpers import login_required, already_logged_in
 # Create app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
-app.register_blueprint(mfa_bp) # Routes at /mfa/*
+app.register_blueprint(mfa_bp)  # Routes at /mfa/*
 app.register_blueprint(auth_bp)  # Routes at /register, /login, /logout, etc.
 app.register_blueprint(content_bp)  # Routes at /feed, /post/<id>, /search, etc.
 
