@@ -1,5 +1,5 @@
 """
-Authorization checks for content operations.
+Authorization checks for content operations, e.g., view, edit, delete posts.
 """
 
 from .repository import PostRepository
