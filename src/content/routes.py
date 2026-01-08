@@ -13,8 +13,7 @@ def feed():
     page = request.args.get("page", 1, type=int)
     posts = services.get_public_feed(page=page)
 
-    return render_template("content/feed.html", posts=posts, page=page)
-
+    return render_template("feed.html", posts=posts, page=page)
 
 @content_bp.route("/post/<int:post_id>")
 def view_post(post_id):
@@ -26,7 +25,7 @@ def view_post(post_id):
         return render_template("404.html"), 404
 
     comments = services.get_by_post(post_id)
-    return render_template("content/post_detail.html", post=post, comments=comments)
+    return render_template("post_detail.html", post=post, comments=comments)
 
 
 @content_bp.route("/post/create", methods=["GET", "POST"])
@@ -36,7 +35,7 @@ def create_post():
     user_id = session.get("user_id")
 
     if request.method == "GET":
-        return render_template("content/post_create.html")
+        return render_template("post_create.html")
 
     # POST
     title = request.form.get("title", "")
@@ -46,7 +45,7 @@ def create_post():
     result = services.create_post(user_id, title, body, is_public)
 
     if not result.ok:
-        return render_template("content/post_create.html", errors=result.errors)
+        return render_template("post_create.html", errors=result.errors)
 
     return redirect(url_for("content.view_post", post_id=result.post_id))
 
@@ -57,7 +56,7 @@ def search():
     query = request.args.get("q", "").strip()
 
     if len(query) < 2:
-        return render_template("content/search.html", posts=[], query=query)
+        return render_template("search.html", posts=[], query=query)
 
     posts = services.search_posts(query)
-    return render_template("content/search.html", posts=posts, query=query)
+    return render_template("search.html", posts=posts, query=query)
