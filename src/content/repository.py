@@ -41,8 +41,8 @@ class PostRepository:
         db = get_db()
         return db.execute(
             """
-            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at, 
-                   p.updated_at, u.email
+            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                   p.updated_at, u.email AS author_email
             FROM posts p
             JOIN users u ON p.author_id = u.id
             WHERE p.id = ?
@@ -56,7 +56,8 @@ class PostRepository:
         db = get_db()
         return db.execute(
             """
-            SELECT p.id, p.author_id, p.title, p.body, p.created_at, u.email
+            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                   u.email AS author_email
             FROM posts p
             JOIN users u ON p.author_id = u.id
             WHERE p.is_public = 1
@@ -94,7 +95,8 @@ class PostRepository:
         search_term = f"%{query}%"
         return db.execute(
             """
-            SELECT p.id, p.author_id, p.title, p.body, p.created_at, u.email
+            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                   u.email AS author_email
             FROM posts p
             JOIN users u ON p.author_id = u.id
             WHERE p.is_public = 1 AND (p.title LIKE ? OR p.body LIKE ?)

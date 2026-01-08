@@ -50,6 +50,70 @@ def create_post():
     return redirect(url_for("content.view_post", post_id=result.post_id))
 
 
+@content_bp.route("/post/<int:post_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_post(post_id):
+    """Edit a post."""
+    user_id = session.get("user_id")
+    post = services.get_post_view(post_id, requesting_user_id=user_id)
+
+    result = services.permissions.can_edit_post(user_id, post_id)
+    if not post or not result:
+        return render_template("404.html"), 404
+
+    if request.method == "GET":
+        return render_template("post_edit.html", post=post)
+
+    # POST
+    title = request.form.get("title", "")
+    body = request.form.get("body", "")
+    is_public = request.form.get("is_public", "on") == "on"
+
+    result = services.edit_post(post_id, user_id, title, body, is_public)
+
+    if not result.ok:
+        return render_template("post_edit.html", post=post, errors=result.errors)
+
+    return redirect(url_for("content.view_post", post_id=post_id))
+
+
+@content_bp.route("/post/<int:post_id>/delete", methods=["POST"])
+@login_required
+def delete_post(post_id):
+    """Delete a post."""
+    user_id = session.get("user_id")
+    post = services.get_post_view(post_id, requesting_user_id=user_id)
+
+    result = services.permissions.can_edit_post(user_id, post_id)
+    if not post or not result:
+        return render_template("404.html"), 404
+
+    result = services.delete_post(post_id, user_id)
+
+    if not result.ok:
+        return redirect(url_for("content.view_post", post_id=post_id))
+
+    return redirect(url_for("content.feed"))
+
+
+@content_bp.route("/post/<int:post_id>/comment", methods=["POST"])
+@login_required
+def add_comment(post_id):
+    """Add a comment to a post."""
+    user_id = session.get("user_id")
+    text = request.form.get("text", "").strip()
+
+    if not text:
+        return redirect(url_for("content.view_post", post_id=post_id))
+
+    result = services.add_comment(post_id, user_id, text)
+
+    if not result.ok:
+        return redirect(url_for("content.view_post", post_id=post_id))
+
+    return redirect(url_for("content.view_post", post_id=post_id))
+
+
 @content_bp.route("/search")
 def search():
     """Search posts."""
