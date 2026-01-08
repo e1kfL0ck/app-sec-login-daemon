@@ -11,7 +11,6 @@ content_bp = Blueprint(
     "content", __name__, url_prefix="/content", template_folder="templates"
 )
 
-
 @content_bp.route("/feed")
 def feed():
     """Display public feed."""
