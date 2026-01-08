@@ -7,7 +7,7 @@ DB_FILE = "/data/app.db"
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)
-    conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA foreign_keys = OFF;")
     cur = conn.cursor()
 
     # ================================
@@ -104,6 +104,8 @@ def init_db():
     cur.execute("CREATE INDEX idx_events_user_id ON security_events(user_id);")
     """
 
+    # Re-enable foreign keys for runtime
+    conn.execute("PRAGMA foreign_keys = ON;")
     conn.commit()
 
     # Create an initial user for testing if DEBUG mode is set to True
@@ -113,6 +115,8 @@ def init_db():
         print("Email: user@domain.org")
         print("Password: Bonjour123!")
         print("MFA Secret: YOZSSE4QXLPRNCELINUIH6O2BXWLJVO4")
+        create_initial_post(conn)
+        print("Initial post created.")
     conn.close()
     print(f"Database initialized successfully: {DB_FILE}")
 
@@ -139,6 +143,28 @@ def create_initial_user(conn: sqlite3.Connection) -> None:
             1,
             "YOZSSE4QXLPRNCELINUIH6O2BXWLJVO4",
             '["e3aba907b83b", "ab237fb50db5", "3e1a0b59417c", "09cac10f2169", "ae8715439a60", "ec37c00a9217", "1cfdca3194bf", "a37cc97d5610"]',
+        ),
+    )
+    conn.commit()
+
+def create_initial_post(conn: sqlite3.Connection) -> None:
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO posts (
+            id, author_id, title, body, is_public, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+        """,
+        (
+            1,
+            1,
+            "Welcome to the Blog!",
+            "This is the first post in the blog. Feel free to explore and create your own posts!",
+            1,
+            "2025-12-03T14:00:00.000000",
+            "2025-12-03T14:00:00.000000",
         ),
     )
     conn.commit()
