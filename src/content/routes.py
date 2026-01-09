@@ -46,7 +46,8 @@ def create_post():
     # POST
     title = request.form.get("title", "")
     body = request.form.get("body", "")
-    is_public = request.form.get("is_public", "on") == "on"
+    # Treat missing checkbox as False so unchecked submissions remain private
+    is_public = request.form.get("is_public") == "on"
 
     result = services.create_post(user_id, title, body, is_public)
 
@@ -73,7 +74,8 @@ def edit_post(post_id):
     # POST
     title = request.form.get("title", "")
     body = request.form.get("body", "")
-    is_public = request.form.get("is_public", "on") == "on"
+    # Treat missing checkbox as False so unchecked submissions remain private
+    is_public = request.form.get("is_public") == "on"
 
     result = services.edit_post(post_id, user_id, title, body, is_public)
 
