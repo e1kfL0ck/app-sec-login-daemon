@@ -4,6 +4,7 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 ## New features TODO
 
+- Magic bytes check on file upload (to avoid users uploading scripts / invalid files)
 - Role Based Access Control (RBAC)
 - Text Upload
 - File Upload
