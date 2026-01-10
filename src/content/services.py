@@ -54,10 +54,10 @@ def _save_attachments(post_id, uploader_id, validated_files):
         stored_name = f"{uuid.uuid4().hex}{ext.lower()}"
         stored_path = os.path.join(target_dir, stored_name)
 
-        # Persist file to disk
+        # Persist file to disk - ensure stream is at beginning
         f.stream.seek(0)
         with open(stored_path, "wb") as out:
-            out.write(f.read())
+            out.write(f.stream.read())
 
         # Get size again from the saved file to be accurate
         size_bytes = os.path.getsize(stored_path)
@@ -204,8 +204,8 @@ def get_attachment_file(attachment_id, requesting_user_id=None):
                     mime_type = detected_mime.lower() if detected_mime else stored_mime
                 else:
                     mime_type = stored_mime
-        except Exception:
-            # If verification fails, use stored MIME type
+        except (OSError, IOError, ValueError):
+            # If verification fails due to I/O or value errors, use stored MIME type
             mime_type = stored_mime
     else:
         mime_type = stored_mime

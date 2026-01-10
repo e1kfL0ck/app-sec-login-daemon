@@ -55,8 +55,8 @@ def detect_mime_from_content(file_stream):
         # Detect MIME type from content
         mime = magic.from_buffer(header, mime=True)
         return mime.lower() if mime else None
-    except Exception:
-        # If detection fails, return None
+    except (OSError, IOError, ValueError):
+        # If detection fails due to I/O or value errors, return None
         return None
 
 
