@@ -82,7 +82,7 @@ def confirm():
 
     code = request.form.get("otp", "")
     errors = []
-    errors += field_utils.sanitize_user_input(code)
+    errors += field_utils.sanitize_user_input_obfuscated(code)
 
     secret = session.get("mfa_setup_secret", "")
 

@@ -15,7 +15,7 @@ class PostResult:
 
 def create_post(author_id, title, body, is_public=True):
     """Create a new post."""
-    errors = validators.validate_post_input(title, body, is_public)
+    errors = validators.validate_post_input(title, body)
     if errors:
         return PostResult(ok=False, errors=errors)
 
@@ -70,7 +70,7 @@ def edit_post(post_id, user_id, title, body, is_public=True):
             ok=False, errors=["You don't have permission to edit this post."]
         )
 
-    errors = validators.validate_post_input(title, body, is_public)
+    errors = validators.validate_post_input(title, body)
     if errors:
         return PostResult(ok=False, errors=errors)
 

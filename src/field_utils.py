@@ -31,12 +31,14 @@ def contains_dangerous_pattern(value: str) -> bool:
     return False
 
 
-def sanitize_user_input(field_value: str, max_len: int = 255) -> list[str]:
+def sanitize_user_input_obfuscated(field_value: str, max_len: int = 255) -> list[str]:
     """
     Check for safety and compliance of simple fields (email, pseudo, etc..) :
     - limit length
     - block some dangerous patterns
     - disallow certain characters
+    - newlines are allowed
+    Returns a list of OBFUSCATED errors.
     """
 
     errors = []
@@ -57,6 +59,39 @@ def sanitize_user_input(field_value: str, max_len: int = 255) -> list[str]:
 
     if any(c in DISALLOWED_CHARS for c in field_value):
         errors.append("User input error.")
+        return errors
+
+    return errors
+
+
+def sanitize_user_input_explicit(field_value: str, max_len: int = 255, field_name: str = "Field") -> list[str]:
+    """
+    Check for safety and compliance of simple fields (email, pseudo, etc..) :
+    - limit length
+    - block some dangerous patterns
+    - disallow certain characters
+    - newlines are allowed
+    Returns a list of error messages (empty if no error).
+    """
+
+    errors = []
+
+    if field_value is None:
+        errors.append(f"{field_name} is required.")
+        return errors
+
+    field_value = field_value.strip()  # Remove leading/trailing whitespace
+
+    if len(field_value) > max_len:
+        errors.append(f"{field_name} must be under {max_len} characters.")
+        return errors
+
+    if contains_dangerous_pattern(field_value):
+        errors.append(f"{field_name} contains disallowed patterns.")
+        return errors
+
+    if any(c in DISALLOWED_CHARS for c in field_value):
+        errors.append(f"{field_name} contains disallowed characters.")
         return errors
 
     return errors
