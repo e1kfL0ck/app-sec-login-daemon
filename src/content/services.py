@@ -5,7 +5,6 @@ Business logic for content operations.
 from . import validators, permissions
 import os
 import uuid
-from werkzeug.utils import secure_filename
 from .repository import PostRepository, CommentRepository, AttachmentRepository
 
 
@@ -25,17 +24,30 @@ def _ensure_post_upload_dir(post_id):
     return d
 
 
-def _save_attachments(post_id, uploader_id, files):
-    if not files:
+def _save_attachments(post_id, uploader_id, validated_files):
+    """Save validated attachments to disk and database.
+    
+    Args:
+        post_id: The post ID to attach files to
+        uploader_id: The user ID uploading the files
+        validated_files: List of dicts from validate_attachments with keys:
+            - file_obj: the file object
+            - original_name: sanitized filename
+            - verified_mime: MIME type detected from content
+    
+    Returns:
+        List of attachment IDs created
+    """
+    if not validated_files:
         return []
 
     saved_ids = []
     target_dir = _ensure_post_upload_dir(post_id)
 
-    for f in files:
-        original_name = secure_filename(f.filename or "")
-        if not original_name:
-            continue
+    for file_meta in validated_files:
+        f = file_meta['file_obj']
+        original_name = file_meta['original_name']
+        verified_mime = file_meta['verified_mime']
 
         _, ext = os.path.splitext(original_name)
         stored_name = f"{uuid.uuid4().hex}{ext.lower()}"
@@ -53,7 +65,7 @@ def _save_attachments(post_id, uploader_id, files):
             uploader_id,
             original_name,
             stored_name,
-            (f.mimetype or "application/octet-stream"),
+            verified_mime,  # Use verified MIME type, not client-provided
             size_bytes,
         )
         if attachment_id:
@@ -65,14 +77,15 @@ def _save_attachments(post_id, uploader_id, files):
 def create_post(author_id, title, body, is_public=True, files=None):
     """Create a new post."""
     errors = validators.validate_post_input(title, body)
-    # Validate attachments
-    errors += validators.validate_attachments(files or [])
+    # Validate attachments and get verified metadata
+    attachment_errors, validated_files = validators.validate_attachments(files or [])
+    errors += attachment_errors
     if errors:
         return PostResult(ok=False, errors=errors)
 
     post_id = PostRepository.create(author_id, title, body, is_public)
     # Save attachments if any
-    _save_attachments(post_id, author_id, files or [])
+    _save_attachments(post_id, author_id, validated_files)
     return PostResult(ok=True, post_id=post_id)
 
 
@@ -124,12 +137,13 @@ def edit_post(post_id, user_id, title, body, is_public=True, files=None):
         )
 
     errors = validators.validate_post_input(title, body)
-    errors += validators.validate_attachments(files or [])
+    attachment_errors, validated_files = validators.validate_attachments(files or [])
+    errors += attachment_errors
     if errors:
         return PostResult(ok=False, errors=errors)
 
     PostRepository.update(post_id, title, body, is_public)
-    _save_attachments(post_id, user_id, files or [])
+    _save_attachments(post_id, user_id, validated_files)
     return PostResult(ok=True, post_id=post_id)
 
 
@@ -159,7 +173,10 @@ def get_attachments_for_post(post_id):
 
 
 def get_attachment_file(attachment_id, requesting_user_id=None):
-    """Return tuple (directory, stored_name, original_name, mime_type) if user can view it, else None."""
+    """Return tuple (directory, stored_name, original_name, mime_type) if user can view it, else None.
+    
+    Re-validates MIME type from file content for defense-in-depth.
+    """
     att = AttachmentRepository.get_by_id(attachment_id)
     if not att:
         return None
@@ -171,5 +188,26 @@ def get_attachment_file(attachment_id, requesting_user_id=None):
     directory = _ensure_post_upload_dir(post_id)
     stored_name = att["stored_name"]
     original_name = att["original_name"]
-    mime_type = att["mime_type"]
+    stored_mime = att["mime_type"]
+    
+    # Re-verify MIME type from actual file content for defense-in-depth
+    file_path = os.path.join(directory, stored_name)
+    if os.path.exists(file_path):
+        try:
+            # Read file header to verify MIME type
+            with open(file_path, 'rb') as f:
+                header = f.read(2048)
+                if header:
+                    import magic
+                    detected_mime = magic.from_buffer(header, mime=True)
+                    # Use detected MIME type if available, otherwise fall back to stored
+                    mime_type = detected_mime.lower() if detected_mime else stored_mime
+                else:
+                    mime_type = stored_mime
+        except Exception:
+            # If verification fails, use stored MIME type
+            mime_type = stored_mime
+    else:
+        mime_type = stored_mime
+    
     return directory, stored_name, original_name, mime_type

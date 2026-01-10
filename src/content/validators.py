@@ -4,7 +4,7 @@ Validation utilities for content module.
 
 import field_utils as fu
 import os
-import mimetypes
+import magic
 from werkzeug.utils import secure_filename
 
 # Basic file validation settings
@@ -31,6 +31,35 @@ ALLOWED_EXTENSIONS = {
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 
 
+def detect_mime_from_content(file_stream):
+    """Detect MIME type from actual file content using magic bytes.
+    
+    Args:
+        file_stream: File stream object
+        
+    Returns:
+        str: Detected MIME type or None if detection fails
+    """
+    try:
+        # Save current position
+        pos = file_stream.tell()
+        # Read first 2048 bytes for magic detection
+        file_stream.seek(0)
+        header = file_stream.read(2048)
+        # Restore position
+        file_stream.seek(pos)
+        
+        if not header:
+            return None
+            
+        # Detect MIME type from content
+        mime = magic.from_buffer(header, mime=True)
+        return mime.lower() if mime else None
+    except Exception:
+        # If detection fails, return None
+        return None
+
+
 def validate_post_input(title, body):
     """Validate post creation/edit inputs."""
     errors = []
@@ -47,15 +76,25 @@ def validate_comment_input(text):
 
 
 def validate_attachments(files):
-    """Validate uploaded attachments list.
+    """Validate uploaded attachments list and return verified metadata.
 
     - Checks filename presence and safety
     - Enforces max file size
-    - Validates MIME type and extension
+    - Validates MIME type from actual content (not client-provided)
+    - Validates extension matches allowed types
+    
+    Returns:
+        tuple: (errors list, validated_files list)
+        where validated_files is a list of dicts with keys:
+        - file_obj: the file object
+        - original_name: sanitized filename
+        - verified_mime: MIME type detected from content
     """
     errors = []
+    validated = []
+    
     if not files:
-        return errors
+        return errors, validated
 
     for f in files:
         if not f:
@@ -99,18 +138,25 @@ def validate_attachments(files):
             )
             continue
 
-        # MIME type check: combine client-provided and guessed types
-        client_mime = (f.mimetype or "").lower()
-        guessed_mime, _ = mimetypes.guess_type(safe_name)
-        guessed_mime = (guessed_mime or "").lower()
-
-        effective_mime = client_mime or guessed_mime
-        if not effective_mime:
-            errors.append(f"Attachment '{original_name}': unknown MIME type.")
+        # Verify MIME type from actual file content
+        detected_mime = detect_mime_from_content(f.stream)
+        if not detected_mime:
+            errors.append(f"Attachment '{original_name}': could not detect file type from content.")
+            continue
+            
+        # Validate detected MIME type is in allowed list
+        if detected_mime not in ALLOWED_MIME_TYPES:
+            errors.append(
+                f"Attachment '{original_name}': detected file type '{detected_mime}' is not allowed. "
+                f"Only {', '.join(sorted(ALLOWED_MIME_TYPES))} are permitted."
+            )
             continue
 
-        if effective_mime not in ALLOWED_MIME_TYPES:
-            errors.append(f"Attachment '{original_name}': MIME type not allowed.")
-            continue
+        # All validations passed - add to validated list
+        validated.append({
+            'file_obj': f,
+            'original_name': safe_name,
+            'verified_mime': detected_mime
+        })
 
-    return errors
+    return errors, validated
