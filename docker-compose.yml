@@ -17,4 +17,5 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG}
       - INIT_DB=True # destructive: re-initializes the database on each container start
+      - CLEAR_UPLOADS=True # destructive: clears all user uploads on each container start
     restart: unless-stopped

@@ -14,5 +14,18 @@ if [ -n "$INIT_DB" ]; then
   esac
 fi
 
+# If CLEAR_UPLOADS is set to a truthy value, clear the data directory.
+if [ -n "$CLEAR_UPLOADS" ]; then
+  case "$CLEAR_UPLOADS" in
+    1|true|True|TRUE|yes|Yes)
+      echo "CLEAR_UPLOADS is enabled — clearing data directory..."
+      rm -rf /data/uploads/*
+      ;;
+    *)
+      echo "CLEAR_UPLOADS not enabled (value='$CLEAR_UPLOADS'), skipping data clear."
+      ;;
+  esac
+fi
+
 # Exec the container CMD (e.g. uvicorn)
 exec "$@"
