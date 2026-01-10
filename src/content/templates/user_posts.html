@@ -30,9 +30,10 @@
 					</div>
 					<div class="flex gap-2 ml-4">
 						<a href="{{ url_for('content.edit_post', post_id=post.id) }}" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm">Edit</a>
-						<form method="POST" action="{{ url_for('content.delete_post', post_id=post.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure?');">
-							<button type="submit" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm">Delete</button>
-						</form>
+						<button type="button" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm"
+							onclick="deletePost({{ url_for('content.delete_post', post_id=post.id)|tojson }}, {{ url_for('content.user_posts')|tojson }}, {{ url_for('content.view_post', post_id=post.id)|tojson }})">
+							Delete
+						</button>
 					</div>
 				</div>
 				<p class="text-gray-700 line-clamp-3">{{ post.body }}</p>
@@ -56,4 +57,30 @@
 		{% endif %}
 	</div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function deletePost(deleteUrl, successRedirect, failureRedirect) {
+	if (!confirm('Are you sure?')) return;
+	try {
+		const csrfInput = document.querySelector('input[name="csrf_token"]');
+		const headers = {};
+		if (csrfInput && csrfInput.value) {
+			headers['X-CSRF-Token'] = csrfInput.value;
+		}
+		const res = await fetch(deleteUrl, {
+			method: 'DELETE',
+			headers
+		});
+		if (res.ok) {
+			window.location.href = successRedirect;
+		} else {
+			window.location.href = failureRedirect;
+		}
+	} catch (e) {
+		window.location.href = failureRedirect;
+	}
+}
+</script>
 {% endblock %}
