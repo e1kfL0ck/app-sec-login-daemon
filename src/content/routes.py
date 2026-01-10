@@ -21,6 +21,17 @@ def feed():
     return render_template("feed.html", posts=posts, page=page)
 
 
+@content_bp.route("/posts")
+@login_required
+def user_posts():
+    """Display current user's posts (both public and private)."""
+    user_id = session.get("user_id")
+    page = request.args.get("page", 1, type=int)
+    posts = services.get_user_posts(user_id, page=page)
+
+    return render_template("user_posts.html", posts=posts, page=page)
+
+
 @content_bp.route("/post/<int:post_id>")
 def view_post(post_id):
     """View a single post."""

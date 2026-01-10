@@ -68,6 +68,23 @@ class PostRepository:
         ).fetchall()
 
     @staticmethod
+    def get_by_author(author_id, limit=50, offset=0):
+        """Get all posts by a specific author (including private posts)."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                   u.email AS author_email
+            FROM posts p
+            JOIN users u ON p.author_id = u.id
+            WHERE p.author_id = ?
+            ORDER BY p.created_at DESC
+            LIMIT ? OFFSET ?
+            """,
+            (author_id, limit, offset),
+        ).fetchall()
+
+    @staticmethod
     def update(post_id, title, body, is_public=True):
         """Update an existing post."""
         db = get_db()

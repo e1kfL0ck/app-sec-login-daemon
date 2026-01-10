@@ -43,6 +43,13 @@ def get_public_feed(page=1, per_page=10):
     return posts
 
 
+def get_user_posts(user_id, page=1, per_page=10):
+    """Get paginated posts for a specific user (all posts - public and private)."""
+    offset = (page - 1) * per_page
+    posts = PostRepository.get_by_author(user_id, limit=per_page, offset=offset)
+    return posts
+
+
 def search_posts(query, limit=50):
     """Search posts."""
     if len(query) < 2:
