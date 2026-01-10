@@ -39,6 +39,20 @@
       <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ post.body }}</p>
     </div>
 
+    {% if attachments %}
+    <div class="mb-8">
+      <h2 class="text-xl font-bold text-gray-900 mb-3">Attachments</h2>
+      <ul class="list-disc list-inside space-y-1">
+        {% for a in attachments %}
+        <li>
+          <a class="text-indigo-600 hover:text-indigo-800" href="{{ url_for('content.download_attachment', attachment_id=a.id) }}">{{ a.original_name }}</a>
+          <span class="text-xs text-gray-500">({{ a.mime_type }}, {{ a.size_bytes }} bytes)</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
     <!-- Edit/Delete Options (if user is author) -->
     {% if session.get('user_id') == post.author_id %}
     <div class="flex gap-2 pt-6 border-t-2 border-gray-200">

@@ -2,7 +2,7 @@
 Content routes - posts, comments, search, feed.
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, send_from_directory, abort
 from session_helpers import login_required
 
 from . import services
@@ -42,7 +42,8 @@ def view_post(post_id):
         return render_template("404.html"), 404
 
     comments = services.get_by_post(post_id)
-    return render_template("post_detail.html", post=post, comments=comments)
+    attachments = services.get_attachments_for_post(post_id)
+    return render_template("post_detail.html", post=post, comments=comments, attachments=attachments)
 
 
 @content_bp.route("/post/create", methods=["GET", "POST"])
@@ -60,7 +61,8 @@ def create_post():
     # Treat missing checkbox as False so unchecked submissions remain private
     is_public = request.form.get("is_public") == "on"
 
-    result = services.create_post(user_id, title, body, is_public)
+    files = request.files.getlist("attachments")
+    result = services.create_post(user_id, title, body, is_public, files=files)
 
     if not result.ok:
         return render_template("post_create.html", errors=result.errors)
@@ -80,7 +82,8 @@ def edit_post(post_id):
         return render_template("404.html"), 404
 
     if request.method == "GET":
-        return render_template("post_edit.html", post=post)
+        attachments = services.get_attachments_for_post(post_id)
+        return render_template("post_edit.html", post=post, attachments=attachments)
 
     # POST
     title = request.form.get("title", "")
@@ -88,7 +91,8 @@ def edit_post(post_id):
     # Treat missing checkbox as False so unchecked submissions remain private
     is_public = request.form.get("is_public") == "on"
 
-    result = services.edit_post(post_id, user_id, title, body, is_public)
+    files = request.files.getlist("attachments")
+    result = services.edit_post(post_id, user_id, title, body, is_public, files=files)
 
     if not result.ok:
         return render_template("post_edit.html", post=post, errors=result.errors)
@@ -143,3 +147,16 @@ def search():
 
     posts = services.search_posts(query)
     return render_template("search.html", posts=posts, query=query)
+
+
+@content_bp.route("/attachment/<int:attachment_id>")
+def download_attachment(attachment_id: int):
+    """Serve an attachment file if viewer has permissions."""
+    user_id = session.get("user_id")
+    meta = services.get_attachment_file(attachment_id, requesting_user_id=user_id)
+    if not meta:
+        return abort(404)
+    directory, stored_name, original_name, mime_type = meta
+    # Use send_from_directory for safe serving; attachment filenames sanitized
+    response = send_from_directory(directory, stored_name, mimetype=mime_type, as_attachment=True, download_name=original_name)
+    return response

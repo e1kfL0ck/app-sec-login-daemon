@@ -86,6 +86,28 @@ def init_db():
     """)
 
     # ================================
+    # ATTACHMENTS TABLE
+    # ================================
+    cur.execute("DROP TABLE IF EXISTS attachments;")
+    cur.execute(
+        """
+        CREATE TABLE attachments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            uploader_id INTEGER NOT NULL,
+            original_name TEXT NOT NULL,
+            stored_name TEXT NOT NULL,
+            mime_type TEXT NOT NULL,
+            size_bytes INTEGER NOT NULL,
+            created_at DATETIME NOT NULL,
+            FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+            FOREIGN KEY (uploader_id) REFERENCES users(id)
+        );
+        """
+    )
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_attachments_post_id ON attachments(post_id);")
+
+    # ================================
     # OPTIONAL SECURITY EVENTS TABLE
     # Uncomment to enable logs
     # ================================

@@ -167,3 +167,68 @@ class CommentRepository:
         db = get_db()
         db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
         db.commit()
+
+
+class AttachmentRepository:
+    """Handles attachment-related database operations."""
+
+    @staticmethod
+    def create(post_id, uploader_id, original_name, stored_name, mime_type, size_bytes):
+        """Create a new attachment and return its id."""
+        db = get_db()
+        created_at = datetime.now()
+        db.execute(
+            """
+            INSERT INTO attachments (post_id, uploader_id, original_name, stored_name, mime_type, size_bytes, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                post_id,
+                uploader_id,
+                original_name,
+                stored_name,
+                mime_type,
+                size_bytes,
+                created_at.isoformat(),
+            ),
+        )
+        db.commit()
+        row = db.execute(
+            "SELECT id FROM attachments WHERE post_id = ? ORDER BY created_at DESC LIMIT 1",
+            (post_id,),
+        ).fetchone()
+        return row[0] if row else None
+
+    @staticmethod
+    def get_by_post(post_id):
+        """Get all attachments for a post."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT id, post_id, uploader_id, original_name, stored_name, mime_type, size_bytes, created_at
+            FROM attachments
+            WHERE post_id = ?
+            ORDER BY created_at ASC
+            """,
+            (post_id,),
+        ).fetchall()
+
+    @staticmethod
+    def get_by_id(attachment_id):
+        """Get a single attachment by id."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT id, post_id, uploader_id, original_name, stored_name, mime_type, size_bytes, created_at
+            FROM attachments
+            WHERE id = ?
+            """,
+            (attachment_id,),
+        ).fetchone()
+
+    @staticmethod
+    def delete(attachment_id):
+        """Delete an attachment row."""
+        db = get_db()
+        db.execute("DELETE FROM attachments WHERE id = ?", (attachment_id,))
+        db.commit()
