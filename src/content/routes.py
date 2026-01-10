@@ -95,7 +95,8 @@ def edit_post(post_id):
     result = services.edit_post(post_id, user_id, title, body, is_public, files=files)
 
     if not result.ok:
-        return render_template("post_edit.html", post=post, errors=result.errors)
+        attachments = services.get_attachments_for_post(post_id)
+        return render_template("post_edit.html", post=post, attachments=attachments, errors=result.errors)
 
     return redirect(url_for("content.view_post", post_id=post_id))
 
