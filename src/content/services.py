@@ -5,6 +5,7 @@ Business logic for content operations.
 from . import validators, permissions
 import os
 import uuid
+import magic
 from .repository import PostRepository, CommentRepository, AttachmentRepository
 
 
@@ -194,11 +195,10 @@ def get_attachment_file(attachment_id, requesting_user_id=None):
     file_path = os.path.join(directory, stored_name)
     if os.path.exists(file_path):
         try:
-            # Read file header to verify MIME type
+            # Read file and verify MIME type using magic bytes
             with open(file_path, 'rb') as f:
                 header = f.read(2048)
                 if header:
-                    import magic
                     detected_mime = magic.from_buffer(header, mime=True)
                     # Use detected MIME type if available, otherwise fall back to stored
                     mime_type = detected_mime.lower() if detected_mime else stored_mime
