@@ -65,7 +65,7 @@
                 <span class="font-semibold">{{ post.author_email }}</span>
                 <span class="mx-2">•</span>
                 <time datetime="{{ post.created_at }}">
-                    {{ post.created_at if post.created_at else 'N/A' }}
+                    {{ post.created_at.replace('T', ' ').split('.')[0] if post.created_at else 'N/A' }}
                 </time>
                 {% if post.is_public %}
                 <span
@@ -101,22 +101,22 @@
     {% endif %}
 
     {% elif not query %}
-        <!-- Initial State (No Query) -->
-        <div class="text-center py-16 bg-white rounded-lg shadow-md">
-            <div class="text-6xl mb-4">📚</div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Start searching</h3>
-            <p class="text-gray-600 mb-4">Enter a search term to find posts, explore content, or discover attachments.
-            </p>
-            <p class="text-gray-500 text-sm">Search across post titles, content, and attachment filenames all in one
-                place.</p>
-        </div>
-        {% endif %}
+    <!-- Initial State (No Query) -->
+    <div class="text-center py-16 bg-white rounded-lg shadow-md">
+        <div class="text-6xl mb-4">📚</div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">Start searching</h3>
+        <p class="text-gray-600 mb-4">Enter a search term to find posts, explore content, or discover attachments.
+        </p>
+        <p class="text-gray-500 text-sm">Search across post titles, content, and attachment filenames all in one
+            place.</p>
+    </div>
+    {% endif %}
 
-        <!-- Back to Feed -->
-        <div class="mt-8 text-center">
-            <a href="{{ url_for('content.feed') }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">
-                ← Back to Feed
-            </a>
-        </div>
+    <!-- Back to Feed -->
+    <div class="mt-8 text-center">
+        <a href="{{ url_for('content.feed') }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+            ← Back to Feed
+        </a>
+    </div>
 </div>
 {% endblock %}

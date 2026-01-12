@@ -3,8 +3,11 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
 	<div class="mb-6 flex justify-between items-center">
-		<a href="{{ url_for('dashboard') }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">← Back to Dashboard</a>
-		<a href="{{ url_for('content.create_post') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">New Post</a>
+		<a href="{{ url_for('dashboard') }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">← Back to
+			Dashboard</a>
+		<a href="{{ url_for('content.create_post') }}"
+			class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">New
+			Post</a>
 	</div>
 
 	<div class="bg-white rounded-lg shadow-lg p-8 border-l-4 border-indigo-600">
@@ -16,28 +19,35 @@
 			<div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition">
 				<div class="flex justify-between items-start mb-4">
 					<div class="flex-1">
-						<a href="{{ url_for('content.view_post', post_id=post.id) }}" class="text-2xl font-bold text-gray-900 hover:text-indigo-600 transition">
+						<a href="{{ url_for('content.view_post', post_id=post.id) }}"
+							class="text-2xl font-bold text-gray-900 hover:text-indigo-600 transition">
 							{{ post.title }}
 						</a>
 						<div class="flex items-center gap-3 mt-2 text-sm text-gray-600">
-							<span>{{ post.created_at }}</span>
+							<span>{{ post.created_at.replace('T', ' ').split('.')[0] if post.created_at else 'N/A' }}</span>
 							{% if post.is_public %}
-								<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Public</span>
+							<span
+								class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Public</span>
 							{% else %}
-								<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">Private</span>
+							<span
+								class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">Private</span>
 							{% endif %}
 						</div>
 					</div>
 					<div class="flex gap-2 ml-4">
-						<a href="{{ url_for('content.edit_post', post_id=post.id) }}" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm">Edit</a>
-						<form method="POST" action="{{ url_for('content.delete_post', post_id=post.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure?');">
-							<button type="submit" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm">Delete</button>
+						<a href="{{ url_for('content.edit_post', post_id=post.id) }}"
+							class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm">Edit</a>
+						<form method="POST" action="{{ url_for('content.delete_post', post_id=post.id) }}"
+							style="display:inline;" onsubmit="return confirm('Are you sure?');">
+							<button type="submit"
+								class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm">Delete</button>
 						</form>
 					</div>
 				</div>
 				<p class="text-gray-700 line-clamp-3">{{ post.body }}</p>
 				<div class="mt-4">
-					<a href="{{ url_for('content.view_post', post_id=post.id) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">Read more →</a>
+					<a href="{{ url_for('content.view_post', post_id=post.id) }}"
+						class="text-indigo-600 hover:text-indigo-800 font-semibold">Read more →</a>
 				</div>
 			</div>
 			{% endfor %}
@@ -45,13 +55,16 @@
 
 		{% if page > 1 %}
 		<div class="mt-6 pt-6 border-t border-gray-200">
-			<a href="{{ url_for('content.user_posts', page=page-1) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">← Previous</a>
+			<a href="{{ url_for('content.user_posts', page=page-1) }}"
+				class="text-indigo-600 hover:text-indigo-800 font-semibold">← Previous</a>
 		</div>
 		{% endif %}
 		{% else %}
 		<div class="text-center py-8">
 			<p class="text-gray-600 mb-4">You haven't created any posts yet.</p>
-			<a href="{{ url_for('content.create_post') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">Create Your First Post</a>
+			<a href="{{ url_for('content.create_post') }}"
+				class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">Create
+				Your First Post</a>
 		</div>
 		{% endif %}
 	</div>
