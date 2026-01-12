@@ -24,9 +24,15 @@
             {{ post.created_at.replace('T', ' ').split('.')[0] if post.created_at else 'N/A' }}
           </time>
         </div>
-        {% if not post.is_public %}
+        {% if post.is_public %}
         <div>
-          <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+          <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+            Public
+          </span>
+        </div>
+        {% else %}
+        <div>
+          <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">
             Private
           </span>
         </div>
