@@ -21,8 +21,25 @@
         </form>
     </div>
 
+    <!-- Error Messages -->
+    {% if errors %}
+    <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+        <div class="flex items-start">
+            <div class="text-red-600 text-xl mr-3">⚠️</div>
+            <div class="flex-1">
+                <h3 class="text-red-800 font-semibold mb-2">Search Error</h3>
+                <ul class="text-red-700 space-y-1">
+                    {% for error in errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Search Results -->
-    {% if query and query|length >= 2 %}
+    {% if query and not errors %}
     {% if posts %}
     <div class="mb-4">
         <p class="text-gray-600 font-semibold">
@@ -83,14 +100,7 @@
     </div>
     {% endif %}
 
-    {% elif query and query|length < 2 %} <!-- Query Too Short State -->
-        <div class="text-center py-16 bg-white rounded-lg shadow-md">
-            <div class="text-6xl mb-4">✏️</div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Query too short</h3>
-            <p class="text-gray-600">Please enter at least 2 characters to search.</p>
-        </div>
-
-        {% else %}
+    {% elif not query %}
         <!-- Initial State (No Query) -->
         <div class="text-center py-16 bg-white rounded-lg shadow-md">
             <div class="text-6xl mb-4">📚</div>

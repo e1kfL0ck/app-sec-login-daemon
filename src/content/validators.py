@@ -46,6 +46,18 @@ def validate_comment_input(text):
     return errors
 
 
+def validate_search_query(text):
+    """Validate search query input."""
+    errors = []
+    errors += fu.sanitize_user_input_explicit(
+        text, max_len=200, field_name="Search Query"
+    )
+    # Avoid database overload with very short queries
+    if len(text.strip()) < 2:
+        errors.append("Search query must be at least 2 characters long.")
+    return errors
+
+
 def validate_attachments(files):
     """Validate uploaded attachments list.
 
@@ -95,7 +107,7 @@ def validate_attachments(files):
 
         if size > MAX_FILE_SIZE_BYTES:
             errors.append(
-                f"Attachment '{original_name}': exceeds max size of {MAX_FILE_SIZE_BYTES // (1024*1024)}MB."
+                f"Attachment '{original_name}': exceeds max size of {MAX_FILE_SIZE_BYTES // (1024 * 1024)}MB."
             )
             continue
 

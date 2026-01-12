@@ -143,11 +143,11 @@ def search():
     """Search posts."""
     query = request.args.get("q", "").strip()
 
-    if len(query) < 2:
-        return render_template("search.html", posts=[], query=query)
+    if not query:
+        return render_template("search.html", posts=[], query=query, errors=[])
 
-    posts = services.search_posts(query)
-    return render_template("search.html", posts=posts, query=query)
+    posts, errors = services.search_posts(query)
+    return render_template("search.html", posts=posts, query=query, errors=errors)
 
 
 @content_bp.route("/attachment/<int:attachment_id>")
