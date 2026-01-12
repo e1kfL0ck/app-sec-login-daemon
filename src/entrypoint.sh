@@ -1,28 +1,16 @@
 #!/bin/sh
 set -e
 
-# If INIT_DB is set to a truthy value, run the initialization script.
-if [ -n "$INIT_DB" ]; then
-  case "$INIT_DB" in
+# If INIT_DATA is set to a truthy value, run the initialization script.
+if [ -n "$INIT_DATA" ]; then
+  case "$INIT_DATA" in
     1|true|True|TRUE|yes|Yes)
-      echo "INIT_DB is enabled — initializing database..."
+      echo "INIT_DATA is enabled — initializing database & clearing uploads..."
       python3 /workspace/init_db.py
-      ;;
-    *)
-      echo "INIT_DB not enabled (value='$INIT_DB'), skipping DB init."
-      ;;
-  esac
-fi
-
-# If CLEAR_UPLOADS is set to a truthy value, clear the data directory.
-if [ -n "$CLEAR_UPLOADS" ]; then
-  case "$CLEAR_UPLOADS" in
-    1|true|True|TRUE|yes|Yes)
-      echo "CLEAR_UPLOADS is enabled — clearing data directory..."
       rm -rf /data/uploads/*
       ;;
     *)
-      echo "CLEAR_UPLOADS not enabled (value='$CLEAR_UPLOADS'), skipping data clear."
+      echo "INIT_DATA not enabled (value='$INIT_DATA'), skipping DB init & uploads clearing."
       ;;
   esac
 fi
