@@ -2,7 +2,16 @@
 Content routes - posts, comments, search, feed.
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, send_from_directory, abort
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    send_from_directory,
+    abort,
+)
 from session_helpers import login_required
 
 from . import services
@@ -13,7 +22,7 @@ content_bp = Blueprint(
 
 
 @content_bp.route("/feed")
-def feed(): 
+def feed():
     """Display public feed."""
     page = request.args.get("page", 1, type=int)
     posts = services.get_public_feed(page=page)
@@ -43,7 +52,9 @@ def view_post(post_id):
 
     comments = services.get_by_post(post_id)
     attachments = services.get_attachments_for_post(post_id)
-    return render_template("post_detail.html", post=post, comments=comments, attachments=attachments)
+    return render_template(
+        "post_detail.html", post=post, comments=comments, attachments=attachments
+    )
 
 
 @content_bp.route("/post/create", methods=["GET", "POST"])
@@ -111,7 +122,9 @@ def edit_post(post_id):
 
     if not result.ok:
         attachments = services.get_attachments_for_post(post_id)
-        return render_template("post_edit.html", post=post, attachments=attachments, errors=result.errors)
+        return render_template(
+            "post_edit.html", post=post, attachments=attachments, errors=result.errors
+        )
 
     return redirect(url_for("content.view_post", post_id=post_id))
 
@@ -174,5 +187,11 @@ def download_attachment(attachment_id: int):
         return abort(404)
     directory, stored_name, original_name, mime_type = meta
     # Use send_from_directory for safe serving; attachment filenames sanitized
-    response = send_from_directory(directory, stored_name, mimetype=mime_type, as_attachment=True, download_name=original_name)
+    response = send_from_directory(
+        directory,
+        stored_name,
+        mimetype=mime_type,
+        as_attachment=True,
+        download_name=original_name,
+    )
     return response
