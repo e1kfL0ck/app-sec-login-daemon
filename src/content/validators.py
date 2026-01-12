@@ -71,7 +71,7 @@ def validate_attachments(files):
 
     for f in files:
         if not f:
-            errors.append("Invalid attachment provided.")
+            # Skip empty file inputs
             continue
 
         # Filename safety
