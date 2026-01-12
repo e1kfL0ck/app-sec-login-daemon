@@ -14,7 +14,6 @@ def init_db():
     # USERS TABLE
     # ================================
     cur.execute("""DROP TABLE IF EXISTS users;""")
-
     cur.execute("""
     CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +35,6 @@ def init_db():
     # ACTIVATION TOKENS TABLE
     # ================================
     cur.execute("""DROP TABLE IF EXISTS tokens;""")
-
     cur.execute("""
     CREATE TABLE tokens (
         token TEXT PRIMARY KEY,
@@ -55,7 +53,6 @@ def init_db():
     # POSTS TABLE
     # ================================
     cur.execute("DROP TABLE IF EXISTS posts;")
-
     cur.execute("""
         CREATE TABLE posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,7 +102,9 @@ def init_db():
         );
         """
     )
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_attachments_post_id ON attachments(post_id);")
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_attachments_post_id ON attachments(post_id);"
+    )
 
     # ================================
     # OPTIONAL SECURITY EVENTS TABLE
@@ -130,7 +129,7 @@ def init_db():
     conn.execute("PRAGMA foreign_keys = ON;")
     conn.commit()
 
-    # Create an initial user for testing if DEBUG mode is set to True
+    # Create an initial user & post for testing if DEBUG mode is set to True
     if os.environ.get("DEBUG", "False").lower() in ("true", "1", "t"):
         create_initial_user(conn)
         print("Initial user created.")
@@ -139,6 +138,8 @@ def init_db():
         print("MFA Secret: YOZSSE4QXLPRNCELINUIH6O2BXWLJVO4")
         create_initial_post(conn)
         print("Initial post created.")
+        print("Title: Welcome to the Blog!")
+        print("Post is located at: /content/post/1")
     conn.close()
     print(f"Database initialized successfully: {DB_FILE}")
 
@@ -168,6 +169,7 @@ def create_initial_user(conn: sqlite3.Connection) -> None:
         ),
     )
     conn.commit()
+
 
 def create_initial_post(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
