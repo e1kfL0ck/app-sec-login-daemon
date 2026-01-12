@@ -123,6 +123,25 @@ class PostRepository:
             (search_term, search_term, limit),
         ).fetchall()
 
+    @staticmethod
+    def search_by_attachment_filename(query, limit=50):
+        """Search for posts that have attachments matching the query filename."""
+        db = get_db()
+        search_term = f"%{query}%"
+        return db.execute(
+            """
+            SELECT DISTINCT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                u.email AS author_email
+            FROM posts p
+            JOIN users u ON p.author_id = u.id
+            JOIN attachments a ON p.id = a.post_id
+            WHERE p.is_public = 1 AND (a.original_name LIKE ? OR a.stored_name LIKE ?)
+            ORDER BY p.created_at DESC
+            LIMIT ?
+            """,
+            (search_term, search_term, limit),
+        ).fetchall()
+
 
 class CommentRepository:
     """Handles comment-related database operations."""

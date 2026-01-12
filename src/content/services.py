@@ -7,6 +7,7 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 from .repository import PostRepository, CommentRepository, AttachmentRepository
+from db import get_db
 
 
 class PostResult:
@@ -104,11 +105,33 @@ def get_user_posts(user_id, page=1, per_page=10):
 
 
 def search_posts(query, limit=50):
-    """Search posts."""
+    """Search posts by title, content, and attachment filenames."""
     if len(query) < 2:
         return []
 
-    return PostRepository.search(query, limit=limit)
+    # Search in posts (title and body)
+    posts_from_db = PostRepository.search(query, limit=limit)
+
+    # Also search by attachment filenames
+    posts_with_matching_attachments = PostRepository.search_by_attachment_filename(
+        query, limit=limit
+    )
+
+    # Combine results and remove duplicates
+    seen_ids = set()
+    combined_results = []
+
+    for post in posts_from_db:
+        if post[0] not in seen_ids:
+            combined_results.append(post)
+            seen_ids.add(post[0])
+
+    for post in posts_with_matching_attachments:
+        if post[0] not in seen_ids:
+            combined_results.append(post)
+            seen_ids.add(post[0])
+
+    return combined_results[:limit]
 
 
 def get_by_post(post_id):

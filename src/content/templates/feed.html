@@ -8,10 +8,23 @@
     <p class="text-gray-600">Discover posts from the community</p>
   </div>
 
+  <!-- Search Bar -->
+  <div class="mb-8 bg-white rounded-lg shadow-md p-6">
+    <form method="get" action="{{ url_for('content.search') }}" class="flex gap-2">
+      <input type="text" name="q" placeholder="Search posts, content, or filenames..." minlength="2"
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600">
+      <button type="submit"
+        class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">
+        🔍 Search
+      </button>
+    </form>
+  </div>
+
   <!-- Create Post Button (if logged in) -->
   {% if session.get('user_id') %}
   <div class="mb-8">
-    <a href="{{ url_for('content.create_post') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+    <a href="{{ url_for('content.create_post') }}"
+      class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
       + Create a Post
     </a>
   </div>
@@ -48,7 +61,8 @@
       <p class="text-gray-700 leading-relaxed line-clamp-3">{{ post.body }}</p>
 
       <div class="mt-4">
-        <a href="{{ url_for('content.view_post', post_id=post.id) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+        <a href="{{ url_for('content.view_post', post_id=post.id) }}"
+          class="text-indigo-600 hover:text-indigo-800 font-semibold">
           Read More →
         </a>
       </div>
@@ -59,7 +73,8 @@
   <!-- Pagination -->
   <div class="flex justify-center items-center gap-4 mt-8">
     {% if page > 1 %}
-    <a href="{{ url_for('content.feed', page=page-1) }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+    <a href="{{ url_for('content.feed', page=page-1) }}"
+      class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
       ← Previous
     </a>
     {% endif %}
@@ -68,7 +83,8 @@
       Page {{ page }}
     </span>
 
-    <a href="{{ url_for('content.feed', page=page+1) }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+    <a href="{{ url_for('content.feed', page=page+1) }}"
+      class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
       Next →
     </a>
   </div>
@@ -80,7 +96,8 @@
     <h3 class="text-2xl font-bold text-gray-900 mb-2">No posts yet</h3>
     <p class="text-gray-600 mb-6">Be the first to share something with the community!</p>
     {% if session.get('user_id') %}
-    <a href="{{ url_for('content.create_post') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+    <a href="{{ url_for('content.create_post') }}"
+      class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
       Create a Post
     </a>
     {% endif %}

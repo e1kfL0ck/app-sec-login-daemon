@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Search Header -->
+    <div class="mb-8">
+        <h2 class="text-4xl font-bold text-gray-900 mb-2">Search Posts</h2>
+        <p class="text-gray-600">Search through post titles, content, and attachment filenames</p>
+    </div>
+
+    <!-- Search Form -->
+    <div class="mb-8 bg-white rounded-lg shadow-md p-6">
+        <form method="get" class="flex gap-2">
+            <input type="text" name="q" placeholder="Search posts, content, or filenames..." value="{{ query }}"
+                minlength="2"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600">
+            <button type="submit"
+                class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                🔍 Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Search Results -->
+    {% if query and query|length >= 2 %}
+    {% if posts %}
+    <div class="mb-4">
+        <p class="text-gray-600 font-semibold">
+            Found {{ posts|length }} result{{ "s" if posts|length != 1 else "" }} for "<span class="text-indigo-600">{{
+                query }}</span>"
+        </p>
+    </div>
+
+    <div class="space-y-4">
+        {% for post in posts %}
+        <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-6 border-l-4 border-green-600">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900 hover:text-indigo-600">
+                        <a href="{{ url_for('content.view_post', post_id=post.id) }}">
+                            {{ post.title }}
+                        </a>
+                    </h3>
+                </div>
+            </div>
+
+            <div class="flex items-center text-sm text-gray-500 mb-3">
+                <span class="font-semibold">{{ post.author_email }}</span>
+                <span class="mx-2">•</span>
+                <time datetime="{{ post.created_at }}">
+                    {{ post.created_at if post.created_at else 'N/A' }}
+                </time>
+                {% if post.is_public %}
+                <span
+                    class="ml-4 inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+                    Public
+                </span>
+                {% endif %}
+            </div>
+
+            <p class="text-gray-700 leading-relaxed line-clamp-3">{{ post.body }}</p>
+
+            <div class="mt-4">
+                <a href="{{ url_for('content.view_post', post_id=post.id) }}"
+                    class="text-indigo-600 hover:text-indigo-800 font-semibold">
+                    Read More →
+                </a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- No Results State -->
+    <div class="text-center py-16 bg-white rounded-lg shadow-md">
+        <div class="text-6xl mb-4">🔍</div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">No results found</h3>
+        <p class="text-gray-600 mb-4">
+            No posts match your search for "<span class="font-semibold text-indigo-600">{{ query }}</span>"
+        </p>
+        <p class="text-gray-500 text-sm">Try different keywords or browse the <a href="{{ url_for('content.feed') }}"
+                class="text-indigo-600 hover:text-indigo-800 font-semibold">public feed</a> instead.</p>
+    </div>
+    {% endif %}
+
+    {% elif query and query|length < 2 %} <!-- Query Too Short State -->
+        <div class="text-center py-16 bg-white rounded-lg shadow-md">
+            <div class="text-6xl mb-4">✏️</div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Query too short</h3>
+            <p class="text-gray-600">Please enter at least 2 characters to search.</p>
+        </div>
+
+        {% else %}
+        <!-- Initial State (No Query) -->
+        <div class="text-center py-16 bg-white rounded-lg shadow-md">
+            <div class="text-6xl mb-4">📚</div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Start searching</h3>
+            <p class="text-gray-600 mb-4">Enter a search term to find posts, explore content, or discover attachments.
+            </p>
+            <p class="text-gray-500 text-sm">Search across post titles, content, and attachment filenames all in one
+                place.</p>
+        </div>
+        {% endif %}
+
+        <!-- Back to Feed -->
+        <div class="mt-8 text-center">
+            <a href="{{ url_for('content.feed') }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+                ← Back to Feed
+            </a>
+        </div>
+</div>
+{% endblock %}
