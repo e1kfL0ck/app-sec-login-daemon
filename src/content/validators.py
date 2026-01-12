@@ -4,8 +4,9 @@ Validation utilities for content module.
 
 import field_utils as fu
 import os
-import mimetypes
 from werkzeug.utils import secure_filename
+import magic
+
 
 # Basic file validation settings
 ALLOWED_MIME_TYPES = {
@@ -111,18 +112,44 @@ def validate_attachments(files):
             )
             continue
 
-        # MIME type check: combine client-provided and guessed types
-        client_mime = (f.mimetype or "").lower()
-        guessed_mime, _ = mimetypes.guess_type(safe_name)
-        guessed_mime = (guessed_mime or "").lower()
+        # MIME type check: magic-byte detection with verification
+        try:
+            client_mime = (f.mimetype or "").lower()
 
-        effective_mime = client_mime or guessed_mime
-        if not effective_mime:
-            errors.append(f"Attachment '{original_name}': unknown MIME type.")
-            continue
+            # Detect actual MIME type from file content
+            file_content = f.stream.read(2048)
+            f.stream.seek(0)  # Restore stream position after reading
+            actual_mime = (magic.from_buffer(file_content, mime=True) or "").lower()
 
-        if effective_mime not in ALLOWED_MIME_TYPES:
-            errors.append(f"Attachment '{original_name}': MIME type not allowed.")
+            if not actual_mime:
+                errors.append(
+                    f"Attachment '{original_name}': could not detect MIME type from file content."
+                )
+                continue
+
+            # Check if actual MIME type is allowed
+            if actual_mime not in ALLOWED_MIME_TYPES:
+                errors.append(
+                    f"Attachment '{original_name}': of type '{actual_mime}' is not allowed."
+                )
+                continue
+
+            # Verify claimed MIME type matches detected type
+            if client_mime and client_mime != actual_mime:
+                # Allow some flexibility for text files
+                if not (
+                    actual_mime == "text/plain"
+                    and client_mime
+                    in ("text/plain", "text/txt", "application/octet-stream")
+                ):
+                    errors.append(
+                        f"Attachment '{original_name}': the file type does not match its extension, or it is not allowed."
+                    )
+                    continue
+        except Exception as e:
+            errors.append(
+                f"Attachment '{original_name}': failed to verify file type - {str(e)}"
+            )
             continue
 
     return errors

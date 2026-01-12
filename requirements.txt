@@ -5,3 +5,4 @@ asgiref
 Flask-WTF
 pyotp
 qrcode[pil]
+python-magic
