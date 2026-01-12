@@ -49,7 +49,22 @@ def view_post(post_id):
 @content_bp.route("/post/create", methods=["GET", "POST"])
 @login_required
 def create_post():
-    """Create a new post."""
+    """
+    Handle GET and POST requests for creating a new post.
+
+    GET: Renders the post creation form.
+
+    POST: Processes form submission to create a new post.
+        - Extracts title and body from form data
+        - Determines is_public status from checkbox (checked = "on", unchecked = absent)
+        - Accepts file attachments
+        - Returns rendered form with errors if creation fails
+        - Redirects to the new post view on success
+
+    Returns:
+        GET: Rendered post_create.html template
+        POST: Rendered post_create.html with errors dict, or redirect to view_post
+    """
     user_id = session.get("user_id")
 
     if request.method == "GET":
