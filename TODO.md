@@ -6,6 +6,8 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 **Enforce validation of the user input fields added in the new user module**
 
+- Admin disabled accounts should receive a proper message when trying to log in.
+
 - Admin dashboard (to later validate post)
   - Delete / hide
     - posts

@@ -87,14 +87,13 @@ class PostRepository:
             (limit, offset),
         ).fetchall()
 
-    # TODO: The get_by_author query filters out posts from disabled users, but this means
-    # a user viewing their own profile won't see their own posts if they've disabled their
-    # account. This is inconsistent with the behavior where users can still access settings
-    # and reactivate their account. Either allow users to see their own posts when disabled,
-    # or prevent disabled users from logging in entirely.
     @staticmethod
     def get_by_author(author_id, limit=50, offset=0):
-        """Get all posts by a specific author (including private posts)."""
+        """Get all posts by a specific author (including private posts).
+        
+        Allows self-disabled users to see their own posts, but filters out
+        posts from admin-disabled users.
+        """
         db = get_db()
         return db.execute(
             """
@@ -103,7 +102,6 @@ class PostRepository:
             FROM posts p
             JOIN users u ON p.author_id = u.id
                         WHERE p.author_id = ?
-                            AND u.disabled = 0
                             AND u.disabled_by_admin = 0
             ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
