@@ -181,12 +181,12 @@ def verify():
             db.commit()
             session.clear()
             session["user_id"] = user_id
-            email = db.execute(
+            user = db.execute(
                 "SELECT email, role, disabled FROM users WHERE id = ?", (user_id,)
             ).fetchone()
-            session["email"] = email[0]
-            session["role"] = email[1]
-            session["disabled"] = bool(email[2])
+            session["email"] = user[0]
+            session["role"] = user[1]
+            session["disabled"] = bool(user[2])
             # TODO: update last login
             return redirect(url_for("dashboard"))
 
