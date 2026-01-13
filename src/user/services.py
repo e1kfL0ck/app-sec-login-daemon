@@ -1,0 +1,128 @@
+"""
+Business logic for user profile and account management.
+"""
+
+import sqlite3
+from werkzeug.security import check_password_hash
+
+from .validators import validate_email_update, validate_account_deletion
+from .repository import UserProfileRepository
+
+
+class UpdateEmailResult:
+    """Result object for email update operation."""
+
+    def __init__(self, ok, errors=None):
+        self.ok = ok
+        self.errors = errors or []
+
+
+class DeleteAccountResult:
+    """Result object for account deletion operation."""
+
+    def __init__(self, ok, errors=None):
+        self.ok = ok
+        self.errors = errors or []
+
+
+def get_user_profile(user_id):
+    """
+    Get user profile data.
+    Returns user dict with email and other info.
+    """
+    user = UserProfileRepository.get_user_by_id(user_id)
+    if not user:
+        return None
+
+    return {
+        "id": user[0],
+        "email": user[1],
+        "created_at": user[3],
+        "activated": user[4],
+        "mfa_enabled": user[5],
+    }
+
+
+def get_user_feed(user_id, page=1, per_page=10):
+    """
+    Get user's personal feed (their own posts).
+    Returns list of posts.
+    """
+    # Import here to avoid circular dependency
+    from content import services as content_services
+
+    return content_services.get_user_posts(user_id, page=page, per_page=per_page)
+
+
+def update_user_email(user_id, new_email, password):
+    """
+    Update user's email address.
+    Requires password confirmation.
+    Returns UpdateEmailResult.
+    """
+    # Validate inputs
+    validation_errors = validate_email_update(new_email)
+    if validation_errors:
+        return UpdateEmailResult(ok=False, errors=validation_errors)
+
+    # Get current user
+    user = UserProfileRepository.get_user_by_id(user_id)
+    if not user:
+        return UpdateEmailResult(ok=False, errors=["User not found"])
+
+    # Verify password
+    password_hash = user[2]  # password_hash is at index 2
+    if not check_password_hash(password_hash, password):
+        return UpdateEmailResult(ok=False, errors=["Incorrect password"])
+
+    # Check if new email is same as current
+    current_email = user[1]
+    if current_email == new_email:
+        return UpdateEmailResult(
+            ok=False, errors=["New email is the same as current email"]
+        )
+
+    # Check if new email already exists
+    existing_user = UserProfileRepository.get_user_by_email(new_email)
+    if existing_user:
+        return UpdateEmailResult(ok=False, errors=["Email already in use"])
+
+    # Update email
+    try:
+        UserProfileRepository.update_email(user_id, new_email)
+        return UpdateEmailResult(ok=True)
+    except sqlite3.IntegrityError:
+        return UpdateEmailResult(ok=False, errors=["Email already in use"])
+    except Exception as e:
+        return UpdateEmailResult(ok=False, errors=[f"Failed to update email: {str(e)}"])
+
+
+def delete_user_account(user_id, password, confirmation):
+    """
+    Delete user account permanently.
+    Requires password and typed confirmation.
+    Returns DeleteAccountResult.
+    """
+    # Validate inputs
+    validation_errors = validate_account_deletion(confirmation)
+    if validation_errors:
+        return DeleteAccountResult(ok=False, errors=validation_errors)
+
+    # Get current user
+    user = UserProfileRepository.get_user_by_id(user_id)
+    if not user:
+        return DeleteAccountResult(ok=False, errors=["User not found"])
+
+    # Verify password
+    password_hash = user[2]
+    if not check_password_hash(password_hash, password):
+        return DeleteAccountResult(ok=False, errors=["Incorrect password"])
+
+    # Delete user account
+    try:
+        UserProfileRepository.delete_user(user_id)
+        return DeleteAccountResult(ok=True)
+    except Exception as e:
+        return DeleteAccountResult(
+            ok=False, errors=[f"Failed to delete account: {str(e)}"]
+        )

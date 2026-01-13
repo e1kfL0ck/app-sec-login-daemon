@@ -70,6 +70,10 @@
     <div class="mt-8 pt-8 border-t border-gray-200">
       <h3 class="text-xl font-semibold text-gray-800 mb-4">Content Hub</h3>
       <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <a href="{{ url_for('user.profile') }}"
+          class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition text-center">
+          My Profile
+        </a>
         <a href="{{ url_for('content.feed') }}"
           class="inline-block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition text-center">
           View Public Feed

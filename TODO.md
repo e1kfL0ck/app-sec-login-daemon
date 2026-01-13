@@ -4,7 +4,6 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 ## High priority / New mandatory features
 
-- Magic bytes check on file upload (to avoid users uploading scripts / invalid files)
 - User profile page
 
 - Admin dashboard (to later validate post)
