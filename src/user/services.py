@@ -162,14 +162,13 @@ def disable_user_account(user_id, password, confirmation):
     if not user:
         return ToggleAccountResult(ok=False, errors=["User not found"])
 
-    # TODO: consider unpacking the user tuple for clarity
-    if user[8]:  # disabled_by_admin
+    if bool(user["disabled_by_admin"]):
         return ToggleAccountResult(
             ok=False,
             errors=["Account disabled by administrator. Contact support."],
         )
 
-    if not check_password_hash(user[2], password):
+    if not check_password_hash(user["password_hash"], password):
         return ToggleAccountResult(ok=False, errors=["Incorrect password"])
 
     try:
@@ -189,18 +188,16 @@ def reactivate_user_account(user_id, password):
     if not user:
         return ToggleAccountResult(ok=False, errors=["User not found"])
 
-    # TODO: consider unpacking the user tuple for clarity
-    if user[8]:
+    if bool(user["disabled_by_admin"]):
         return ToggleAccountResult(
             ok=False,
             errors=["Account disabled by administrator. Contact support."],
         )
 
-    # TODO: consider unpacking the user tuple once again for clarity
-    if not user[7]:
+    if not bool(user["disabled"]):
         return ToggleAccountResult(ok=False, errors=["Account is already active"])
 
-    if not check_password_hash(user[2], password):
+    if not check_password_hash(user["password_hash"], password):
         return ToggleAccountResult(ok=False, errors=["Incorrect password"])
 
     try:
