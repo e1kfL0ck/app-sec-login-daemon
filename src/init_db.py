@@ -188,7 +188,6 @@ def create_initial_user(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-# TODO: Change the MFA secret and backup codes for the admin user
 def create_initial_admin(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
 
