@@ -76,14 +76,16 @@ def create_post(author_id, title, body, is_public=True, files=None):
     return PostResult(ok=True, post_id=post_id)
 
 
-def get_post_view(post_id, requesting_user_id=None):
+def get_post_view(post_id, requesting_user_id=None, requesting_is_admin=False):
     """Get post for display (with permissions check)."""
     post = PostRepository.get_by_id(post_id)
     if not post:
         return None
 
     # Check permissions
-    if not permissions.can_view_post(requesting_user_id, post_id):
+    if not permissions.can_view_post(
+        requesting_user_id, post_id, is_admin=requesting_is_admin
+    ):
         return None
 
     return post
@@ -94,6 +96,12 @@ def get_public_feed(page=1, per_page=10):
     offset = (page - 1) * per_page
     posts = PostRepository.get_public_posts(limit=per_page, offset=offset)
     return posts
+
+
+def get_admin_feed(page=1, per_page=20):
+    """Admin: paginated feed of all posts (public and private)."""
+    offset = (page - 1) * per_page
+    return PostRepository.get_all_posts(limit=per_page, offset=offset)
 
 
 def get_user_posts(user_id, page=1, per_page=10):
@@ -187,14 +195,18 @@ def get_attachments_for_post(post_id):
     return AttachmentRepository.get_by_post(post_id)
 
 
-def get_attachment_file(attachment_id, requesting_user_id=None):
+def get_attachment_file(
+    attachment_id, requesting_user_id=None, requesting_is_admin=False
+):
     """Return tuple (directory, stored_name, original_name, mime_type) if user can view it, else None."""
     att = AttachmentRepository.get_by_id(attachment_id)
     if not att:
         return None
 
     post_id = att["post_id"]
-    if not permissions.can_view_post(requesting_user_id, post_id):
+    if not permissions.can_view_post(
+        requesting_user_id, post_id, is_admin=requesting_is_admin
+    ):
         return None
 
     directory = _ensure_post_upload_dir(post_id)

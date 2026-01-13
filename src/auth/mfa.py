@@ -154,16 +154,19 @@ def verify():
         return redirect(url_for("auth.login"))
     db = get_db()
     row = db.execute(
-        "SELECT email, mfa_secret, backup_codes FROM users WHERE id = ?", (user_id,)
+        "SELECT email, mfa_secret, backup_codes, role, disabled FROM users WHERE id = ?",
+        (user_id,),
     ).fetchone()
     if not row:
         return redirect(url_for("auth.login"))
-    email, secret, backup_json = row
+    email, secret, backup_json, role, disabled = row
     if secret and pyotp.TOTP(secret).verify(code, valid_window=1):
         # login finalization
         session.clear()
         session["user_id"] = user_id
         session["email"] = email
+        session["role"] = role
+        session["disabled"] = bool(disabled)
         # TODO: update last login
         return redirect(url_for("dashboard"))
 
@@ -179,9 +182,11 @@ def verify():
             session.clear()
             session["user_id"] = user_id
             email = db.execute(
-                "SELECT email FROM users WHERE id = ?", (user_id,)
-            ).fetchone()[0]
-            session["email"] = email
+                "SELECT email, role, disabled FROM users WHERE id = ?", (user_id,)
+            ).fetchone()
+            session["email"] = email[0]
+            session["role"] = email[1]
+            session["disabled"] = bool(email[2])
             # TODO: update last login
             return redirect(url_for("dashboard"))
 

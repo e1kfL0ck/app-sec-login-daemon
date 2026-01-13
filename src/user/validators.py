@@ -43,3 +43,19 @@ def validate_account_deletion(confirmation):
         errors.append("You must type DELETE to confirm account deletion")
 
     return errors
+
+
+def validate_account_disable(confirmation):
+    """
+    Validate account disable confirmation.
+    Users must type DISABLE to proceed.
+    """
+    errors = []
+    if not confirmation:
+        errors.append("Confirmation is required")
+        return errors
+
+    if confirmation != "DISABLE":
+        errors.append("You must type DISABLE to confirm account disablement")
+
+    return errors

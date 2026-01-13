@@ -5,7 +5,11 @@ Business logic for user profile and account management.
 import sqlite3
 from werkzeug.security import check_password_hash
 
-from .validators import validate_email_update, validate_account_deletion
+from .validators import (
+    validate_email_update,
+    validate_account_deletion,
+    validate_account_disable,
+)
 from .repository import UserProfileRepository
 
 
@@ -40,6 +44,9 @@ def get_user_profile(user_id):
         "created_at": user[3],
         "activated": user[4],
         "mfa_enabled": user[5],
+        "role": user[6],
+        "disabled": bool(user[7]),
+        "disabled_by_admin": bool(user[8]),
     }
 
 
@@ -52,6 +59,12 @@ def get_user_feed(user_id, page=1, per_page=10):
     from content import services as content_services
 
     return content_services.get_user_posts(user_id, page=page, per_page=per_page)
+
+
+def get_all_users(page=1, per_page=50):
+    """Admin: list users with basic info."""
+    offset = (page - 1) * per_page
+    return UserProfileRepository.list_users(limit=per_page, offset=offset)
 
 
 def update_user_email(user_id, new_email, password):
@@ -126,3 +139,98 @@ def delete_user_account(user_id, password, confirmation):
         return DeleteAccountResult(
             ok=False, errors=[f"Failed to delete account: {str(e)}"]
         )
+
+
+class ToggleAccountResult:
+    """Result for disable/reactivate operations."""
+
+    def __init__(self, ok, errors=None):
+        self.ok = ok
+        self.errors = errors or []
+
+
+def disable_user_account(user_id, password, confirmation):
+    """
+    Disable a user account (self-service). Content becomes hidden.
+    Requires password and typed confirmation.
+    """
+    validation_errors = validate_account_disable(confirmation)
+    if validation_errors:
+        return ToggleAccountResult(ok=False, errors=validation_errors)
+
+    user = UserProfileRepository.get_user_by_id(user_id)
+    if not user:
+        return ToggleAccountResult(ok=False, errors=["User not found"])
+
+    # TODO: consider unpacking the user tuple for clarity
+    if user[8]:  # disabled_by_admin
+        return ToggleAccountResult(
+            ok=False,
+            errors=["Account disabled by administrator. Contact support."],
+        )
+
+    if not check_password_hash(user[2], password):
+        return ToggleAccountResult(ok=False, errors=["Incorrect password"])
+
+    try:
+        UserProfileRepository.set_disabled(user_id, True, False)
+        return ToggleAccountResult(ok=True)
+    except Exception as e:
+        return ToggleAccountResult(
+            ok=False, errors=[f"Failed to disable account: {str(e)}"]
+        )
+
+
+def reactivate_user_account(user_id, password):
+    """
+    Reactivate a self-disabled account. Not allowed if disabled by admin.
+    """
+    user = UserProfileRepository.get_user_by_id(user_id)
+    if not user:
+        return ToggleAccountResult(ok=False, errors=["User not found"])
+
+    # TODO: consider unpacking the user tuple for clarity
+    if user[8]:
+        return ToggleAccountResult(
+            ok=False,
+            errors=["Account disabled by administrator. Contact support."],
+        )
+
+    # TODO: consider unpacking the user tuple once again for clarity
+    if not user[7]:
+        return ToggleAccountResult(ok=False, errors=["Account is already active"])
+
+    if not check_password_hash(user[2], password):
+        return ToggleAccountResult(ok=False, errors=["Incorrect password"])
+
+    try:
+        UserProfileRepository.set_disabled(user_id, False, False)
+        return ToggleAccountResult(ok=True)
+    except Exception as e:
+        return ToggleAccountResult(
+            ok=False, errors=[f"Failed to reactivate account: {str(e)}"]
+        )
+
+
+def admin_set_disabled(target_user_id, disabled=True):
+    """Admin disable/enable a user account."""
+    try:
+        UserProfileRepository.set_disabled(target_user_id, disabled, disabled)
+        return ToggleAccountResult(ok=True)
+    except Exception as e:
+        return ToggleAccountResult(
+            ok=False, errors=[f"Failed to update status: {str(e)}"]
+        )
+
+
+# TODO: Check this out too
+#
+# def admin_set_activation(target_user_id, activated=True):
+#     """Admin activate/deactivate an account (email activation flag)."""
+#     try:
+#         UserProfileRepository.set_activation(target_user_id, activated)
+#         return ToggleAccountResult(ok=True)
+#     except Exception as e:
+#         return ToggleAccountResult(
+#             ok=False, errors=[f"Failed to update activation: {str(e)}"]
+#         )

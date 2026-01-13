@@ -13,7 +13,12 @@ class UserProfileRepository:
         """Get user by ID. Returns user row or None."""
         db = get_db()
         return db.execute(
-            "SELECT id, email, password_hash, created_at, activated, mfa_enabled FROM users WHERE id = ?",
+            """
+            SELECT id, email, password_hash, created_at, activated,
+                   mfa_enabled, role, disabled, disabled_by_admin
+            FROM users
+            WHERE id = ?
+            """,
             (user_id,),
         ).fetchone()
 
@@ -22,7 +27,8 @@ class UserProfileRepository:
         """Get user by email. Returns user row or None."""
         db = get_db()
         return db.execute(
-            "SELECT id, email, password_hash FROM users WHERE email = ?", (email,)
+            "SELECT id, email, password_hash, role, disabled, disabled_by_admin FROM users WHERE email = ?",
+            (email,),
         ).fetchone()
 
     @staticmethod
@@ -33,6 +39,32 @@ class UserProfileRepository:
         db.commit()
 
     @staticmethod
+    def set_disabled(user_id, disabled, disabled_by_admin=False):
+        """Enable or disable a user account."""
+        db = get_db()
+        db.execute(
+            """
+            UPDATE users
+            SET disabled = ?, disabled_by_admin = ?
+            WHERE id = ?
+            """,
+            (1 if disabled else 0, 1 if disabled_by_admin else 0, user_id),
+        )
+        db.commit()
+
+    # TODO: Check this out
+    #
+    # @staticmethod
+    # def set_activation(user_id, activated):
+    #     """Activate or deactivate a user account."""
+    #     db = get_db()
+    #     db.execute(
+    #         "UPDATE users SET activated = ? WHERE id = ?",
+    #         (1 if activated else 0, user_id),
+    #     )
+    #     db.commit()
+
+    @staticmethod
     def delete_user(user_id):
         """
         Delete user account and all associated data.
@@ -41,10 +73,10 @@ class UserProfileRepository:
         db = get_db()
 
         # Delete user's comments first (foreign key constraint)
-        db.execute("DELETE FROM comments WHERE user_id = ?", (user_id,))
+        db.execute("DELETE FROM comments WHERE author_id = ?", (user_id,))
 
         # Delete user's posts
-        db.execute("DELETE FROM posts WHERE user_id = ?", (user_id,))
+        db.execute("DELETE FROM posts WHERE author_id = ?", (user_id,))
 
         # Delete user's tokens
         db.execute("DELETE FROM tokens WHERE user_id = ?", (user_id,))
@@ -53,3 +85,17 @@ class UserProfileRepository:
         db.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
         db.commit()
+
+    @staticmethod
+    def list_users(limit=50, offset=0):
+        """Return basic info for users for admin listing."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT id, email, role, activated, disabled, disabled_by_admin, created_at
+            FROM users
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        ).fetchall()

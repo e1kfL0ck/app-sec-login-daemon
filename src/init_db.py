@@ -25,7 +25,10 @@ def init_db():
         activated INTEGER DEFAULT 0 CHECK (activated IN (0,1)),
         mfa_enabled INTEGER DEFAULT 0 CHECK (mfa_enabled IN (0,1)),
         mfa_secret TEXT,
-        backup_codes TEXT
+        backup_codes TEXT,
+        role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
+        disabled INTEGER DEFAULT 0 CHECK (disabled IN (0,1)),
+        disabled_by_admin INTEGER DEFAULT 0 CHECK (disabled_by_admin IN (0,1))
     );
     """)
 
@@ -137,10 +140,19 @@ def init_db():
         print("Email: user@domain.org")
         print("Password: Bonjour123!")
         print("MFA Secret: YOZSSE4QXLPRNCELINUIH6O2BXWLJVO4")
+        create_initial_admin(conn)
+        print("Initial admin created.")
+        print("Email: admin@domain.org")
+        print("Password: Bonjour123!")
+        print("MFA Secret: ZBOAS52YBTNSZXHC35B6AJXCOOTZ4TTO")
         create_initial_post(conn)
         print("Initial post created.")
         print("Title: Welcome to the Blog!")
         print("Post is located at: /content/post/1")
+        create_initial_private_post(conn)
+        print("Initial private post created.")
+        print("Title: Private Post")
+        print("Post is located at: /content/post/2")
     conn.close()
     print(f"Database initialized successfully: {DB_FILE}")
 
@@ -152,9 +164,10 @@ def create_initial_user(conn: sqlite3.Connection) -> None:
         """
         INSERT OR IGNORE INTO users (
             id, email, password_hash, last_login, nb_failed_logins,
-            created_at, activated, mfa_enabled, mfa_secret, backup_codes
+            created_at, activated, mfa_enabled, mfa_secret, backup_codes,
+            role, disabled, disabled_by_admin
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """,
         (
             1,
@@ -167,6 +180,41 @@ def create_initial_user(conn: sqlite3.Connection) -> None:
             1,
             "YOZSSE4QXLPRNCELINUIH6O2BXWLJVO4",
             '["e3aba907b83b", "ab237fb50db5", "3e1a0b59417c", "09cac10f2169", "ae8715439a60", "ec37c00a9217", "1cfdca3194bf", "a37cc97d5610"]',
+            "user",
+            0,
+            0,
+        ),
+    )
+    conn.commit()
+
+
+# TODO: Change the MFA secret and backup codes for the admin user
+def create_initial_admin(conn: sqlite3.Connection) -> None:
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO users (
+            id, email, password_hash, last_login, nb_failed_logins,
+            created_at, activated, mfa_enabled, mfa_secret, backup_codes,
+            role, disabled, disabled_by_admin
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """,
+        (
+            2,
+            "admin@domain.org",
+            "scrypt:32768:8:1$0iGmdM53ifrZnXpX$78413db3ee07ba0fd89bcc2cd5ac9b8bcbe75c83eb8021a07be951887fd0848d5f0e711f484f2c8da25c8810fb9eaf7f24085b00a0bad3a6b10e451d1c01c2c6",
+            "2025-12-08T20:10:12.482998",
+            0,
+            "2025-12-03T13:01:23.267399",
+            1,
+            1,
+            "ZBOAS52YBTNSZXHC35B6AJXCOOTZ4TTO",
+            '["823230f43476", "87ed321db154", "04d3848b5047", "39d32fb88843", "f057a4ade8d5", "a3a0b4a24f46", "0e139351f7ef", "92f460b242f7"]',
+            "admin",
+            0,
+            0,
         ),
     )
     conn.commit()
@@ -190,6 +238,29 @@ def create_initial_post(conn: sqlite3.Connection) -> None:
             1,
             "2025-12-03T14:00:00.000000",
             "2025-12-03T14:00:00.000000",
+        ),
+    )
+    conn.commit()
+
+
+def create_initial_private_post(conn: sqlite3.Connection) -> None:
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO posts (
+            id, author_id, title, body, is_public, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+        """,
+        (
+            2,
+            1,
+            "Private Post",
+            "This is a private post. Only you can see this content.",
+            0,
+            "2025-12-03T15:00:00.000000",
+            "2025-12-03T15:00:00.000000",
         ),
     )
     conn.commit()

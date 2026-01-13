@@ -87,6 +87,19 @@
           My Posts
         </a>
       </div>
+
+      {% if user.role == 'admin' %}
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <a href="{{ url_for('user.admin_list_users') }}"
+          class="inline-block bg-gradient-to-r from-slate-700 to-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:from-slate-800 hover:to-black transition text-center">
+          Admin: Manage Users
+        </a>
+        <a href="{{ url_for('content.admin_feed') }}"
+          class="inline-block bg-gradient-to-r from-orange-500 to-amber-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-amber-700 transition text-center">
+          Admin: Global Feed
+        </a>
+      </div>
+      {% endif %}
       <!-- Search Bar -->
       <div class="bg-white rounded-lg shadow-md p-4">
         <form method="get" action="{{ url_for('content.search') }}" class="flex gap-2">

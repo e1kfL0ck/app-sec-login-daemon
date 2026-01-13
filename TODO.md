@@ -4,7 +4,7 @@ This file lists high-level tasks and function contracts for the login/registrati
 
 ## High priority / New mandatory features
 
-- User profile page
+**Enforce validation of the user input fields added in the new user module**
 
 - Admin dashboard (to later validate post)
   - Delete / hide

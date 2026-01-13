@@ -12,7 +12,7 @@ from flask import (
     send_from_directory,
     abort,
 )
-from session_helpers import login_required
+from session_helpers import login_required, admin_required
 
 from . import services
 
@@ -30,6 +30,15 @@ def feed():
     return render_template("feed.html", posts=posts, page=page)
 
 
+@content_bp.route("/admin/feed")
+@admin_required
+def admin_feed():
+    """Admin global feed (all posts)."""
+    page = request.args.get("page", 1, type=int)
+    posts = services.get_admin_feed(page=page, per_page=20)
+    return render_template("admin_feed.html", posts=posts, page=page)
+
+
 @content_bp.route("/posts")
 @login_required
 def user_posts():
@@ -45,7 +54,10 @@ def user_posts():
 def view_post(post_id):
     """View a single post."""
     user_id = session.get("user_id")
-    post = services.get_post_view(post_id, requesting_user_id=user_id)
+    is_admin = session.get("role") == "admin"
+    post = services.get_post_view(
+        post_id, requesting_user_id=user_id, requesting_is_admin=is_admin
+    )
 
     if not post:
         return render_template("404.html"), 404
@@ -101,7 +113,10 @@ def create_post():
 def edit_post(post_id):
     """Edit a post."""
     user_id = session.get("user_id")
-    post = services.get_post_view(post_id, requesting_user_id=user_id)
+    is_admin = session.get("role") == "admin"
+    post = services.get_post_view(
+        post_id, requesting_user_id=user_id, requesting_is_admin=is_admin
+    )
 
     result = services.permissions.can_edit_post(user_id, post_id)
     if not post or not result:
@@ -134,7 +149,10 @@ def edit_post(post_id):
 def delete_post(post_id):
     """Delete a post."""
     user_id = session.get("user_id")
-    post = services.get_post_view(post_id, requesting_user_id=user_id)
+    is_admin = session.get("role") == "admin"
+    post = services.get_post_view(
+        post_id, requesting_user_id=user_id, requesting_is_admin=is_admin
+    )
 
     result = services.permissions.can_edit_post(user_id, post_id)
     if not post or not result:
@@ -182,7 +200,12 @@ def search():
 def download_attachment(attachment_id: int):
     """Serve an attachment file if viewer has permissions."""
     user_id = session.get("user_id")
-    meta = services.get_attachment_file(attachment_id, requesting_user_id=user_id)
+    is_admin = session.get("role") == "admin"
+    meta = services.get_attachment_file(
+        attachment_id,
+        requesting_user_id=user_id,
+        requesting_is_admin=is_admin,
+    )
     if not meta:
         return abort(404)
     directory, stored_name, original_name, mime_type = meta

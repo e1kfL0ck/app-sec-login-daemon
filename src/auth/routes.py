@@ -111,6 +111,8 @@ def login():
 
     session["user_id"] = result.user_id
     session["email"] = email
+    session["role"] = result.role
+    session["disabled"] = result.disabled
     return redirect(url_for("dashboard"))
 
 

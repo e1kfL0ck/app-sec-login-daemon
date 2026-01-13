@@ -5,7 +5,7 @@ Authorization checks for content operations, e.g., view, edit, delete posts.
 from .repository import PostRepository
 
 
-def can_view_post(user_id, post_id):
+def can_view_post(user_id, post_id, is_admin=False):
     """
     Check if a user has permission to view a specific post.
 
@@ -30,6 +30,12 @@ def can_view_post(user_id, post_id):
     if not post:
         return False
 
+    # Hide content from disabled accounts
+    if post["author_disabled"] or post["author_disabled_by_admin"]:
+        # Admins can still inspect disabled content if needed
+        if not is_admin:
+            return False
+
     # Public posts can be viewed by anyone
     if post["is_public"]:  # is_public
         return True
@@ -38,7 +44,10 @@ def can_view_post(user_id, post_id):
     if user_id == post["author_id"]:  # author_id
         return True
 
-    # TODO: Check if user is admin
+    # Admins can view any post
+    if is_admin:
+        return True
+
     return False
 
 

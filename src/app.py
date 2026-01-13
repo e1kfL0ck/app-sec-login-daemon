@@ -18,7 +18,9 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
 app.register_blueprint(mfa_bp)  # Routes at /mfa/*
 app.register_blueprint(auth_bp)  # Routes at /register, /login, /logout, etc.
-app.register_blueprint(content_bp)  # Routes at /content/feed, /content/post/<id>, /content/search, etc.
+app.register_blueprint(
+    content_bp
+)  # Routes at /content/feed, /content/post/<id>, /content/search, etc.
 app.register_blueprint(user_bp)  # Routes at /user/profile, /user/settings, etc.
 
 # CSRF Protection
@@ -58,7 +60,13 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html", user={"email": session.get("email")}), 200
+    return render_template(
+        "dashboard.html",
+        user={
+            "email": session.get("email"),
+            "role": session.get("role", "user"),
+        },
+    ), 200
 
 
 asgi_app = WsgiToAsgi(app)

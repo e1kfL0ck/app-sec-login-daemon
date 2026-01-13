@@ -41,11 +41,12 @@ class PostRepository:
         db = get_db()
         return db.execute(
             """
-            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
-                   p.updated_at, u.email AS author_email
-            FROM posts p
-            JOIN users u ON p.author_id = u.id
-            WHERE p.id = ?
+             SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                 p.updated_at, u.email AS author_email, u.disabled AS author_disabled,
+                 u.disabled_by_admin AS author_disabled_by_admin
+             FROM posts p
+             JOIN users u ON p.author_id = u.id
+             WHERE p.id = ?
             """,
             (post_id,),
         ).fetchone()
@@ -61,12 +62,36 @@ class PostRepository:
             FROM posts p
             JOIN users u ON p.author_id = u.id
             WHERE p.is_public = 1
+              AND u.disabled = 0
+              AND u.disabled_by_admin = 0
             ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
             """,
             (limit, offset),
         ).fetchall()
 
+    @staticmethod
+    def get_all_posts(limit=50, offset=0):
+        """Admin: get every post regardless of visibility or author status."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                   u.email AS author_email, u.disabled AS author_disabled,
+                   u.disabled_by_admin AS author_disabled_by_admin
+            FROM posts p
+            JOIN users u ON p.author_id = u.id
+            ORDER BY p.created_at DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        ).fetchall()
+
+    # TODO: The get_by_author query filters out posts from disabled users, but this means
+    # a user viewing their own profile won't see their own posts if they've disabled their
+    # account. This is inconsistent with the behavior where users can still access settings
+    # and reactivate their account. Either allow users to see their own posts when disabled,
+    # or prevent disabled users from logging in entirely.
     @staticmethod
     def get_by_author(author_id, limit=50, offset=0):
         """Get all posts by a specific author (including private posts)."""
@@ -77,7 +102,9 @@ class PostRepository:
                    u.email AS author_email
             FROM posts p
             JOIN users u ON p.author_id = u.id
-            WHERE p.author_id = ?
+                        WHERE p.author_id = ?
+                            AND u.disabled = 0
+                            AND u.disabled_by_admin = 0
             ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
             """,
@@ -116,7 +143,10 @@ class PostRepository:
                    u.email AS author_email
             FROM posts p
             JOIN users u ON p.author_id = u.id
-            WHERE p.is_public = 1 AND (p.title LIKE ? OR p.body LIKE ?)
+                        WHERE p.is_public = 1
+                            AND u.disabled = 0
+                            AND u.disabled_by_admin = 0
+                            AND (p.title LIKE ? OR p.body LIKE ?)
             ORDER BY p.created_at DESC
             LIMIT ?
             """,
@@ -135,7 +165,10 @@ class PostRepository:
             FROM posts p
             JOIN users u ON p.author_id = u.id
             JOIN attachments a ON p.id = a.post_id
-            WHERE p.is_public = 1 AND (a.original_name LIKE ? OR a.stored_name LIKE ?)
+                        WHERE p.is_public = 1
+                            AND u.disabled = 0
+                            AND u.disabled_by_admin = 0
+                            AND (a.original_name LIKE ? OR a.stored_name LIKE ?)
             ORDER BY p.created_at DESC
             LIMIT ?
             """,
@@ -175,6 +208,8 @@ class CommentRepository:
             FROM comments c
             JOIN users u ON c.author_id = u.id
             WHERE c.post_id = ?
+              AND u.disabled = 0
+              AND u.disabled_by_admin = 0
             ORDER BY c.created_at ASC
             """,
             (post_id,),
