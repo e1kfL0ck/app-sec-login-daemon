@@ -61,7 +61,7 @@ def can_edit_post(user_id, post_id):
     return user_id == post[1]  # author_id
 
 
-def can_delete_post(user_id, post_id):
+def can_delete_post(user_id, post_id, is_admin=False):
     """Check if user can delete a post."""
     post = PostRepository.get_by_id(post_id)
     if not post:
@@ -71,5 +71,8 @@ def can_delete_post(user_id, post_id):
     if user_id == post[1]:
         return True
 
-    # TODO: Check if user is admin
+    # Admins may delete any post
+    if is_admin:
+        return True
+
     return False

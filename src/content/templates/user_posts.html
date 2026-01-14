@@ -24,7 +24,8 @@
 							{{ post.title }}
 						</a>
 						<div class="flex items-center gap-3 mt-2 text-sm text-gray-600">
-							<span>{{ post.created_at.replace('T', ' ').split('.')[0] if post.created_at else 'N/A' }}</span>
+							<span>{{ post.created_at.replace('T', ' ').split('.')[0] if post.created_at else 'N/A'
+								}}</span>
 							{% if post.is_public %}
 							<span
 								class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Public</span>
@@ -39,6 +40,7 @@
 							class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm">Edit</a>
 						<form method="POST" action="{{ url_for('content.delete_post', post_id=post.id) }}"
 							style="display:inline;" onsubmit="return confirm('Are you sure?');">
+							<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 							<button type="submit"
 								class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm">Delete</button>
 						</form>

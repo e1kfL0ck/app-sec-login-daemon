@@ -60,13 +60,15 @@
     </div>
     {% endif %}
 
-    <!-- Edit/Delete Options (if user is author) -->
-    {% if session.get('user_id') == post.author_id %}
+    <!-- Edit/Delete Options: Edit for authors, Delete for authors or admins -->
+    {% if session.get('user_id') == post.author_id or session.get('role') == 'admin' %}
     <div class="flex gap-2 pt-6 border-t-2 border-gray-200">
+      {% if session.get('user_id') == post.author_id %}
       <a href="{{ url_for('content.edit_post', post_id=post.id) }}"
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
         Edit
       </a>
+      {% endif %}
       <form action="{{ url_for('content.delete_post', post_id=post.id) }}" method="POST"
         onsubmit="return confirm('Are you sure?');" class="inline">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

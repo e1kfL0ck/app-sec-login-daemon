@@ -170,9 +170,9 @@ def edit_post(post_id, user_id, title, body, is_public=True, files=None):
     return PostResult(ok=True, post_id=post_id)
 
 
-def delete_post(post_id, user_id):
+def delete_post(post_id, user_id, is_admin=False):
     """Delete a post (with permission check)."""
-    if not permissions.can_delete_post(user_id, post_id):
+    if not permissions.can_delete_post(user_id, post_id, is_admin=is_admin):
         return PostResult(
             ok=False, errors=["You don't have permission to delete this post."]
         )

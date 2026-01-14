@@ -218,16 +218,3 @@ def admin_set_disabled(target_user_id, disabled=True):
         return ToggleAccountResult(
             ok=False, errors=[f"Failed to update status: {str(e)}"]
         )
-
-
-# TODO: Check this out too
-#
-# def admin_set_activation(target_user_id, activated=True):
-#     """Admin activate/deactivate an account (email activation flag)."""
-#     try:
-#         UserProfileRepository.set_activation(target_user_id, activated)
-#         return ToggleAccountResult(ok=True)
-#     except Exception as e:
-#         return ToggleAccountResult(
-#             ok=False, errors=[f"Failed to update activation: {str(e)}"]
-#         )
