@@ -29,4 +29,69 @@ This report documents the implementation of the User Registration Module as part
 
 \part{MicroBlog Application Implementation}
 
+\chapter{New Features Introduced in Commit 559a80d}
+This section documents the features added on the main branch by merge commit \texttt{559a80d}. The comparison is against
+the main branch state immediately before that merge, so the list focuses on new functionality and structural changes
+introduced by the merge.
+
+\section{Application Structure and Modularity}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Blueprint-based routing}: the application is reorganized into \texttt{auth}, \texttt{content}, and
+  \texttt{user} blueprints, improving separation of concerns and route clarity.
+  \item \textbf{Service and repository layers}: new \texttt{services.py} and \texttt{repository.py} modules encapsulate
+  business logic and database access for each domain, reducing logic in route handlers.
+  \item \textbf{Validation utilities}: input validation is centralized in \texttt{validators.py} modules for auth, user,
+  and content workflows.
+  \item \textbf{Session helpers}: shared decorators enforce authentication and admin permissions while keeping routes
+  concise.
+\end{itemize}
+
+\section{Authentication and Account Security}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Account activation flow}: activation tokens are generated, stored, and validated through a dedicated
+  token system, with activation pages moved under the auth blueprint.
+  \item \textbf{Password reset workflow}: reset tokens and validation logic are added, enabling secure password resets
+  without revealing account existence.
+  \item \textbf{Multi-factor authentication}: MFA setup, verification, and backup codes are supported, with QR-code
+  generation and one-time backup code usage.
+  \item \textbf{Login protections}: failed login counters and session clearing on successful login mitigate brute-force
+  attempts and session fixation.
+  \item \textbf{Admin disablement}: accounts can be disabled by administrators, blocking login until re-enabled.
+\end{itemize}
+
+\section{MicroBlog Content Features}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Public feed and admin feed}: a public feed for all users and an admin-only global feed are introduced.
+  \item \textbf{Post management}: users can create, edit, delete, and view posts, including public or private visibility.
+  \item \textbf{Comments and attachments}: posts support comments and file attachments, with safe download handling.
+  \item \textbf{Search}: keyword search returns matching posts with user-friendly feedback for empty queries.
+  \item \textbf{Content permissions}: authorization checks enforce viewing, editing, and deletion rules, including
+  special handling for disabled accounts.
+\end{itemize}
+
+\section{User Profiles and Administration}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Profile pages}: users have a profile view showing account details and a personal feed of posts.
+  \item \textbf{Account settings}: users can update their email, delete their account, or self-disable and reactivate.
+  \item \textbf{Admin user management}: admins can list users, view other profiles, and disable or re-enable accounts.
+\end{itemize}
+
+\section{UI and Template Coverage}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{New templates}: dedicated templates were added for feeds, post creation and editing, search, profiles,
+  settings, and admin user views.
+  \item \textbf{Updated base and dashboard}: the base layout and dashboard were updated to reflect new sections and
+  quick actions.
+  \item \textbf{Static assets}: the project now includes a favicon and content-specific CSS additions.
+\end{itemize}
+
+\section{Database and Deployment Updates}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Extended schema}: the database now includes tables for posts, comments, attachments, and expanded user
+  fields (role, disabled state, MFA data, and backup codes).
+  \item \textbf{Initialization routines}: seed data for users and example posts are created in debug mode.
+  \item \textbf{Environment and runtime}: updates to the sample environment file, entrypoint script, and Docker
+  configuration reflect the new module layout.
+\end{itemize}
+
 \end{document}
