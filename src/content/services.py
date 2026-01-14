@@ -3,6 +3,7 @@ Business logic for content operations.
 """
 
 from . import validators, permissions
+from datetime import datetime, timedelta
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -64,6 +65,18 @@ def _save_attachments(post_id, uploader_id, files):
 
 def create_post(author_id, title, body, is_public=True, files=None):
     """Create a new post."""
+    # Check rate limiting (3 minutes between posts)
+    last_post_time = PostRepository.get_last_post_time(author_id)
+    if last_post_time:
+        time_since_last_post = datetime.now() - last_post_time
+        min_interval = timedelta(minutes=3)
+        if time_since_last_post < min_interval:
+            remaining_seconds = int((min_interval - time_since_last_post).total_seconds())
+            return PostResult(
+                ok=False,
+                errors=[f"You must wait {remaining_seconds} seconds before posting again."],
+            )
+
     errors = validators.validate_post_input(title, body)
     # Validate attachments
     errors += validators.validate_attachments(files or [])
