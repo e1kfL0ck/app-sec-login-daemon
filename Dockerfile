@@ -6,15 +6,12 @@ WORKDIR /build
 
 # Copy package files first to leverage Docker cache
 COPY package.json package-lock.json ./
-# The * makes the config copy optional in case you move to v4 CSS-only config later
-COPY tailwind.config.js ./
 
 # Install dependencies (Standard slim image handles lightningcss/parcel-watcher binaries)
 RUN npm ci
 
-# Copy source files needed for the build
-COPY src/static/tailwind.css src/static/tailwind.css
-COPY src/templates src/templates
+# Copy the source code for the build
+COPY ./src ./src
 
 # Run the build script
 RUN npm run build:css
