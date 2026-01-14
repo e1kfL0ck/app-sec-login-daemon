@@ -65,21 +65,21 @@ redirects) so that routes remain concise and security controls are applied unifo
 files. Validation helpers are in \texttt{src/auth/validators.py}, \texttt{src/content/validators.py}, and
 \texttt{src/user/validators.py}. Session enforcement is implemented in \texttt{src/session\_helpers.py}.\subsection*{Architecture map}
 \begin{center}
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Layer} & \textbf{Primary modules} \\
-\hline
-Routes & \texttt{src/auth/routes.py}, \texttt{src/content/routes.py}, \texttt{src/user/routes.py} \\
-\hline
-Services & \texttt{src/auth/services.py}, \texttt{src/content/services.py}, \texttt{src/user/services.py} \\
-\hline
-Repositories & \texttt{src/auth/repository.py}, \texttt{src/content/repository.py}, \texttt{src/user/repository.py} \\
-\hline
-Validation & \texttt{src/auth/validators.py}, \texttt{src/content/validators.py}, \texttt{src/user/validators.py} \\
-\hline
-Session/Auth & \texttt{src/session\_helpers.py} \\
-\hline
-\end{tabular}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Layer} & \textbf{Primary modules}                                                                             \\
+        \hline
+        Routes         & \texttt{src/auth/routes.py}, \texttt{src/content/routes.py}, \texttt{src/user/routes.py}             \\
+        \hline
+        Services       & \texttt{src/auth/services.py}, \texttt{src/content/services.py}, \texttt{src/user/services.py}       \\
+        \hline
+        Repositories   & \texttt{src/auth/repository.py}, \texttt{src/content/repository.py}, \texttt{src/user/repository.py} \\
+        \hline
+        Validation     & \texttt{src/auth/validators.py}, \texttt{src/content/validators.py}, \texttt{src/user/validators.py} \\
+        \hline
+        Session/Auth   & \texttt{src/session\_helpers.py}                                                                     \\
+        \hline
+    \end{tabular}
 \end{center}
 
 \section{Authentication and Account Security}
@@ -187,17 +187,17 @@ templates under \texttt{src/auth/templates/}. Static assets are in \texttt{src/s
 
 \subsection*{Template inventory}
 \begin{center}
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Area} & \textbf{Templates added} \\
-\hline
-Auth & \texttt{activation.html} \\
-\hline
-Content & \texttt{feed.html}, \texttt{admin\_feed.html}, \texttt{post\_create.html}, \texttt{post\_edit.html}, \texttt{post\_detail.html}, \texttt{search.html}, \texttt{user\_posts.html} \\
-\hline
-User & \texttt{profile.html}, \texttt{settings.html}, \texttt{admin\_users.html} \\
-\hline
-\end{tabular}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Area} & \textbf{Templates added}                                                                                                                                                         \\
+        \hline
+        Auth          & \texttt{activation.html}                                                                                                                                                         \\
+        \hline
+        Content       & \texttt{feed.html}, \texttt{admin\_feed.html}, \texttt{post\_create.html}, \texttt{post\_edit.html}, \texttt{post\_detail.html}, \texttt{search.html}, \texttt{user\_posts.html} \\
+        \hline
+        User          & \texttt{profile.html}, \texttt{settings.html}, \texttt{admin\_users.html}                                                                                                        \\
+        \hline
+    \end{tabular}
 \end{center}
 
 \section{Database and Deployment Updates}
@@ -222,21 +222,21 @@ Container startup uses \texttt{src/entrypoint.sh}. Build and orchestration are h
 
 \subsection*{Schema summary}
 \begin{center}
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Table} & \textbf{Purpose} \\
-\hline
-users & Accounts, roles, activation, MFA, disabled state \\
-\hline
-tokens & Activation and password reset tokens \\
-\hline
-posts & Blog posts with public/private visibility \\
-\hline
-comments & User comments on posts \\
-\hline
-attachments & Files attached to posts \\
-\hline
-\end{tabular}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Table} & \textbf{Purpose}                                 \\
+        \hline
+        users          & Accounts, roles, activation, MFA, disabled state \\
+        \hline
+        tokens         & Activation and password reset tokens             \\
+        \hline
+        posts          & Blog posts with public/private visibility        \\
+        \hline
+        comments       & User comments on posts                           \\
+        \hline
+        attachments    & Files attached to posts                          \\
+        \hline
+    \end{tabular}
 \end{center}
 
 \end{document}
