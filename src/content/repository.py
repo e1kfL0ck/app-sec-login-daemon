@@ -202,7 +202,7 @@ class CommentRepository:
         db = get_db()
         return db.execute(
             """
-            SELECT c.id, c.author_id, c.text, c.created_at, u.email
+            SELECT c.id, c.author_id, c.text, c.created_at, u.email AS author_email
             FROM comments c
             JOIN users u ON c.author_id = u.id
             WHERE c.post_id = ?
