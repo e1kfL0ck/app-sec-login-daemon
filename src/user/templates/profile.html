@@ -143,8 +143,10 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 ml-4">
+                                {% if session.get('user_id') == post.author_id %}
                                 <a href="{{ url_for('content.edit_post', post_id=post.id) }}"
                                     class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm">Edit</a>
+                                {% endif %}
                                 <form method="POST" action="{{ url_for('content.delete_post', post_id=post.id) }}"
                                     style="display:inline;" onsubmit="return confirm('Are you sure?');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
