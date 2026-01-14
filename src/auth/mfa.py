@@ -90,7 +90,6 @@ def confirm():
     if errors:
         return render_template("mfa_setup.html", error="Secret code invalid")
 
-    # TODO: if not secret, it should be regenerate trought @mfa_bp.route("/setup", methods=["GET"])
     if not secret or not code:
         return render_template("mfa_setup.html", error="Missing fields")
 
