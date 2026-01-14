@@ -3,7 +3,8 @@
 {% block content %}
 <div class="max-w-3xl mx-auto">
 	<div class="mb-6">
-		<a href="{{ url_for('content.view_post', post_id=post.id) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">← Back to Post</a>
+		<a href="{{ url_for('content.view_post', post_id=post.id) }}"
+			class="text-indigo-600 hover:text-indigo-800 font-semibold">← Back to Post</a>
 	</div>
 
 	<div class="bg-white rounded-lg shadow-lg p-8 border-l-4 border-indigo-600">
@@ -20,66 +21,54 @@
 		</div>
 		{% endif %}
 
-		<form method="POST" action="{{ url_for('content.edit_post', post_id=post.id) }}" class="space-y-6" enctype="multipart/form-data">
+		<form method="POST" action="{{ url_for('content.edit_post', post_id=post.id) }}" class="space-y-6"
+			enctype="multipart/form-data">
 			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
 			<div>
 				<label for="title" class="block text-sm font-semibold text-gray-700 mb-1">Title</label>
-				<input
-					id="title"
-					name="title"
-					type="text"
-					required
-					autocomplete="off"
+				<input id="title" name="title" type="text" required autocomplete="off"
 					value="{{ request.form.title or post.title }}"
-					class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-				>
+					class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600">
 			</div>
 
 			<div>
 				<label for="body" class="block text-sm font-semibold text-gray-700 mb-1">Content</label>
-				<textarea
-					id="body"
-					name="body"
-					rows="8"
-					required
-					class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-				>{{ request.form.body or post.body }}</textarea>
+				<textarea id="body" name="body" rows="8" required
+					class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600">{{ request.form.body or post.body }}</textarea>
 			</div>
 
 			<div class="flex items-center gap-3">
-				<input
-					id="is_public"
-					name="is_public"
-					type="checkbox"
-					class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-					{% if request.form.get('is_public') or (not request.form and post.is_public) %}checked{% endif %}
-				>
+				<input id="is_public" name="is_public" type="checkbox"
+					class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" {% if
+					request.form.get('is_public') or (not request.form and post.is_public) %}checked{% endif %}>
 				<label for="is_public" class="text-sm text-gray-700">Public post</label>
 			</div>
 
 			<div>
 				<label for="attachments" class="block text-sm font-semibold text-gray-700 mb-1">Add Attachments</label>
-				<input
-					id="attachments"
-					name="attachments"
-					type="file"
-					multiple
-				class="w-full file:bg-indigo-600 file:text-white file:px-4 file:py-2 file:rounded-lg file:border-0 file:cursor-pointer file:font-medium hover:file:bg-indigo-700 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-				<ul class="list-disc list-inside space-y-1">
+				<input id="attachments" name="attachments" type="file" multiple
+					class="w-full file:bg-indigo-600 file:text-white file:px-4 file:py-2 file:rounded-lg file:border-0 file:cursor-pointer file:font-medium hover:file:bg-indigo-700 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+				{% if attachments %}
+				<ul class="list-disc list-inside space-y-1 mt-4">
 					{% for a in attachments %}
 					<li>
-						<a class="text-indigo-600 hover:text-indigo-800" href="{{ url_for('content.download_attachment', attachment_id=a.id) }}">{{ a.original_name }}</a>
+						<a class="text-indigo-600 hover:text-indigo-800"
+							href="{{ url_for('content.download_attachment', attachment_id=a.id) }}">{{ a.original_name
+							}}</a>
 						<span class="text-xs text-gray-500">({{ a.mime_type }}, {{ a.size_bytes }} bytes)</span>
 					</li>
 					{% endfor %}
 				</ul>
+				{% endif %}
 			</div>
-			{% endif %}
 
 			<div class="flex gap-3">
-				<button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">Save Changes</button>
-				<a href="{{ url_for('content.view_post', post_id=post.id) }}" class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+				<button type="submit"
+					class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">Save
+					Changes</button>
+				<a href="{{ url_for('content.view_post', post_id=post.id) }}"
+					class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Cancel</a>
 			</div>
 		</form>
 	</div>
