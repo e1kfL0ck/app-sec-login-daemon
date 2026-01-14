@@ -176,7 +176,7 @@ def add_comment(post_id):
     if not text:
         return redirect(url_for("content.view_post", post_id=post_id))
 
-    result = services.add_comment(post_id, user_id, text)
+    result = services.add_comment(user_id, post_id, text)
 
     if not result.ok:
         return redirect(url_for("content.view_post", post_id=post_id))
