@@ -5,7 +5,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # - .:/app
       - ./src:/workspace
       - ./data:/data
     environment:
@@ -16,5 +15,5 @@ services:
       - MAIL_PORT=${MAIL_PORT}
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG}
-      - INIT_DB=True # destructive: re-initializes the database on each container start
+      - INIT_DATA=${INIT_DATA}
     restart: unless-stopped

@@ -32,10 +32,15 @@ class UserRepository:
 
     @staticmethod
     def get_by_email(email):
-        """Get user by email. Returns (id, password_hash, nb_failed_logins, activated, mfa_enabled) or None."""
+        """Get user by email. Returns row with credentials and flags."""
         db = get_db()
         return db.execute(
-            "SELECT id, password_hash, nb_failed_logins, activated, mfa_enabled FROM users WHERE email = ?",
+            """
+            SELECT id, password_hash, nb_failed_logins, activated,
+                   mfa_enabled, role, disabled, disabled_by_admin
+            FROM users
+            WHERE email = ?
+            """,
             (email,),
         ).fetchone()
 

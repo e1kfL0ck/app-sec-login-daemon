@@ -41,11 +41,12 @@ class PostRepository:
         db = get_db()
         return db.execute(
             """
-            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
-                   p.updated_at, u.email AS author_email
-            FROM posts p
-            JOIN users u ON p.author_id = u.id
-            WHERE p.id = ?
+             SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                 p.updated_at, u.email AS author_email, u.disabled AS author_disabled,
+                 u.disabled_by_admin AS author_disabled_by_admin
+             FROM posts p
+             JOIN users u ON p.author_id = u.id
+             WHERE p.id = ?
             """,
             (post_id,),
         ).fetchone()
@@ -61,6 +62,25 @@ class PostRepository:
             FROM posts p
             JOIN users u ON p.author_id = u.id
             WHERE p.is_public = 1
+              AND u.disabled = 0
+              AND u.disabled_by_admin = 0
+            ORDER BY p.created_at DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        ).fetchall()
+
+    @staticmethod
+    def get_all_posts(limit=50, offset=0):
+        """Admin: get every post regardless of visibility or author status."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                   u.email AS author_email, u.disabled AS author_disabled,
+                   u.disabled_by_admin AS author_disabled_by_admin
+            FROM posts p
+            JOIN users u ON p.author_id = u.id
             ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
             """,
@@ -69,7 +89,11 @@ class PostRepository:
 
     @staticmethod
     def get_by_author(author_id, limit=50, offset=0):
-        """Get all posts by a specific author (including private posts)."""
+        """Get all posts by a specific author (including private posts).
+        
+        Allows self-disabled users to see their own posts, but filters out
+        posts from admin-disabled users.
+        """
         db = get_db()
         return db.execute(
             """
@@ -77,7 +101,8 @@ class PostRepository:
                    u.email AS author_email
             FROM posts p
             JOIN users u ON p.author_id = u.id
-            WHERE p.author_id = ?
+                        WHERE p.author_id = ?
+                            AND u.disabled_by_admin = 0
             ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
             """,
@@ -116,7 +141,32 @@ class PostRepository:
                    u.email AS author_email
             FROM posts p
             JOIN users u ON p.author_id = u.id
-            WHERE p.is_public = 1 AND (p.title LIKE ? OR p.body LIKE ?)
+                        WHERE p.is_public = 1
+                            AND u.disabled = 0
+                            AND u.disabled_by_admin = 0
+                            AND (p.title LIKE ? OR p.body LIKE ?)
+            ORDER BY p.created_at DESC
+            LIMIT ?
+            """,
+            (search_term, search_term, limit),
+        ).fetchall()
+
+    @staticmethod
+    def search_by_attachment_filename(query, limit=50):
+        """Search for posts that have attachments matching the query filename."""
+        db = get_db()
+        search_term = f"%{query}%"
+        return db.execute(
+            """
+            SELECT DISTINCT p.id, p.author_id, p.title, p.body, p.is_public, p.created_at,
+                u.email AS author_email
+            FROM posts p
+            JOIN users u ON p.author_id = u.id
+            JOIN attachments a ON p.id = a.post_id
+                        WHERE p.is_public = 1
+                            AND u.disabled = 0
+                            AND u.disabled_by_admin = 0
+                            AND (a.original_name LIKE ? OR a.stored_name LIKE ?)
             ORDER BY p.created_at DESC
             LIMIT ?
             """,
@@ -156,6 +206,8 @@ class CommentRepository:
             FROM comments c
             JOIN users u ON c.author_id = u.id
             WHERE c.post_id = ?
+              AND u.disabled = 0
+              AND u.disabled_by_admin = 0
             ORDER BY c.created_at ASC
             """,
             (post_id,),
@@ -166,4 +218,69 @@ class CommentRepository:
         """Delete a comment."""
         db = get_db()
         db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+        db.commit()
+
+
+class AttachmentRepository:
+    """Handles attachment-related database operations."""
+
+    @staticmethod
+    def create(post_id, uploader_id, original_name, stored_name, mime_type, size_bytes):
+        """Create a new attachment and return its id."""
+        db = get_db()
+        created_at = datetime.now()
+        db.execute(
+            """
+            INSERT INTO attachments (post_id, uploader_id, original_name, stored_name, mime_type, size_bytes, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                post_id,
+                uploader_id,
+                original_name,
+                stored_name,
+                mime_type,
+                size_bytes,
+                created_at.isoformat(),
+            ),
+        )
+        db.commit()
+        row = db.execute(
+            "SELECT id FROM attachments WHERE post_id = ? ORDER BY created_at DESC LIMIT 1",
+            (post_id,),
+        ).fetchone()
+        return row[0] if row else None
+
+    @staticmethod
+    def get_by_post(post_id):
+        """Get all attachments for a post."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT id, post_id, uploader_id, original_name, stored_name, mime_type, size_bytes, created_at
+            FROM attachments
+            WHERE post_id = ?
+            ORDER BY created_at ASC
+            """,
+            (post_id,),
+        ).fetchall()
+
+    @staticmethod
+    def get_by_id(attachment_id):
+        """Get a single attachment by id."""
+        db = get_db()
+        return db.execute(
+            """
+            SELECT id, post_id, uploader_id, original_name, stored_name, mime_type, size_bytes, created_at
+            FROM attachments
+            WHERE id = ?
+            """,
+            (attachment_id,),
+        ).fetchone()
+
+    @staticmethod
+    def delete(attachment_id):
+        """Delete an attachment row."""
+        db = get_db()
+        db.execute("DELETE FROM attachments WHERE id = ?", (attachment_id,))
         db.commit()

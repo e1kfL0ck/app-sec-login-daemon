@@ -431,3 +431,6 @@ FodyWeavers.xsd
 
 # Database files for the Docker environment
 data/app.db
+
+# Data from the test uploads
+data/uploads/*

@@ -23,13 +23,22 @@ class LoginResult:
     """Result object for login operation."""
 
     def __init__(
-        self, ok, user_id=None, error_msg=None, require_reset=False, mfa_enabled=False
+        self,
+        ok,
+        user_id=None,
+        error_msg=None,
+        require_reset=False,
+        mfa_enabled=False,
+        role="user",
+        disabled=False,
     ):
         self.ok = ok
         self.user_id = user_id
         self.error_msg = error_msg
         self.require_reset = require_reset
         self.mfa_enabled = mfa_enabled
+        self.role = role
+        self.disabled = disabled
 
 
 def register_user(email, password, confirm_password):
@@ -187,7 +196,16 @@ def login_user(email, password):
     if not user:
         return LoginResult(ok=False, error_msg="Invalid email or password.")
 
-    user_id, password_hash, nb_failed_logins, activated, mfa_enabled = user
+    (
+        user_id,
+        password_hash,
+        nb_failed_logins,
+        activated,
+        mfa_enabled,
+        role,
+        disabled,
+        disabled_by_admin,
+    ) = user
 
     # Check if account is locked after failed attempts
     if nb_failed_logins >= 3:
@@ -202,10 +220,25 @@ def login_user(email, password):
         UserRepository.increment_failed_logins(user_id)
         return LoginResult(ok=False, error_msg="Invalid email or password.")
 
+    # Account disabled by admin cannot log in
+    if disabled_by_admin:
+        return LoginResult(
+            ok=False,
+            error_msg="Your account has been disabled by an administrator.",
+        )
+
     # Reset failed login counter on successful login
     UserRepository.reset_failed_logins(user_id)
 
-    # Update last login time
-    UserRepository.update_last_login(user_id)
+    # Update last login time only if MFA is not enabled
+    # If MFA is enabled, last_login will be updated after MFA verification
+    if not mfa_enabled:
+        UserRepository.update_last_login(user_id)
 
-    return LoginResult(ok=True, user_id=user_id, mfa_enabled=mfa_enabled)
+    return LoginResult(
+        ok=True,
+        user_id=user_id,
+        mfa_enabled=mfa_enabled,
+        role=role,
+        disabled=bool(disabled),
+    )

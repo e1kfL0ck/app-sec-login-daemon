@@ -9,6 +9,7 @@ import secrets
 # custom imports
 import field_utils
 from db import get_db
+from .repository import UserRepository
 
 mfa_bp = Blueprint("mfa", __name__, url_prefix="/mfa")
 
@@ -82,14 +83,13 @@ def confirm():
 
     code = request.form.get("otp", "")
     errors = []
-    errors += field_utils.sanitize_user_input(code)
+    errors += field_utils.sanitize_user_input_obfuscated(code)
 
     secret = session.get("mfa_setup_secret", "")
 
     if errors:
         return render_template("mfa_setup.html", error="Secret code invalid")
 
-    # TODO: if not secret, it should be regenerate trought @mfa_bp.route("/setup", methods=["GET"])
     if not secret or not code:
         return render_template("mfa_setup.html", error="Missing fields")
 
@@ -154,17 +154,20 @@ def verify():
         return redirect(url_for("auth.login"))
     db = get_db()
     row = db.execute(
-        "SELECT email, mfa_secret, backup_codes FROM users WHERE id = ?", (user_id,)
+        "SELECT email, mfa_secret, backup_codes, role, disabled FROM users WHERE id = ?",
+        (user_id,),
     ).fetchone()
     if not row:
         return redirect(url_for("auth.login"))
-    email, secret, backup_json = row
+    email, secret, backup_json, role, disabled = row
     if secret and pyotp.TOTP(secret).verify(code, valid_window=1):
         # login finalization
         session.clear()
         session["user_id"] = user_id
         session["email"] = email
-        # TODO: update last login
+        session["role"] = role
+        session["disabled"] = bool(disabled)
+        UserRepository.update_last_login(user_id)
         return redirect(url_for("dashboard"))
 
     if backup_json:
@@ -178,12 +181,15 @@ def verify():
             db.commit()
             session.clear()
             session["user_id"] = user_id
-            email = db.execute(
-                "SELECT email FROM users WHERE id = ?", (user_id,)
-            ).fetchone()[0]
-            session["email"] = email
-            # TODO: update last login
+            user = db.execute(
+                "SELECT email, role, disabled FROM users WHERE id = ?", (user_id,)
+            ).fetchone()
+            session["email"] = user[0]
+            session["role"] = user[1]
+            session["disabled"] = bool(user[2])
+            UserRepository.update_last_login(user_id)
             return redirect(url_for("dashboard"))
 
-    # TODO: increment failed logins
+    #MFA could not be verified
+    UserRepository.increment_failed_logins(user_id)
     return render_template("mfa_verify.html", error="Invalid code"), 400

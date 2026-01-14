@@ -14,19 +14,25 @@
     <!-- Post Header -->
     <header class="mb-6 pb-6 border-b-2 border-gray-200">
       <h1 class="text-4xl font-bold text-gray-900 mb-3">{{ post.title }}</h1>
-      
+
       <div class="flex items-center text-sm text-gray-600 space-x-4">
         <div>
           <span class="font-semibold">{{ post.author_email }}</span>
         </div>
         <div>
           <time datetime="{{ post.created_at }}">
-            {{ post.created_at }}
+            {{ post.created_at.replace('T', ' ').split('.')[0] if post.created_at else 'N/A' }}
           </time>
         </div>
-        {% if not post.is_public %}
+        {% if post.is_public %}
         <div>
-          <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+          <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+            Public
+          </span>
+        </div>
+        {% else %}
+        <div>
+          <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">
             Private
           </span>
         </div>
@@ -39,22 +45,37 @@
       <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ post.body }}</p>
     </div>
 
-    <!-- Edit/Delete Options (if user is author) -->
-    {% if session.get('user_id') == post.author_id %}
+    {% if attachments %}
+    <div class="mb-8">
+      <h2 class="text-xl font-bold text-gray-900 mb-3">Attachments</h2>
+      <ul class="list-disc list-inside space-y-1">
+        {% for a in attachments %}
+        <li>
+          <a class="text-indigo-600 hover:text-indigo-800"
+            href="{{ url_for('content.download_attachment', attachment_id=a.id) }}">{{ a.original_name }}</a>
+          <span class="text-xs text-gray-500">({{ a.mime_type }}, {{ a.size_bytes }} bytes)</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Edit/Delete Options: Edit for authors, Delete for authors or admins -->
+    {% if session.get('user_id') == post.author_id or session.get('role') == 'admin' %}
     <div class="flex gap-2 pt-6 border-t-2 border-gray-200">
-      <a href="{{ url_for('content.edit_post', post_id=post.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+      {% if session.get('user_id') == post.author_id %}
+      <a href="{{ url_for('content.edit_post', post_id=post.id) }}"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
         Edit
       </a>
-      <button
-        id="delete-btn"
-        type="button"
-        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-        data-delete-url="{{ url_for('content.delete_post', post_id=post.id) }}"
-        data-success-url="{{ url_for('content.feed') }}"
-        data-failure-url="{{ url_for('content.view_post', post_id=post.id) }}"
-      >
-        Delete
-      </button>
+      {% endif %}
+      <form action="{{ url_for('content.delete_post', post_id=post.id) }}" method="POST"
+        onsubmit="return confirm('Are you sure?');" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+          Delete
+        </button>
+      </form>
     </div>
     {% endif %}
   </article>
@@ -70,7 +91,7 @@
         <div class="flex justify-between items-start mb-2">
           <div class="font-semibold text-gray-900">{{ comment.author_email }}</div>
           <time datetime="{{ comment.created_at }}" class="text-sm text-gray-500">
-            {{ comment.created_at }}
+            {{ comment.created_at.replace('T', ' ').split('.')[0] if comment.created_at else 'N/A' }}
           </time>
         </div>
         <p class="text-gray-700 leading-relaxed">{{ comment.text }}</p>
@@ -89,21 +110,14 @@
       <h3 class="text-xl font-bold text-gray-900 mb-4">Leave a Comment</h3>
       <form method="POST" action="{{ url_for('content.add_comment', post_id=post.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
+
         <div class="mb-4">
-          <textarea
-            name="text"
-            placeholder="Share your thoughts..."
-            rows="4"
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
-          ></textarea>
+          <textarea name="text" placeholder="Share your thoughts..." rows="4" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
         </div>
 
-        <button
-          type="submit"
-          class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold"
-        >
+        <button type="submit"
+          class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">
           Post Comment
         </button>
       </form>
@@ -118,40 +132,4 @@
     {% endif %}
   </section>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-async function deletePost(deleteUrl, successRedirect, failureRedirect) {
-  if (!confirm('Are you sure?')) return;
-  try {
-    const csrfInput = document.querySelector('input[name="csrf_token"]');
-    const headers = {};
-    if (csrfInput && csrfInput.value) {
-      headers['X-CSRF-Token'] = csrfInput.value;
-    }
-    const res = await fetch(deleteUrl, {
-      method: 'DELETE',
-      headers
-    });
-    if (res.ok) {
-      window.location.href = successRedirect;
-    } else {
-      window.location.href = failureRedirect;
-    }
-  } catch (e) {
-    window.location.href = failureRedirect;
-  }
-}
-// Bind delete button
-const btn = document.getElementById('delete-btn');
-if (btn) {
-  btn.addEventListener('click', () => {
-    const delUrl = btn.getAttribute('data-delete-url');
-    const successUrl = btn.getAttribute('data-success-url');
-    const failureUrl = btn.getAttribute('data-failure-url');
-    deletePost(delUrl, successUrl, failureUrl);
-  });
-}
-</script>
 {% endblock %}
