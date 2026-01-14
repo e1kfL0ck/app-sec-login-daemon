@@ -434,3 +434,6 @@ data/app.db
 
 # Data from the test uploads
 data/uploads/*
+
+# Ignore tailwind css generated file
+src/static/styles.css
