@@ -190,5 +190,6 @@ def verify():
             UserRepository.update_last_login(user_id)
             return redirect(url_for("dashboard"))
 
-    # TODO: increment failed logins
+    #MFA could not be verified
+    UserRepository.increment_failed_logins(user_id)
     return render_template("mfa_verify.html", error="Invalid code"), 400
