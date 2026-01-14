@@ -230,8 +230,10 @@ def login_user(email, password):
     # Reset failed login counter on successful login
     UserRepository.reset_failed_logins(user_id)
 
-    # Update last login time
-    UserRepository.update_last_login(user_id)
+    # Update last login time only if MFA is not enabled
+    # If MFA is enabled, last_login will be updated after MFA verification
+    if not mfa_enabled:
+        UserRepository.update_last_login(user_id)
 
     return LoginResult(
         ok=True,

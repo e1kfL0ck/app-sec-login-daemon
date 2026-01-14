@@ -9,6 +9,7 @@ import secrets
 # custom imports
 import field_utils
 from db import get_db
+from .repository import UserRepository
 
 mfa_bp = Blueprint("mfa", __name__, url_prefix="/mfa")
 
@@ -167,7 +168,7 @@ def verify():
         session["email"] = email
         session["role"] = role
         session["disabled"] = bool(disabled)
-        # TODO: update last login
+        UserRepository.update_last_login(user_id)
         return redirect(url_for("dashboard"))
 
     if backup_json:
@@ -187,7 +188,7 @@ def verify():
             session["email"] = user[0]
             session["role"] = user[1]
             session["disabled"] = bool(user[2])
-            # TODO: update last login
+            UserRepository.update_last_login(user_id)
             return redirect(url_for("dashboard"))
 
     # TODO: increment failed logins
