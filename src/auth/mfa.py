@@ -9,6 +9,7 @@ import secrets
 # custom imports
 import field_utils
 from db import get_db
+from auth.repository import UserRepository
 
 mfa_bp = Blueprint("mfa", __name__, url_prefix="/mfa")
 
@@ -190,5 +191,6 @@ def verify():
             # TODO: update last login
             return redirect(url_for("dashboard"))
 
-    # TODO: increment failed logins
+    #MFA could not be verified
+    UserRepository.increment_failed_logins(user_id)
     return render_template("mfa_verify.html", error="Invalid code"), 400
