@@ -2,12 +2,25 @@
 Repository pattern for content data access.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from db import get_db
 
 
 class PostRepository:
     """Handles post-related database operations."""
+
+    @staticmethod
+    def get_last_post_time(author_id):
+        """Get the created_at timestamp of the user's most recent post.
+        Returns datetime object or None if no posts exist."""
+        db = get_db()
+        result = db.execute(
+            "SELECT created_at FROM posts WHERE author_id = ? ORDER BY created_at DESC LIMIT 1",
+            (author_id,),
+        ).fetchone()
+        if result:
+            return datetime.fromisoformat(result[0])
+        return None
 
     @staticmethod
     def create(author_id, title, body, is_public=True):
