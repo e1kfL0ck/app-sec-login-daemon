@@ -35,63 +35,129 @@ the main branch state immediately before that merge, so the list focuses on new 
 introduced by the merge.
 
 \section{Application Structure and Modularity}
-\begin{itemize}[leftmargin=1.5em]
-  \item \textbf{Blueprint-based routing}: the application is reorganized into \texttt{auth}, \texttt{content}, and
-  \texttt{user} blueprints, improving separation of concerns and route clarity.
-  \item \textbf{Service and repository layers}: new \texttt{services.py} and \texttt{repository.py} modules encapsulate
-  business logic and database access for each domain, reducing logic in route handlers.
-  \item \textbf{Validation utilities}: input validation is centralized in \texttt{validators.py} modules for auth, user,
-  and content workflows.
-  \item \textbf{Session helpers}: shared decorators enforce authentication and admin permissions while keeping routes
-  concise.
-\end{itemize}
+\subsection*{Blueprint-based routing}
+Blueprints split the application into three coherent domains: authentication (\texttt{auth}), content management
+(\texttt{content}), and user management (\texttt{user}). Each blueprint owns its URL prefix, templates, and route
+handlers, which keeps domain-specific logic localized and makes it easier to test, document, and evolve each area
+independently. This structure also simplifies URL mapping by making ownership explicit (e.g., \texttt{/register} under
+auth, \texttt{/content/*} for posts and feeds, \texttt{/user/*} for profiles and settings).
+
+\subsection*{Service and repository layers}
+The new service layer (\texttt{services.py}) centralizes business rules such as login validation, content visibility, and
+account state handling. The repository layer (\texttt{repository.py}) encapsulates all database queries and mutations.
+This separation reduces direct SQL in route handlers, prevents duplicated logic across endpoints, and allows future
+changes (database schema or backend storage) to be made in a single place with minimal impact on routing code.
+
+\subsection*{Validation utilities}
+Input validation is now consolidated in dedicated \texttt{validators.py} modules for each domain. These validators
+enforce format, length, and policy rules (email format, password strength, post length, etc.) before data reaches the
+service and repository layers. Centralizing validation improves consistency across features, reduces the risk of missing
+checks in new endpoints, and documents input expectations in a single, reusable location.
+
+\subsection*{Session helpers}
+Shared decorators and utilities in the session helper module provide consistent enforcement of authentication and admin
+authorization. They abstract common access checks (logged-in requirement, admin-only requirement, already-logged-in
+redirects) so that routes remain concise and security controls are applied uniformly across the application.
 
 \section{Authentication and Account Security}
-\begin{itemize}[leftmargin=1.5em]
-  \item \textbf{Account activation flow}: activation tokens are generated, stored, and validated through a dedicated
-  token system, with activation pages moved under the auth blueprint.
-  \item \textbf{Password reset workflow}: reset tokens and validation logic are added, enabling secure password resets
-  without revealing account existence.
-  \item \textbf{Multi-factor authentication}: MFA setup, verification, and backup codes are supported, with QR-code
-  generation and one-time backup code usage.
-  \item \textbf{Login protections}: failed login counters and session clearing on successful login mitigate brute-force
-  attempts and session fixation.
-  \item \textbf{Admin disablement}: accounts can be disabled by administrators, blocking login until re-enabled.
-\end{itemize}
+\subsection*{Account activation flow}
+New registrations create an activation token stored in the database with expiry metadata. The activation endpoint
+validates the token, checks expiration and usage status, and activates the account only when the token is valid. This
+introduces a clear account lifecycle (registered $\rightarrow$ activated) and enables email-based verification that
+prevents inactive accounts from accessing protected features.
+
+\subsection*{Password reset workflow}
+Password resets use one-time tokens with expiry checks, generated on request and stored in the token table. The reset
+process validates the token before allowing a password change, then marks the token as used. The UI always returns a
+generic success message to avoid email enumeration, while still allowing legitimate users to complete the reset flow
+securely.
+
+\subsection*{Multi-factor authentication}
+MFA support adds a setup flow that generates a TOTP secret, renders a QR code for authenticator apps, and confirms
+time-based one-time codes. On successful setup, the system stores the secret and issues a set of backup codes for
+recovery. The verification flow accepts either a valid TOTP code or an unused backup code, then finalizes login and
+rotates backup codes as they are consumed.
+
+\subsection*{Login protections}
+Authentication now tracks failed login attempts and enforces a reset requirement after repeated failures. On successful
+login, the session is cleared to mitigate session fixation, and last-login timestamps are updated when MFA is not in
+play. These measures improve resilience against brute-force attacks and reduce the likelihood of session reuse.
+
+\subsection*{Admin disablement}
+Administrative controls allow privileged users to disable accounts at the database level. Disabled-by-admin accounts are
+prevented from logging in and cannot be re-enabled by the affected user, ensuring that security or policy violations can
+be enforced centrally.
 
 \section{MicroBlog Content Features}
-\begin{itemize}[leftmargin=1.5em]
-  \item \textbf{Public feed and admin feed}: a public feed for all users and an admin-only global feed are introduced.
-  \item \textbf{Post management}: users can create, edit, delete, and view posts, including public or private visibility.
-  \item \textbf{Comments and attachments}: posts support comments and file attachments, with safe download handling.
-  \item \textbf{Search}: keyword search returns matching posts with user-friendly feedback for empty queries.
-  \item \textbf{Content permissions}: authorization checks enforce viewing, editing, and deletion rules, including
-  special handling for disabled accounts.
-\end{itemize}
+\subsection*{Public feed and admin feed}
+The content module introduces a public feed that lists all public posts with pagination. Administrators are granted a
+separate global feed that surfaces all posts, including private content, which supports moderation and oversight duties.
+These two feeds expose different views of the same underlying dataset based on role.
+
+\subsection*{Post management}
+Users can create, edit, and delete posts, selecting whether each post is public or private. Editing flows re-load
+current post data and attachments, while deletion enforces ownership or admin privileges. Viewing a post respects
+visibility rules and displays related comments and attachments.
+
+\subsection*{Comments and attachments}
+Posts can be commented on by authenticated users, and attachments can be uploaded alongside content creation or edits.
+Attachment downloads are served through permission checks and safe file delivery, preserving original filenames while
+ensuring storage safety and access control.
+
+\subsection*{Search}
+Keyword search scans content and returns matching posts with clear empty-state feedback. The route validates input,
+returns errors when necessary, and ensures search results are displayed consistently alongside the entered query.
+
+\subsection*{Content permissions}
+Authorization checks protect content operations. View permissions respect public/private status and consider disabled
+authors; edit and delete actions are limited to post owners or admins. This isolates security rules from route handlers
+and provides a single location for permission logic.
 
 \section{User Profiles and Administration}
-\begin{itemize}[leftmargin=1.5em]
-  \item \textbf{Profile pages}: users have a profile view showing account details and a personal feed of posts.
-  \item \textbf{Account settings}: users can update their email, delete their account, or self-disable and reactivate.
-  \item \textbf{Admin user management}: admins can list users, view other profiles, and disable or re-enable accounts.
-\end{itemize}
+\subsection*{Profile pages}
+Each user now has a profile page that displays account information and a personalized feed of their posts. For admins,
+the same template can be used to view other users' profiles, supporting oversight and account review tasks without
+introducing a separate UI path.
+
+\subsection*{Account settings}
+The settings page consolidates self-service actions, including email updates, account deletion, and self-disable or
+reactivation flows. Each action validates the current password and requires explicit confirmation to reduce accidental
+changes, while success and error messages are displayed on the same page for clear feedback.
+
+\subsection*{Admin user management}
+Administrative tooling provides a paginated user list and dedicated controls to disable or re-enable accounts. Admins
+can also view a user's profile and posts to audit behavior. Safeguards prevent administrators from disabling their own
+accounts.
 
 \section{UI and Template Coverage}
-\begin{itemize}[leftmargin=1.5em]
-  \item \textbf{New templates}: dedicated templates were added for feeds, post creation and editing, search, profiles,
-  settings, and admin user views.
-  \item \textbf{Updated base and dashboard}: the base layout and dashboard were updated to reflect new sections and
-  quick actions.
-  \item \textbf{Static assets}: the project now includes a favicon and content-specific CSS additions.
-\end{itemize}
+\subsection*{New templates}
+The merge introduces a full template set for the content and user modules, including feeds, post creation and editing,
+search results, profile pages, settings, and admin user views. These templates establish consistent layouts for new
+features and reduce ad hoc rendering logic in routes.
+
+\subsection*{Updated base and dashboard}
+The base layout is adjusted to accommodate new navigation targets and maintain consistent styling across the expanded
+feature set. The dashboard template is updated to reflect the broader application scope and quick actions now available
+to authenticated users.
+
+\subsection*{Static assets}
+A favicon is added for browser identification and branding, while content-specific CSS augments the existing styling to
+support the new templates and layout structures.
 
 \section{Database and Deployment Updates}
-\begin{itemize}[leftmargin=1.5em]
-  \item \textbf{Extended schema}: the database now includes tables for posts, comments, attachments, and expanded user
-  fields (role, disabled state, MFA data, and backup codes).
-  \item \textbf{Initialization routines}: seed data for users and example posts are created in debug mode.
-  \item \textbf{Environment and runtime}: updates to the sample environment file, entrypoint script, and Docker
-  configuration reflect the new module layout.
-\end{itemize}
+\subsection*{Extended schema}
+The database schema expands beyond authentication to include posts, comments, and attachments, enabling full MicroBlog
+functionality. The users table gains role data, disabled-state flags, MFA secrets, and backup codes, which are required
+for admin control and two-factor authentication flows.
+
+\subsection*{Initialization routines}
+Database initialization now includes optional seed data for development and demonstrations. When debug mode is enabled,
+the system creates a test user, an admin account, and example posts, allowing quick verification of the content and
+authentication features without manual setup.
+
+\subsection*{Environment and runtime}
+Container and runtime configuration is updated to align with the new module layout and extended application scope.
+Environment examples, the entrypoint script, and Docker-related files reflect the additional dependencies and routes
+introduced by the merge.
 
 \end{document}
