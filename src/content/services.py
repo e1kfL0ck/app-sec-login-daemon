@@ -181,13 +181,13 @@ def delete_post(post_id, user_id):
     return PostResult(ok=True)
 
 
-def add_comment(post_id, user_id, text):
+def add_comment(user_id, post_id, text):
     """Add a comment to a post."""
     errors = validators.validate_comment_input(text)
     if errors:
         return PostResult(ok=False, errors=errors)
 
-    comment_id = CommentRepository.create(post_id, user_id, text)
+    comment_id = CommentRepository.create(user_id, post_id, text)
     return PostResult(ok=True, post_id=comment_id)
 
 
