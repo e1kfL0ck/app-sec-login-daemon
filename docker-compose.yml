@@ -5,7 +5,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./src:/workspace
+      # - ./src:/workspace # For development purposes
       - ./data:/data
     environment:
       - MAIL_USERNAME=${MAIL_USERNAME}
