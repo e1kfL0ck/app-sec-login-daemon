@@ -58,6 +58,31 @@ checks in new endpoints, and documents input expectations in a single, reusable 
 Shared decorators and utilities in the session helper module provide consistent enforcement of authentication and admin
 authorization. They abstract common access checks (logged-in requirement, admin-only requirement, already-logged-in
 redirects) so that routes remain concise and security controls are applied uniformly across the application.
+\paragraph{Implementation references}
+\texttt{src/app.py} registers all blueprints. \texttt{src/auth/routes.py}, \texttt{src/content/routes.py}, and
+\texttt{src/user/routes.py} define the route groups. \texttt{src/auth/services.py}, \texttt{src/content/services.py}, and
+\texttt{src/user/services.py} provide business logic; repositories live in the corresponding \texttt{repository.py}
+files. Validation helpers are in \texttt{src/auth/validators.py}, \texttt{src/content/validators.py}, and
+\texttt{src/user/validators.py}. Session enforcement is implemented in \texttt{src/session_helpers.py}.
+
+\subsection*{Architecture map}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Layer} & \textbf{Primary modules} \\
+\hline
+Routes & \texttt{src/auth/routes.py}, \texttt{src/content/routes.py}, \texttt{src/user/routes.py} \\
+\hline
+Services & \texttt{src/auth/services.py}, \texttt{src/content/services.py}, \texttt{src/user/services.py} \\
+\hline
+Repositories & \texttt{src/auth/repository.py}, \texttt{src/content/repository.py}, \texttt{src/user/repository.py} \\
+\hline
+Validation & \texttt{src/auth/validators.py}, \texttt{src/content/validators.py}, \texttt{src/user/validators.py} \\
+\hline
+Session/Auth & \texttt{src/session_helpers.py} \\
+\hline
+\end{tabular}
+\end{center}
 
 \section{Authentication and Account Security}
 \subsection*{Account activation flow}
@@ -87,6 +112,11 @@ play. These measures improve resilience against brute-force attacks and reduce t
 Administrative controls allow privileged users to disable accounts at the database level. Disabled-by-admin accounts are
 prevented from logging in and cannot be re-enabled by the affected user, ensuring that security or policy violations can
 be enforced centrally.
+\paragraph{Implementation references}
+Auth routes are in \texttt{src/auth/routes.py}. Core login and token workflows are in \texttt{src/auth/services.py}.
+Token helpers are in \texttt{src/auth/tokens.py}. MFA logic is handled by \texttt{src/auth/mfa.py} with templates under
+\texttt{src/auth/templates/}. User disablement and login checks are enforced via \texttt{src/user/services.py} and
+repository calls in \texttt{src/user/repository.py}.
 
 \section{MicroBlog Content Features}
 \subsection*{Public feed and admin feed}
@@ -112,6 +142,10 @@ returns errors when necessary, and ensures search results are displayed consiste
 Authorization checks protect content operations. View permissions respect public/private status and consider disabled
 authors; edit and delete actions are limited to post owners or admins. This isolates security rules from route handlers
 and provides a single location for permission logic.
+\paragraph{Implementation references}
+Content routes are in \texttt{src/content/routes.py}. Business logic and pagination live in
+\texttt{src/content/services.py}. Data access is in \texttt{src/content/repository.py}, and permission checks are defined
+in \texttt{src/content/permissions.py}. Templates reside in \texttt{src/content/templates/}.
 
 \section{User Profiles and Administration}
 \subsection*{Profile pages}
@@ -128,6 +162,10 @@ changes, while success and error messages are displayed on the same page for cle
 Administrative tooling provides a paginated user list and dedicated controls to disable or re-enable accounts. Admins
 can also view a user's profile and posts to audit behavior. Safeguards prevent administrators from disabling their own
 accounts.
+\paragraph{Implementation references}
+User management routes are in \texttt{src/user/routes.py}. Account operations are implemented in
+\texttt{src/user/services.py} with persistence in \texttt{src/user/repository.py}. Templates are located in
+\texttt{src/user/templates/}.
 
 \section{UI and Template Coverage}
 \subsection*{New templates}
@@ -143,6 +181,26 @@ to authenticated users.
 \subsection*{Static assets}
 A favicon is added for browser identification and branding, while content-specific CSS augments the existing styling to
 support the new templates and layout structures.
+\paragraph{Implementation references}
+Shared UI layout uses \texttt{src/templates/base.html} and \texttt{src/templates/dashboard.html}. Content-specific
+templates are under \texttt{src/content/templates/}, user templates under \texttt{src/user/templates/}, and auth
+templates under \texttt{src/auth/templates/}. Static assets are in \texttt{src/static/} and
+\texttt{src/content/static/}.
+
+\subsection*{Template inventory}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Area} & \textbf{Templates added} \\
+\hline
+Auth & \texttt{activation.html} \\
+\hline
+Content & \texttt{feed.html}, \texttt{admin\_feed.html}, \texttt{post\_create.html}, \texttt{post\_edit.html}, \texttt{post\_detail.html}, \texttt{search.html}, \texttt{user\_posts.html} \\
+\hline
+User & \texttt{profile.html}, \texttt{settings.html}, \texttt{admin\_users.html} \\
+\hline
+\end{tabular}
+\end{center}
 
 \section{Database and Deployment Updates}
 \subsection*{Extended schema}
@@ -159,5 +217,28 @@ authentication features without manual setup.
 Container and runtime configuration is updated to align with the new module layout and extended application scope.
 Environment examples, the entrypoint script, and Docker-related files reflect the additional dependencies and routes
 introduced by the merge.
+\paragraph{Implementation references}
+Schema creation and seed data are defined in \texttt{src/init\_db.py}. Environment samples are in \texttt{.env.example}.
+Container startup uses \texttt{src/entrypoint.sh}. Build and orchestration are handled by \texttt{Dockerfile} and
+\texttt{docker-compose.yml}.
+
+\subsection*{Schema summary}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Table} & \textbf{Purpose} \\
+\hline
+users & Accounts, roles, activation, MFA, disabled state \\
+\hline
+tokens & Activation and password reset tokens \\
+\hline
+posts & Blog posts with public/private visibility \\
+\hline
+comments & User comments on posts \\
+\hline
+attachments & Files attached to posts \\
+\hline
+\end{tabular}
+\end{center}
 
 \end{document}
