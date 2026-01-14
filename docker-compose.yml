@@ -2,8 +2,8 @@ services:
   web:
     build: .
     container_name: appsec-login-daemon
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     volumes:
       - ./src:/workspace
       - ./data:/data
