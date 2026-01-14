@@ -65,8 +65,10 @@
 					name="attachments"
 					type="file"
 					multiple
-				class="w-full file:bg-indigo-600 file:text-white file:px-4 file:py-2 file:rounded-lg file:border-0 file:cursor-pointer file:font-medium hover:file:bg-indigo-700 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-				<ul class="list-disc list-inside space-y-1">
+					class="w-full file:bg-indigo-600 file:text-white file:px-4 file:py-2 file:rounded-lg file:border-0 file:cursor-pointer file:font-medium hover:file:bg-indigo-700 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+				>
+				{% if attachments %}
+				<ul class="list-disc list-inside space-y-1 mt-4">
 					{% for a in attachments %}
 					<li>
 						<a class="text-indigo-600 hover:text-indigo-800" href="{{ url_for('content.download_attachment', attachment_id=a.id) }}">{{ a.original_name }}</a>
@@ -74,8 +76,8 @@
 					</li>
 					{% endfor %}
 				</ul>
+				{% endif %}
 			</div>
-			{% endif %}
 
 			<div class="flex gap-3">
 				<button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">Save Changes</button>

@@ -58,7 +58,7 @@ def can_edit_post(user_id, post_id):
         return False
 
     # Only author can edit
-    return user_id == post[1]  # author_id
+    return user_id == post["author_id"]
 
 
 def can_delete_post(user_id, post_id, is_admin=False):
@@ -68,7 +68,7 @@ def can_delete_post(user_id, post_id, is_admin=False):
         return False
 
     # Author can delete own post
-    if user_id == post[1]:
+    if user_id == post["author_id"]:
         return True
 
     # Admins may delete any post
