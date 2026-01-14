@@ -9,6 +9,7 @@ import secrets
 # custom imports
 import field_utils
 from db import get_db
+from .repository import UserRepository
 
 mfa_bp = Blueprint("mfa", __name__, url_prefix="/mfa")
 
@@ -17,7 +18,7 @@ mfa_bp = Blueprint("mfa", __name__, url_prefix="/mfa")
 def _require_login_for_mfa():
     # allow pre-auth flow for verify route (when coming from login)
     if "user_id" not in session and "pre_auth_user_id" not in session:
-        return redirect(url_for("login", next=request.path))
+        return redirect(url_for("auth.login", next=request.path))
 
 
 @mfa_bp.after_request
@@ -73,21 +74,22 @@ Notes:
     - Generates 8 backup codes (12 character hex strings)
     - Stores backup codes as JSON in database
 """
+
+
 @mfa_bp.route("/confirm", methods=["POST"])
 def confirm():
     if "user_id" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
 
     code = request.form.get("otp", "")
     errors = []
-    errors += field_utils.sanitize_user_input(code)
+    errors += field_utils.sanitize_user_input_obfuscated(code)
 
     secret = session.get("mfa_setup_secret", "")
 
     if errors:
         return render_template("mfa_setup.html", error="Secret code invalid")
 
-    #TODO: if not secret, it should be regenerate trought @mfa_bp.route("/setup", methods=["GET"])
     if not secret or not code:
         return render_template("mfa_setup.html", error="Missing fields")
 
@@ -138,6 +140,8 @@ Notes:
     - Backup codes are single-use and removed after successful verification
     - Used backup codes trigger a database update to remove them from the list
 """
+
+
 @mfa_bp.route("/verify", methods=["GET", "POST"])
 def verify():
     # Called when session is in pre-auth state (session['pre_auth_user_id'])
@@ -147,34 +151,45 @@ def verify():
     code = request.form.get("otp", "")
     user_id = session.get("pre_auth_user_id")
     if not user_id:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     db = get_db()
     row = db.execute(
-        "SELECT email, mfa_secret, backup_codes FROM users WHERE id = ?", (user_id,)
+        "SELECT email, mfa_secret, backup_codes, role, disabled FROM users WHERE id = ?",
+        (user_id,),
     ).fetchone()
     if not row:
-        return redirect(url_for("login"))
-    email, secret, backup_json = row
+        return redirect(url_for("auth.login"))
+    email, secret, backup_json, role, disabled = row
     if secret and pyotp.TOTP(secret).verify(code, valid_window=1):
         # login finalization
         session.clear()
         session["user_id"] = user_id
         session["email"] = email
-        #TODO: update last login
+        session["role"] = role
+        session["disabled"] = bool(disabled)
+        UserRepository.update_last_login(user_id)
         return redirect(url_for("dashboard"))
 
     if backup_json:
         backups = json.loads(backup_json)
         if code in backups:
             backups.remove(code)
-            db.execute("UPDATE users SET backup_codes = ? WHERE id = ?", (json.dumps(backups), user_id))
+            db.execute(
+                "UPDATE users SET backup_codes = ? WHERE id = ?",
+                (json.dumps(backups), user_id),
+            )
             db.commit()
             session.clear()
             session["user_id"] = user_id
-            email = db.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()[0]
-            session["email"] = email
-            #TODO: update last login
+            user = db.execute(
+                "SELECT email, role, disabled FROM users WHERE id = ?", (user_id,)
+            ).fetchone()
+            session["email"] = user[0]
+            session["role"] = user[1]
+            session["disabled"] = bool(user[2])
+            UserRepository.update_last_login(user_id)
             return redirect(url_for("dashboard"))
-        
-    #TODO: increment failed logins
+
+    #MFA could not be verified
+    UserRepository.increment_failed_logins(user_id)
     return render_template("mfa_verify.html", error="Invalid code"), 400

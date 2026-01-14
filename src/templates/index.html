@@ -23,7 +23,7 @@
         </div>
         <h3 class="text-xl font-semibold text-gray-800 mb-2">New User?</h3>
         <p class="text-gray-600 mb-4">Create an account to get started with secure authentication.</p>
-        <a href="{{ url_for('register') }}" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
+        <a href="{{ url_for('auth.register') }}" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
           Register Now
         </a>
       </div>
@@ -36,9 +36,30 @@
         </div>
         <h3 class="text-xl font-semibold text-gray-800 mb-2">Have an Account?</h3>
         <p class="text-gray-600 mb-4">Sign in to access your secure dashboard.</p>
-        <a href="{{ url_for('login') }}" class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition">
+        <a href="{{ url_for('auth.login') }}" class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition">
           Login
         </a>
+      </div>
+    </div>
+
+    <div class="mt-12 pt-8 border-t border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Explore Content</h3>
+      <div class="mb-6">
+        <a href="{{ url_for('content.feed') }}"
+          class="inline-block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition">
+          View Public Feed
+        </a>
+      </div>
+      <!-- Search Bar -->
+      <div class="bg-white rounded-lg shadow-md p-4">
+        <form method="get" action="{{ url_for('content.search') }}" class="flex gap-2">
+          <input type="text" name="q" placeholder="Search posts, content, or filenames..." minlength="2"
+            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-sm">
+          <button type="submit"
+            class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold text-sm">
+            🔍 Search
+          </button>
+        </form>
       </div>
     </div>
 

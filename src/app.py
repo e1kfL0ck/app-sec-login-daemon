@@ -1,25 +1,27 @@
 import os
-from datetime import datetime, timedelta
-import secrets
-import sqlite3
+from flask import Flask, render_template, session
 import uvicorn
 
-from flask import Flask, request, render_template, url_for, session, redirect
-from werkzeug.security import generate_password_hash, check_password_hash
 from asgiref.wsgi import WsgiToAsgi
-from functools import wraps
 from flask_wtf import CSRFProtect
 
 # Custom modules
-import mail_handler
-import field_utils
-from mfa import mfa_bp
-from db import get_db, close_db
+from auth.mfa import mfa_bp
+from auth.routes import auth_bp
+from content import content_bp
+from user import user_bp
+from db import close_db
+from session_helpers import login_required, already_logged_in
 
 # Create app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
-app.register_blueprint(mfa_bp)
+app.register_blueprint(mfa_bp)  # Routes at /mfa/*
+app.register_blueprint(auth_bp)  # Routes at /register, /login, /logout, etc.
+app.register_blueprint(
+    content_bp
+)  # Routes at /content/feed, /content/post/<id>, /content/search, etc.
+app.register_blueprint(user_bp)  # Routes at /user/profile, /user/settings, etc.
 
 # CSRF Protection
 csrf = CSRFProtect(app)
@@ -33,27 +35,6 @@ debug_mode = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
 @app.teardown_appcontext
 def teardown_db(exception):
     close_db()
-
-
-# Ensure the user is logged in
-def login_required(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-        return view(*args, **kwargs)
-
-    return wrapped
-
-
-def already_logged_in(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if "user_id" in session:
-            return redirect(url_for("dashboard"))
-        return view(*args, **kwargs)
-
-    return wrapped
 
 
 # Error handlers
@@ -76,340 +57,16 @@ def index():
     return render_template("index.html"), 200
 
 
-@app.route("/register", methods=["GET", "POST"])
-@already_logged_in
-def register():
-    if request.method == "GET":
-        return render_template("register.html")
-
-    # POST
-    email = request.form.get("email", "")
-    password = request.form.get("password", "")
-    confirm_password = request.form.get("confirm_password", "")
-
-    errors = []
-    errors += field_utils.sanitize_user_input(email)
-    errors += field_utils.check_email_format(email)
-    errors += field_utils.check_password_strength(password)
-    errors += field_utils.check_password_match(password, confirm_password)
-
-    if errors:
-        return render_template("register.html", errors=errors)
-
-    db = get_db()
-
-    # User creation
-    password_hash = generate_password_hash(password)
-    created_at = datetime.now()
-
-    try:
-        db.execute(
-            """
-            INSERT INTO users (email, password_hash, created_at, activated)
-            VALUES (?, ?, ?, ?)
-            """,
-            (email, password_hash, created_at.isoformat(), 0),
-        )
-        db.commit()
-
-    except sqlite3.IntegrityError:
-        errors.append("An account with this email already exists.")
-        return render_template("register.html", errors=errors)
-
-    user_id = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
-
-    activation_token = secrets.token_hex(32)
-
-    db.execute(
-        """
-        INSERT INTO tokens (token, user_id, expires_at, created_at, type)
-        VALUES (?, ?, ?, ?, 'activation')
-        """,
-        (
-            activation_token,
-            user_id,
-            (datetime.now() + timedelta(hours=24)).isoformat(),
-            datetime.now().isoformat(),
-        ),
-    )
-    db.commit()
-
-    activation_link = url_for("activate", token=activation_token, _external=True)
-
-    # Attempt to send activation email (logged on failure)
-    mail_sent = False
-    try:
-        mail_sent = mail_handler.send_activation_email(email, activation_link)
-    except Exception:
-        # loggin is useless here, as mail_handler already logs exceptions
-        mail_sent = False
-
-    if not mail_sent and debug_mode:
-        # log the activation link if email sending fails
-        app.logger.info("Activation link for %s: %s", email, activation_link)
-        return render_template(
-            "register.html",
-            email=email,
-            mail_sent=False,
-        )
-
-    # Successful registration message (email was sent)
-    return render_template("register.html", email=email, mail_sent=True)
-
-
-@app.route("/activate/<token>")
-@already_logged_in
-def activate(token):
-    db = get_db()
-
-    errors = field_utils.sanitize_user_input(token, max_len=64)
-
-    if errors:
-        return render_template("activation.html", success=False), 400
-
-    token_row = db.execute(
-        "SELECT user_id, used, expires_at FROM tokens WHERE token = ? AND type = 'activation'",
-        (token,),
-    ).fetchone()
-
-    if not token_row:
-        return render_template("activation.html", success=False), 400
-
-    user_id, used, expires_at_str = token_row
-    expires_at = datetime.fromisoformat(expires_at_str)
-
-    if datetime.now() > expires_at:
-        return render_template("activation.html", success=False), 400
-    
-    if used:
-        return render_template("activation.html", success=False), 400
-
-    db.execute("UPDATE users SET activated = 1 WHERE id = ?", (user_id,))
-    db.execute("UPDATE tokens SET used = 1 WHERE token = ?", (token,))
-    db.commit()
-
-    return render_template("activation.html", success=True)
-
-
-@app.route("/forgotten_password", methods=["GET", "POST"])
-def forgotten_password():
-    """
-    Following the click of the user on "I forgot my password":
-    - queries user for an email
-    - display confirmation message
-    - if email is valid, sends a password reset token
-    """
-    if request.method == "GET":
-        return render_template("forgotten_password.html")
-
-    # POST
-    email = request.form.get("email", "")
-
-    errors = []
-    errors += field_utils.sanitize_user_input(email)
-    errors += field_utils.check_email_format(email)
-
-    if errors:
-        return render_template("forgotten_password.html", errors=errors)
-
-    db = get_db()
-    user = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
-
-    if user is None:
-        return render_template("forgotten_password.html", mail_sent=False)
-
-    user_id = user[0]
-    reset_token = secrets.token_hex(32)
-
-    db.execute(
-        """
-        INSERT INTO tokens (token, user_id, expires_at, created_at, type)
-        VALUES (?, ?, ?, ?, 'password_reset')
-        """,
-        (
-            reset_token,
-            user_id,
-            (datetime.now() + timedelta(hours=1)).isoformat(),
-            datetime.now().isoformat(),
-        ),
-    )
-    db.commit()
-
-    reset_link = url_for("password_reset", token=reset_token, _external=True)
-
-    # Attempt to send password reset email (logged on failure)
-    mail_sent = False
-    try:
-        mail_sent = mail_handler.send_password_reset_email(email, reset_link)
-    except Exception:
-        # logging is useless here, as mail_handler already logs exceptions
-        pass
-
-    if not mail_sent and debug_mode:
-        app.logger.info("Password reset link for %s: %s", email, reset_link)
-        return render_template("forgotten_password.html", email=email, mail_sent=False)
-
-    return render_template("forgotten_password.html", email=email, mail_sent=True)
-
-
-@app.route("/password_reset/<token>", methods=["GET", "POST"])
-def password_reset(token):
-    """
-    Upon being requested by a token that the user received by mail, provides the password reset form :
-    - checks password strength
-    - checks that both password and password_confirmation match
-    - replaces the account password in the database
-    - displays a confirmation to the user
-    """
-
-    errors = field_utils.sanitize_user_input(token, max_len=64)
-
-    db = get_db()
-
-    if request.method == "GET":
-        if errors:
-            return render_template(
-                "password_reset.html", message="Invalid activation token", token=token
-            ), 400
-
-        token_row = db.execute(
-            "SELECT user_id, used, expires_at FROM tokens WHERE token = ? AND type = 'password_reset'",
-            (token,),
-        ).fetchone()
-
-        if not token_row:
-            return render_template(
-                "password_reset.html", message="Invalid activation token.", token=token
-            ), 400
-
-        user_id, used, expires_at_str = token_row
-        expires_at = datetime.fromisoformat(expires_at_str)
-
-        if datetime.now() > expires_at:
-            return render_template(
-                "password_reset.html",
-                message="Activation token has expired.",
-                token=token,
-            ), 400
-        
-        if used:
-            return render_template(
-                "password_reset.html", message="Invalid activation token.", token=token
-            ), 400
-
-        return render_template("password_reset.html", token=token)
-
-    # POST
-    password = request.form.get("password", "")
-    confirm_password = request.form.get("confirm_password", "")
-
-    errors = []
-    errors += field_utils.check_password_strength(password)
-    errors += field_utils.check_password_match(password, confirm_password)
-
-    if errors:
-        return render_template("password_reset.html", errors=errors, token=token)
-
-    password_hash = generate_password_hash(password)
-    # TODO: add field to track last password reset date?
-
-    try:
-        user_row = db.execute(
-            "SELECT user_id FROM tokens WHERE token = ? AND type = 'password_reset'",
-            (token,),
-        ).fetchone()
-
-        user_id = user_row[0]
-
-        db.execute(
-            """
-            UPDATE users
-            SET password_hash = ?
-            WHERE id = ?
-            """,
-            (password_hash, user_id),
-        )
-        db.commit()
-        db.execute("UPDATE tokens SET used = 1 WHERE token = ?", (token,))
-
-    except sqlite3.IntegrityError:
-        app.logger.exception("Password database insertion failed.")
-        return render_template("password_reset.html", success=False, token=token)
-
-    db.commit()
-
-    return render_template("password_reset.html", success=True, token=token)
-
-
-@app.route("/login", methods=["GET", "POST"])
-@already_logged_in
-def login():
-    if request.method == "GET":
-        return render_template("login.html"), 200
-
-    # POST
-    email = request.form.get("email", "")
-    password = request.form.get("password", "")
-
-    if field_utils.sanitize_user_input(email):
-        return render_template("login.html", errors=True)
-
-    db = get_db()
-
-    user_row = db.execute(
-        "SELECT id, password_hash, nb_failed_logins, activated FROM users WHERE email = ?",
-        (email,),
-    ).fetchone()
-
-    if not user_row:
-        return render_template("login.html", errors=True)
-
-    user_id, db_password_hash, nb_failed_logins, activated = user_row
-
-    # If password failed more than 3 times, you must change it
-    if nb_failed_logins >= 3:
-        return render_template("login.html", errors=False, reset=True)
-
-    if not check_password_hash(db_password_hash, password) or not activated:
-        db.execute(
-            "UPDATE users SET nb_failed_logins = nb_failed_logins + 1 WHERE id = ? ",
-            (user_id,),
-        )
-        db.commit()
-        return render_template("login.html", errors=True)
-
-    # Update last connexion time
-    db.execute(
-        "UPDATE users SET last_login = ? WHERE id = ?",
-        (datetime.now().isoformat(), user_id),
-    )
-    db.commit()
-
-    # Login successful
-    # Enter MFA flow if enabled
-    session.clear()  # mitigate session fixation
-    mfa_enabled = db.execute(
-        "SELECT mfa_enabled FROM users WHERE id = ?", (user_id,)
-    ).fetchone()[0]
-    if mfa_enabled:
-        session["pre_auth_user_id"] = user_id
-        return redirect(url_for("mfa.verify"))
-    session["user_id"] = user_id
-    session["email"] = email
-    return redirect(url_for("dashboard"))
-
-
-@app.route("/logout")
-@login_required
-def logout():
-    session.clear()
-    return redirect(url_for("index"))
-
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html", user={"email": session.get("email")}), 200
+    return render_template(
+        "dashboard.html",
+        user={
+            "email": session.get("email"),
+            "role": session.get("role", "user"),
+        },
+    ), 200
 
 
 asgi_app = WsgiToAsgi(app)
