@@ -3,10 +3,9 @@
     "version": "1.0.0",
     "description": "Application Security Login Daemon Lab",
     "scripts": {
-        "build:css": "tailwindcss -i ./src/static/tailwind.css -o ./src/static/styles.css",
-        "watch:css": "tailwindcss -i ./src/static/tailwind.css -o ./src/static/styles.css --watch"
+        "build:css": "tailwindcss -i ./src/static/tailwind.css -o ./src/static/styles.css"
     },
-    "devDependencies": {
-        "tailwindcss": "4.1.18"
+    "dependencies": {
+        "@tailwindcss/cli": "^4.1.18"
     }
 }
