@@ -144,21 +144,14 @@ def edit_post(post_id):
     return redirect(url_for("content.view_post", post_id=post_id))
 
 
-@content_bp.route("/post/<int:post_id>/delete", methods=["DELETE"])
+@content_bp.route("/post/<int:post_id>/delete", methods=["POST"])
 @login_required
 def delete_post(post_id):
     """Delete a post."""
     user_id = session.get("user_id")
     is_admin = session.get("role") == "admin"
-    post = services.get_post_view(
-        post_id, requesting_user_id=user_id, requesting_is_admin=is_admin
-    )
 
-    result = services.permissions.can_edit_post(user_id, post_id)
-    if not post or not result:
-        return render_template("404.html"), 404
-
-    result = services.delete_post(post_id, user_id)
+    result = services.delete_post(post_id, user_id, is_admin=is_admin)
 
     if not result.ok:
         return redirect(url_for("content.view_post", post_id=post_id))
