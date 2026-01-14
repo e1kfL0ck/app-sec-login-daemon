@@ -8,9 +8,14 @@
 \usepackage{parskip}
 \usepackage{svg}
 \usepackage{float}
+\usepackage{titlesec}
 
-\title{Application Security -- Laboratories\\[0.4em]
-\large LAB-05}
+% This removes "Chapter X" and the number, but keeps the Title
+\titleformat{\chapter}[hang] 
+{\normalfont\huge\bfseries}{}{0pt}{}
+
+\title{Application Security -- Laboratory Report\\[0.4em]
+\large LAB-05: Complete Secure Web Application with MFA and Hardened Modules}
 \author{Gaillard Théo \\ \texttt{theo.gaillard@student.put.poznan.pl} \\
 Quivron Emile \\ \texttt{emile.quivron@student.put.poznan.pl} \\
 \\
@@ -22,221 +27,108 @@ Supervisor: Michał Apolinarski, Ph.D. \\ Politechnika Poznańska}
 \tableofcontents
 \newpage
 
-This report documents the implementation of the User Registration Module as part of a MicroBlog application. The MicroBlog application will be discussed extensively here.
-\part{API modifications and encapsulation}
+\chapter*{Introduction}
+This report documents the implementation of the previously developped \textit{User Authentication Module}
+and associated security layers for a generic application. We decided to build a rather simple forum-like app.
+This allows us to implement various types of security measures, ranging from basic granular permissions
+to advanced magic-bytes enforcement for file uploads.
 
-\chapter{Component Overview}
+The focus of this laboratory was to transition from a basic functional authentication module to a hardened,
+production-ready application by applying industry-standard security patterns throughout the application.
 
-\part{MicroBlog Application Implementation}
+We used Tailwind CSS to quickly prototype a clean and responsive user interface. However, the main focus was of course
+on backend security. We are using Flask as the web framework, SQLite for data persistence, and various Python libraries
+to implement security features such as password hashing, CSRF protection, and MFA.
 
-\chapter{New Features Introduced in Commit 559a80d}
-This section documents the features added on the main branch by merge commit \texttt{559a80d}. The comparison is against
-the main branch state immediately before that merge, so the list focuses on new functionality and structural changes
-introduced by the merge.
+\part{Architecture and Design Principles}
 
-\section{Application Structure and Modularity}
-\subsection*{Blueprint-based routing}
-Blueprints split the application into three coherent domains: authentication (\texttt{auth}), content management
-(\texttt{content}), and user management (\texttt{user}). Each blueprint owns its URL prefix, templates, and route
-handlers, which keeps domain-specific logic localized and makes it easier to test, document, and evolve each area
-independently. This structure also simplifies URL mapping by making ownership explicit (e.g., \texttt{/register} under
-auth, \texttt{/content/*} for posts and feeds, \texttt{/user/*} for profiles and settings).
+\chapter{Core Security Principles}
+The following guiding principles were strictly followed during the implementation phase to ensure a defense-in-depth approach.
 
-\subsection*{Service and repository layers}
-The new service layer (\texttt{services.py}) centralizes business rules such as login validation, content visibility, and
-account state handling. The repository layer (\texttt{repository.py}) encapsulates all database queries and mutations.
-This separation reduces direct SQL in route handlers, prevents duplicated logic across endpoints, and allows future
-changes (database schema or backend storage) to be made in a single place with minimal impact on routing code.
+\section{Zero-Trust Input Validation}
+All data originating from the client-side is treated as untrusted. Every input is subjected to a three-step process:
+\begin{enumerate}
+    \item \textbf{Validation}: Ensuring data conforms to expected types, lengths, and formats (e.g., regex for emails).
+    \item \textbf{Sanitization}: Stripping potentially harmful characters to prevent injection attacks.
+    \item \textbf{Constraint Enforcement}: Restricting inputs to explicit allowlists (e.g., specific MIME types for uploads).
+\end{enumerate}
+We utilized libraries such as \texttt{python-magic} for file type validation and WTForms for form input validation. This
+ensures that industry-standard validation techniques are applied consistently, and reduces the risk of common vulnerabilities.
 
-\subsection*{Validation utilities}
-Input validation is now consolidated in dedicated \texttt{validators.py} modules for each domain. These validators
-enforce format, length, and policy rules (email format, password strength, post length, etc.) before data reaches the
-service and repository layers. Centralizing validation improves consistency across features, reduces the risk of missing
-checks in new endpoints, and documents input expectations in a single, reusable location.
+\section{Security-First Development Lifecycle}
+Development followed a strict "Security-by-Design" sequence:
+\begin{itemize}
+    \item \textbf{Baseline Security}: Authentication, authorization, and safe persistence were implemented alongside business logic.
+    \item \textbf{UX Refinement}: User flows were \textit{"optimized"} only after ensuring that usability did not compromise security invariants.
+    \item \textbf{Regression Testing}: Every change was verified to ensure it did not bypass existing security middleware.
+\end{itemize}
 
-\subsection*{Session helpers}
-Shared decorators and utilities in the session helper module provide consistent enforcement of authentication and admin
-authorization. They abstract common access checks (logged-in requirement, admin-only requirement, already-logged-in
-redirects) so that routes remain concise and security controls are applied uniformly across the application.
-\paragraph{Implementation references}
-\texttt{src/app.py} registers all blueprints. \texttt{src/auth/routes.py}, \texttt{src/content/routes.py}, and
-\texttt{src/user/routes.py} define the route groups. \texttt{src/auth/services.py}, \texttt{src/content/services.py}, and
-\texttt{src/user/services.py} provide business logic; repositories live in the corresponding \texttt{repository.py}
-files. Validation helpers are in \texttt{src/auth/validators.py}, \texttt{src/content/validators.py}, and
-\texttt{src/user/validators.py}. Session enforcement is implemented in \texttt{src/session\_helpers.py}.\subsection*{Architecture map}
-\begin{center}
-    \begin{tabular}{|l|l|}
-        \hline
-        \textbf{Layer} & \textbf{Primary modules}                                                                             \\
-        \hline
-        Routes         & \texttt{src/auth/routes.py}, \texttt{src/content/routes.py}, \texttt{src/user/routes.py}             \\
-        \hline
-        Services       & \texttt{src/auth/services.py}, \texttt{src/content/services.py}, \texttt{src/user/services.py}       \\
-        \hline
-        Repositories   & \texttt{src/auth/repository.py}, \texttt{src/content/repository.py}, \texttt{src/user/repository.py} \\
-        \hline
-        Validation     & \texttt{src/auth/validators.py}, \texttt{src/content/validators.py}, \texttt{src/user/validators.py} \\
-        \hline
-        Session/Auth   & \texttt{src/session\_helpers.py}                                                                     \\
-        \hline
-    \end{tabular}
-\end{center}
+\part{Module-Level Security Mapping}
 
-\section{Authentication and Account Security}
-\subsection*{Account activation flow}
-New registrations create an activation token stored in the database with expiry metadata. The activation endpoint
-validates the token, checks expiration and usage status, and activates the account only when the token is valid. This
-introduces a clear account lifecycle (registered $\rightarrow$ activated) and enables email-based verification that
-prevents inactive accounts from accessing protected features.
+\chapter{Core Application and Routing}
+This section describes the global security configuration applied to the application base.
 
-\subsection*{Password reset workflow}
-Password resets use one-time tokens with expiry checks, generated on request and stored in the token table. The reset
-process validates the token before allowing a password change, then marks the token as used. The UI always returns a
-generic success message to avoid email enumeration, while still allowing legitimate users to complete the reset flow
-securely.
+\section{Route Surface}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{/} -- Public; utilizes \texttt{already\_logged\_in} to redirect authenticated users.
+    \item \texttt{/dashboard} -- Authenticated; protected by \texttt{login\_required}.
+    \item \textbf{Global Error Handlers} -- Custom 404/500 pages to prevent stack-trace leakage.
+\end{itemize}
 
-\subsection*{Multi-factor authentication}
-MFA support adds a setup flow that generates a TOTP secret, renders a QR code for authenticator apps, and confirms
-time-based one-time codes. On successful setup, the system stores the secret and issues a set of backup codes for
-recovery. The verification flow accepts either a valid TOTP code or an unused backup code, then finalizes login and
-rotates backup codes as they are consumed.
+\section{Security Controls}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{CSRF Protection}: \texttt{CSRFProtect} is enabled globally. Every state-changing request (POST/PUT/DELETE) requires a valid, synchronized token.
+    \item \textbf{Session Management}: The \texttt{SECRET\_KEY} is used to sign session cookies. Sessions are regenerated upon login and cleared upon logout to prevent session fixation and hijacking.
 
-\subsection*{Login protections}
-Authentication now tracks failed login attempts and enforces a reset requirement after repeated failures. On successful
-login, the session is cleared to mitigate session fixation, and last-login timestamps are updated when MFA is not in
-play. These measures improve resilience against brute-force attacks and reduce the likelihood of session reuse.
+          \textit{Note: the secret key should be rotated periodically and at every restart of the application in a production environment. We did not implement this here on purpose to keep our sessions persistent during development.}
+\end{itemize}
 
-\subsection*{Admin disablement}
-Administrative controls allow privileged users to disable accounts at the database level. Disabled-by-admin accounts are
-prevented from logging in and cannot be re-enabled by the affected user, ensuring that security or policy violations can
-be enforced centrally.
-\paragraph{Implementation references}
-Auth routes are in \texttt{src/auth/routes.py}. Core login and token workflows are in \texttt{src/auth/services.py}.
-Token helpers are in \texttt{src/auth/tokens.py}. MFA logic is handled by \texttt{src/auth/mfa.py} with templates under
-\texttt{src/auth/templates/}. User disablement and login checks are enforced via \texttt{src/user/services.py} and
-repository calls in \texttt{src/user/repository.py}.
+\chapter{Authentication and MFA (\texttt{auth} module)}
+The authentication module handles the identity lifecycle, including registration and Multi-Factor Authentication (MFA).
 
-\section{MicroBlog Content Features}
-\subsection*{Public feed and admin feed}
-The content module introduces a public feed that lists all public posts with pagination. Administrators are granted a
-separate global feed that surfaces all posts, including private content, which supports moderation and oversight duties.
-These two feeds expose different views of the same underlying dataset based on role.
+\section{Route Surface}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{/register}, \texttt{/login}, \texttt{/activate/<token>} -- Public-facing entry points.
+    \item \texttt{/mfa/setup}, \texttt{/mfa/confirm} -- MFA configuration (authenticated).
+    \item \texttt{/mfa/verify} -- Gated pre-authentication stage using \texttt{pre\_auth\_user\_id}.
+\end{itemize}
 
-\subsection*{Post management}
-Users can create, edit, and delete posts, selecting whether each post is public or private. Editing flows re-load
-current post data and attachments, while deletion enforces ownership or admin privileges. Viewing a post respects
-visibility rules and displays related comments and attachments.
+\section{Security Implementation}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Cryptographic Hashing}: Passwords are never stored in plaintext. We utilize Werkzeug's \texttt{generate\_password\_hash()} method with unique salts for every user.    \item \textbf{Account Activation}: New accounts remain in a "Pending" state until email verification. Activation tokens are server-side managed with strict expiration timestamps.
+    \item \textbf{Brute-Force Mitigation}: Failed login and MFA attempts are rate-limited. After three failed attempts, the account flow triggers a mandatory reset or lockout period.
+    \item \textbf{MFA Gating}: MFA implementation utilizes TOTP (Time-based One-Time Passwords). During the login process, a user is held in a "pre-authenticated" state, where session permissions are strictly limited until the second factor is verified.
+\end{itemize}
 
-\subsection*{Comments and attachments}
-Posts can be commented on by authenticated users, and attachments can be uploaded alongside content creation or edits.
-Attachment downloads are served through permission checks and safe file delivery, preserving original filenames while
-ensuring storage safety and access control.
+\chapter{Content and Media (\texttt{content} module)}
+This module manages the core business logic of the MicroBlog: posts, comments, and file attachments.
 
-\subsection*{Search}
-Keyword search scans content and returns matching posts with clear empty-state feedback. The route validates input,
-returns errors when necessary, and ensures search results are displayed consistently alongside the entered query.
+\section{Route Surface}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{/content/feed} -- Public visibility of approved posts.
+    \item \texttt{/content/post/create}, \texttt{/edit}, \texttt{/delete} -- Owner-restricted CRUD operations.
+    \item \texttt{/content/attachment/<id>} -- Permission-gated binary delivery.
+\end{itemize}
 
-\subsection*{Content permissions}
-Authorization checks protect content operations. View permissions respect public/private status and consider disabled
-authors; edit and delete actions are limited to post owners or admins. This isolates security rules from route handlers
-and provides a single location for permission logic.
-\paragraph{Implementation references}
-Content routes are in \texttt{src/content/routes.py}. Business logic and pagination live in
-\texttt{src/content/services.py}. Data access is in \texttt{src/content/repository.py}, and permission checks are defined
-in \texttt{src/content/permissions.py}. Templates reside in \texttt{src/content/templates/}.
+\section{Security Implementation}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Granular Authorization}: Access control is centralized in \texttt{permissions.py}. The system verifies that the current \texttt{user\_id} matches the resource \texttt{owner\_id} before allowing modifications.
+    \item \textbf{Secure File Uploads}:
+          \begin{itemize}
+              \item \textbf{Magic Byte Validation}: MIME types are verified by reading the file header, not just the extension.
+              \item \textbf{Storage Isolation}: Files are renamed using \texttt{secure\_filename} and stored outside the web root.
+              \item \textbf{Delivery}: Files are served via \texttt{send\_from\_directory} with forced \texttt{Content-Disposition: attachment}.
+          \end{itemize}
+\end{itemize}
 
-\section{User Profiles and Administration}
-\subsection*{Profile pages}
-Each user now has a profile page that displays account information and a personalized feed of their posts. For admins,
-the same template can be used to view other users' profiles, supporting oversight and account review tasks without
-introducing a separate UI path.
+\chapter{User Management (\texttt{user} module)}
+Handles profile management and administrative oversight.
 
-\subsection*{Account settings}
-The settings page consolidates self-service actions, including email updates, account deletion, and self-disable or
-reactivation flows. Each action validates the current password and requires explicit confirmation to reduce accidental
-changes, while success and error messages are displayed on the same page for clear feedback.
-
-\subsection*{Admin user management}
-Administrative tooling provides a paginated user list and dedicated controls to disable or re-enable accounts. Admins
-can also view a user's profile and posts to audit behavior. Safeguards prevent administrators from disabling their own
-accounts.
-\paragraph{Implementation references}
-User management routes are in \texttt{src/user/routes.py}. Account operations are implemented in
-\texttt{src/user/services.py} with persistence in \texttt{src/user/repository.py}. Templates are located in
-\texttt{src/user/templates/}.
-
-\section{UI and Template Coverage}
-\subsection*{New templates}
-The merge introduces a full template set for the content and user modules, including feeds, post creation and editing,
-search results, profile pages, settings, and admin user views. These templates establish consistent layouts for new
-features and reduce ad hoc rendering logic in routes.
-
-\subsection*{Updated base and dashboard}
-The base layout is adjusted to accommodate new navigation targets and maintain consistent styling across the expanded
-feature set. The dashboard template is updated to reflect the broader application scope and quick actions now available
-to authenticated users.
-
-\subsection*{Static assets}
-A favicon is added for browser identification and branding, while content-specific CSS augments the existing styling to
-support the new templates and layout structures.
-\paragraph{Implementation references}
-Shared UI layout uses \texttt{src/templates/base.html} and \texttt{src/templates/dashboard.html}. Content-specific
-templates are under \texttt{src/content/templates/}, user templates under \texttt{src/user/templates/}, and auth
-templates under \texttt{src/auth/templates/}. Static assets are in \texttt{src/static/} and
-\texttt{src/content/static/}.
-
-\subsection*{Template inventory}
-\begin{center}
-    \begin{tabular}{|l|l|}
-        \hline
-        \textbf{Area} & \textbf{Templates added}                                                                                                                                                         \\
-        \hline
-        Auth          & \texttt{activation.html}                                                                                                                                                         \\
-        \hline
-        Content       & \texttt{feed.html}, \texttt{admin\_feed.html}, \texttt{post\_create.html}, \texttt{post\_edit.html}, \texttt{post\_detail.html}, \texttt{search.html}, \texttt{user\_posts.html} \\
-        \hline
-        User          & \texttt{profile.html}, \texttt{settings.html}, \texttt{admin\_users.html}                                                                                                        \\
-        \hline
-    \end{tabular}
-\end{center}
-
-\section{Database and Deployment Updates}
-\subsection*{Extended schema}
-The database schema expands beyond authentication to include posts, comments, and attachments, enabling full MicroBlog
-functionality. The users table gains role data, disabled-state flags, MFA secrets, and backup codes, which are required
-for admin control and two-factor authentication flows.
-
-\subsection*{Initialization routines}
-Database initialization now includes optional seed data for development and demonstrations. When debug mode is enabled,
-the system creates a test user, an admin account, and example posts, allowing quick verification of the content and
-authentication features without manual setup.
-
-\subsection*{Environment and runtime}
-Container and runtime configuration is updated to align with the new module layout and extended application scope.
-Environment examples, the entrypoint script, and Docker-related files reflect the additional dependencies and routes
-introduced by the merge.
-\paragraph{Implementation references}
-Schema creation and seed data are defined in \texttt{src/init\_db.py}. Environment samples are in \texttt{.env.example}.
-Container startup uses \texttt{src/entrypoint.sh}. Build and orchestration are handled by \texttt{Dockerfile} and
-\texttt{docker-compose.yml}.
-
-\subsection*{Schema summary}
-\begin{center}
-    \begin{tabular}{|l|l|}
-        \hline
-        \textbf{Table} & \textbf{Purpose}                                 \\
-        \hline
-        users          & Accounts, roles, activation, MFA, disabled state \\
-        \hline
-        tokens         & Activation and password reset tokens             \\
-        \hline
-        posts          & Blog posts with public/private visibility        \\
-        \hline
-        comments       & User comments on posts                           \\
-        \hline
-        attachments    & Files attached to posts                          \\
-        \hline
-    \end{tabular}
-\end{center}
+\section{Security Implementation}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Destructive Action Verification}: Deleting or disabling an account requires a re-authentication step (password confirmation) and an explicit string confirmation (e.g., typing "DELETE").
+    \item \textbf{Administrative Safeguards}: Admins cannot disable their own accounts to prevent accidental total lockout of the system.
+    \item \textbf{Account State Persistence}: A distinction is made between user-initiated "disabling" and admin-initiated "banning." Users can self-reactivate, whereas admin bans require administrative intervention.
+\end{itemize}
 
 \end{document}
