@@ -48,6 +48,8 @@ docker compose up --build
 
 Console logs will be displayed on stdout. In order to exit, use the standard `^c`.
 
+The web app is then accessible at `https://localhost/` (note the HTTPS). This means that you will need to accept the self-signed certificate in your browser.
+
 ## MFA (or 2FA, 2-factor authentication)
 
 MFA can be enabled by users inside the app. By default, the demo/testing users come with it pre-enabled. You can use an authenticator app like Proton Authenticator or Authy to scan the QR code and generate time-based one-time passwords (TOTP).
