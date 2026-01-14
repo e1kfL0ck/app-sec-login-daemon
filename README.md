@@ -11,6 +11,14 @@ cp .env.example .env
 ```
 
 Note that email validation of the token is at the moment not mandatory, but an error will be logged if the credentials aren't set. Email credential setup is still mandatory if you want to use the password reset feature.
+**Debug Mode**: When `DEBUG=True`, email tokens for registration or password resets are printed directly to the console. This allows you to test the full flow without a functional SMTP server. (although untested in recent versions, it should still work)
+
+You will also get nicely prepared users for testing/demo purposes:
+
+- <admin@domain.org>
+- <user@domain.org>
+
+And a few default posts to see how the content feed looks like.
 
 ### Example: Add a Google App Password (for Gmail)
 
