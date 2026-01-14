@@ -52,18 +52,6 @@ class UserProfileRepository:
         )
         db.commit()
 
-    # TODO: Check this out
-    #
-    # @staticmethod
-    # def set_activation(user_id, activated):
-    #     """Activate or deactivate a user account."""
-    #     db = get_db()
-    #     db.execute(
-    #         "UPDATE users SET activated = ? WHERE id = ?",
-    #         (1 if activated else 0, user_id),
-    #     )
-    #     db.commit()
-
     @staticmethod
     def delete_user(user_id):
         """
