@@ -64,6 +64,10 @@ npm is used to manage Tailwind CSS dependencies and build processes. The followi
    npm run build:css
    ```
 
+3. **Watch for changes (not implemented):**
+
+At the moment, `package.json` does not include scripts for automatic rebuilding during Flask app runtime. You will need to manually run the build command after modifying any css files. You will also need to modify the mounting points in `docker-compose.yml` to overwrite the generated `styles.css` inside the container.
+
 ### Docker Deployment
 
 The Dockerfile uses a multi-stage build:
