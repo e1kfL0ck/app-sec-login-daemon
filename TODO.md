@@ -65,6 +65,7 @@ any content item, comment or user account.
 - security events logging
 - HTTPS
 - mail sending delay is different if the mail is sent or not
+- dashbaord.html line 32 to be fixed (all security features enabled ?)
 
 ## Nginx (deployment)
 
