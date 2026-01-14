@@ -47,6 +47,7 @@ def get_user_profile(user_id):
         "role": user[6],
         "disabled": bool(user[7]),
         "disabled_by_admin": bool(user[8]),
+        "last_login": user[9],
     }
 
 

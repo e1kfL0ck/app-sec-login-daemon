@@ -2,27 +2,18 @@
 Validators for user profile operations.
 """
 
-import re
+import field_utils as fu
 
 
 def validate_email_update(email):
     """
     Validate email for update operation.
-    Returns list of error messages (empty if valid).
+    Returns a list of errors (empty if valid).
     """
     errors = []
 
-    if not email:
-        errors.append("Email is required")
-        return errors
-
-    # Basic email format validation
-    email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    if not re.match(email_pattern, email):
-        errors.append("Invalid email format")
-
-    if len(email) > 254:
-        errors.append("Email is too long")
+    errors += fu.sanitize_user_input_obfuscated(email)
+    errors += fu.check_email_format(email)
 
     return errors
 
