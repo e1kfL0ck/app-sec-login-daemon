@@ -2,77 +2,85 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
   <div class="form-container p-8 text-center space-y-6">
-    <!-- TODO: modify success to be registered as registration_success -->
     {% if success %}
-      <div class="inline-block p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full">
-        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-      </div>
+    <div class="inline-block p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full">
+      <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+    </div>
 
-      <h2 class="text-3xl font-bold text-gray-800">Account Activated!</h2>
+    <h2 class="text-3xl font-bold text-gray-800">Account Activated!</h2>
 
-      <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-        <p class="font-semibold">Success!</p>
-        <p class="text-sm mt-1">Your account has been successfully activated.</p>
-      </div>
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
+      <p class="font-semibold">Success!</p>
+      <p class="text-sm mt-1">Your account has been successfully activated.</p>
+    </div>
 
-      <p class="text-gray-600">You can now log in and start using your account.</p>
+    <p class="text-gray-600">You can now log in and start using your account.</p>
 
-      <a href="{{ url_for('auth.login') }}" class="inline-block bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition">
-        Go to Login
-      </a>
+    <a href="{{ url_for('auth.login') }}"
+      class="inline-block bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition">
+      Go to Login
+    </a>
 
     {% elif success is false %}
-      <div class="inline-block p-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full">
-        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-        </svg>
-      </div>
+    <div class="inline-block p-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full">
+      <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+        </path>
+      </svg>
+    </div>
 
-      <h2 class="text-3xl font-bold text-gray-800">Activation Error</h2>
+    <h2 class="text-3xl font-bold text-gray-800">Activation Error</h2>
 
-      <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-        <p class="font-semibold">Activation Failed</p>
-        <p class="text-sm mt-1">{{ message }}</p>
-      </div>
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+      <p class="font-semibold">Activation Failed</p>
+      <p class="text-sm mt-1">{{ message }}</p>
+    </div>
 
-      <p class="text-gray-600">This activation link may have expired or is invalid.</p>
+    <p class="text-gray-600">This activation link may have expired or is invalid.</p>
 
-      <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="{{ url_for('auth.register') }}" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
-          Register Again
-        </a>
-        <a href="{{ url_for('index') }}" class="inline-block bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
-          Go to Home
-        </a>
-      </div>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="{{ url_for('auth.register') }}"
+        class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
+        Register Again
+      </a>
+      <a href="{{ url_for('index') }}"
+        class="inline-block bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
+        Go to Home
+      </a>
+    </div>
 
     {% elif mfa_success is true %}
-      <div class="inline-block p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full">
-        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-      </div>
+    <div class="inline-block p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full">
+      <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+    </div>
 
-      <h2 class="text-3xl font-bold text-gray-800">MFA Setup Successful</h2>
+    <h2 class="text-3xl font-bold text-gray-800">MFA Setup Successful</h2>
 
-      <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-        <p class="font-semibold">You're Protected</p>
-        <p class="text-sm mt-1">Your multi-factor authentication has been set up.</p>
-      </div>
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
+      <p class="font-semibold">You're Protected</p>
+      <p class="text-sm mt-1">Your multi-factor authentication has been set up.</p>
+    </div>
 
-      <p class="text-gray-600">Store these backup codes safely. Each code can be used once if you lose access to your authenticator app.</p>
+    <p class="text-gray-600">Store these backup codes safely. Each code can be used once if you lose access to your
+      authenticator app.</p>
 
-      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
-        {% for code in backup_codes %}
-          <li class="font-mono bg-gray-100 border border-gray-200 rounded px-3 py-2 text-gray-800">{{ code }}</li>
-        {% endfor %}
-      </ul>
+    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+      {% for code in backup_codes %}
+      <li class="font-mono bg-gray-100 border border-gray-200 rounded px-3 py-2 text-gray-800">{{ code }}</li>
+      {% endfor %}
+    </ul>
 
-      <a href="{{ url_for('dashboard') }}" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
-        Go to Dashboard
-      </a>
+    <a href="{{ url_for('dashboard') }}"
+      class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition">
+      Go to Dashboard
+    </a>
     {% endif %}
   </div>
 </div>
