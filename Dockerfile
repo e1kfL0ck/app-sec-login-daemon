@@ -1,3 +1,16 @@
+# Build stage: Compile Tailwind CSS
+FROM node:20-alpine AS tailwind-builder
+
+WORKDIR /build
+
+COPY package.json package-lock.json tailwind.config.js ./
+RUN npm ci
+
+COPY src/static/tailwind.css src/static/tailwind.css
+COPY src/templates src/templates
+RUN npm run build:css
+
+# Production stage
 FROM python:3.12-slim
 
 RUN apt update && apt-get install -y --no-install-recommends \
@@ -12,6 +25,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./src /workspace
 COPY ./data /data
+
+# Copy compiled CSS from builder stage
+COPY --from=tailwind-builder /build/src/static/styles.css /workspace/static/styles.css
 
 EXPOSE 8000
 

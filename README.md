@@ -42,18 +42,36 @@ Console logs will be displayed on stdout. In order to exit, use the standard `^c
 
 ## MFA (or 2FA, 2-factor authentication)
 
-In `app.py`, the line `if mfa_enabled:` is a conditional statement that branches the login flow based on whether the user has multi-factor authentication (MFA) enabled on their account.
+MFA can be enabled by users inside the app. By default, the demo/testing users come with it pre-enabled. You can use an authenticator app like Proton Authenticator or Authy to scan the QR code and generate time-based one-time passwords (TOTP).
 
-### What It Does
+When logging in, after entering your username and password, you will be prompted to enter the 6-digit code from your authenticator app.
 
-After a successful login, the code queries the database to retrieve the `mfa_enabled` flag for the authenticated user. This boolean value indicates whether the user has opted into MFA protection. The `if` statement then evaluates this flag to determine which authentication path to follow.
+## Tailwind CSS Setup
 
-### The Two Paths
+npm is used to manage Tailwind CSS dependencies and build processes. The following instructions guide you through setting up Tailwind CSS for local development and Docker deployment.
 
-**If MFA is enabled** (`True`): The application stores the user's ID in the session as `pre_auth_user_id` and redirects them to the MFA verification page. This is a temporary, partial authentication state—the user has proven their identity but hasn't yet completed the second authentication factor (like a TOTP code or security key).
+### Local Development
 
-**If MFA is disabled** (`False`): The code skips this block and proceeds directly to the next lines, where it sets `user_id` and `email` in the session as fully authenticated credentials, then redirects to the dashboard.
+1. **Install Node.js dependencies:**
 
-### Security Consideration
+   ```bash
+   npm install
+   ```
 
-Notice that `session.clear()` is called *before* this check. This mitigates **session fixation attacks** by invalidating any pre-existing session data. Then the code selectively populates the session with either partial credentials (for MFA flow) or full credentials (for direct login), ensuring a clean state either way.
+2. **Build CSS (one-time):**
+
+   ```bash
+   npm run build:css
+   ```
+
+### Docker Deployment
+
+The Dockerfile uses a multi-stage build:
+
+1. **Build stage:** Compiles Tailwind CSS using Node.js
+2. **Production stage:** Runs the Flask application with precompiled CSS
+Simply build and run normally:
+
+```bash
+docker-compose up --build
+```
