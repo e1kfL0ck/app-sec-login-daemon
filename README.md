@@ -38,6 +38,12 @@ MAIL_SERVER=smtp.gmail.com
 
 For reference, see Google's help page: `https://support.google.com/accounts/answer/185833`.
 
+## MFA (or 2FA, 2-factor authentication)
+
+MFA can be enabled by users inside the app. By default, the demo/testing users come with it pre-enabled. You can use an authenticator app like Proton Authenticator or Authy to scan the QR code and generate time-based one-time passwords (TOTP).
+
+When logging in, after entering your username and password, you will be prompted to enter the 6-digit code from your authenticator app.
+
 ## Run the app
 
 While at the root of the project, run :
@@ -50,42 +56,6 @@ Console logs will be displayed on stdout. In order to exit, use the standard `^c
 
 The web app is then accessible at `https://localhost/` (note the HTTPS). This means that you will need to accept the self-signed certificate in your browser.
 
-## MFA (or 2FA, 2-factor authentication)
+## License
 
-MFA can be enabled by users inside the app. By default, the demo/testing users come with it pre-enabled. You can use an authenticator app like Proton Authenticator or Authy to scan the QR code and generate time-based one-time passwords (TOTP).
-
-When logging in, after entering your username and password, you will be prompted to enter the 6-digit code from your authenticator app.
-
-## Tailwind CSS Setup
-
-npm is used to manage Tailwind CSS dependencies and build processes. The following instructions guide you through setting up Tailwind CSS for local development and Docker deployment.
-
-### Local Development
-
-1. **Install Node.js dependencies:**
-
-   ```bash
-   npm install
-   ```
-
-2. **Build CSS (one-time):**
-
-   ```bash
-   npm run build:css
-   ```
-
-3. **Watch for changes (not implemented):**
-
-At the moment, `package.json` does not include scripts for automatic rebuilding during Flask app runtime. You will need to manually run the build command after modifying any css files. You will also need to modify the mounting points in `docker-compose.yml` to overwrite the generated `styles.css` inside the container.
-
-### Docker Deployment
-
-The Dockerfile uses a multi-stage build:
-
-1. **Build stage:** Compiles Tailwind CSS using Node.js
-2. **Production stage:** Runs the Flask application with precompiled CSS
-Simply build and run normally:
-
-```bash
-docker-compose up --build
-```
+This project is licensed under the GNU General Public License v3.0 (GPLv3). See the LICENSE file for the full text.
