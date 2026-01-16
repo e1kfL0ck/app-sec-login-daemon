@@ -1,24 +1,3 @@
-# Build stage: Compile Tailwind CSS
-# Using slim instead of alpine to avoid native binary (musl) issues
-FROM node:20-slim AS tailwind-builder
-
-WORKDIR /build
-
-# Copy package files first to leverage Docker cache
-COPY package.json package-lock.json ./
-
-# Install dependencies (Standard slim image handles lightningcss/parcel-watcher binaries)
-RUN npm ci
-
-# Copy the source code for the build
-COPY ./src ./src
-
-# Run the build script
-RUN npm run build:css
-
-# ------------------------------------------------------------------------------
-# Production stage
-# ------------------------------------------------------------------------------
 FROM python:3.12-slim
 
 # Install system dependencies
@@ -37,9 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY ./src /workspace
 COPY ./data /data
 
-# Copy the compiled CSS from the builder stage
-COPY --from=tailwind-builder /build/src/static/styles.css /workspace/static/styles.css
-
+# Expose port
 EXPOSE 8000
 
 # Make the entrypoint executable
