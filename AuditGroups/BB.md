@@ -49,13 +49,22 @@ Content-Type: image/png
 ```
 [Screenshot of the alert](./xss.png)
   
-1. **Unproper verification of sessions for post deletions**
+2. **Unproper verification of sessions for post deletions**
 
     - **Description**: The application does not make a proper verification of post owner prior to deletions resulting in the possibility for a user to delete the post of an other user.
 
-2. **Panel admin template preview possible**
+3. **Panel admin template preview possible**
 
     - **Description** : Any visitor of the website can preview the admin panel template by accessing the URL /admin/ directly, the user is redirected to the login page, but after the preview of the page. Even tought the user cannot perform any action, or see any metrics without being logged in as an admin
     - **Recommendation** : Load the page and HTML/CSS/JS ressources only after a successful check of the user session as an admin.
 
 [Screenshot of the admin panel preview](./admin.png)
+
+4. **Inconsistant post name and image preview**
+   
+    - **Description** : At some time, the name of the post no matter the id asked with `/post.html?id=$id` will always return the last one. However, this issue does not seems to happen for comments. 
+    - The route `/api/posts?id=$id` always return all the posts, no matter the id asked.
+## Observed good practices 
+
+1. We did not manage to find SSTI, SQLInjection, RCE, Security flaws in the file upload
+2. No secrets disovered
