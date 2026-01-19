@@ -2,20 +2,71 @@
 
 This file lists high-level tasks and function contracts for the login/registration/activation daemon. Each section contains the expected inputs, behavior, and returned template/result.
 
+## High priority / New mandatory features
+
+**Enforce validation of the user input fields added in the new user module**
+
+- Admin disabled accounts should receive a proper message when trying to log in.
+- During the authentication flow, a user's last login date is updated before checking if the mfa is validated.
+
+- Admin dashboard (to later validate post)
+  - Delete / hide
+    - posts
+    - comments / ratings
+    - users
+    - files
+    - manage user roles (admin / user / banned)
+
+- User dashboard
+  - Edit his profile (email, password, avatar)
+  - View his posts / comments
+  - Delete posts / account
+
+- Documentations of the design and security decisions
+  - UML diagrams (class diagram, sequence diagram for main flows)
+  - Security considerations (threat model, mitigations)
+  - API documentation (endpoints, request/response formats)
+
+## Assignment check
+
+### RBAC (Role-Based Access Control)
+
+The system is based on distinct types of actors with different privileges and responsibilities:
+
+- ~~Guest users (unauthenticated) – can browse public content and use keyword-based
+search.~~
+- Registered users (authenticated) – can add new content (including file uploads),
+comment / rate posts, and delete only their own content.
+- Administrators (authenticated) – can moderate the platform by deleting or managing
+any content item, comment or user account.
+
+### Optional features (extra grade)
+
+- CSRF protection,
+- Rate limiting for comments, ratings, uploads or search,
+- content reporting and moderation queue (admin approval),
+- security event or audit logging,
+- advanced file upload hardening (image re-encoding, metadata stripping),
+- security headers (CSP, X-Frame-Options, HSTS if HTTPS is enabled),
+- soft-delete and restore functionality for administrators,
+- optional features from previous laboratories,
+- any other security-related feature proposed by the student.
+
+---
+
 ## Urgent
 
 - Implement a mitigation to prevent password-reset mail requests spam
 - Implement a mitigation to prevent bruteforce on 2FA? (or test if by default it works)
-- Expire activation token upon use. (mail account activation)
 
 ## Optional features TODO
 
-- CSRF ok, a mettre ds le header
+- CSRF ok, to be added directly into headers.
 - Rate limiting / Captcha (simple maths ? / retype something ?)
 - security events logging
 - HTTPS
-- utiliser app.logger.exception("test") plutôt que de réimporter logging ?
-- le temps du mail est trop rapide si mauvais mail
+- mail sending delay is different if the mail is sent or not
+- dashbaord.html line 32 to be fixed (all security features enabled ?)
 
 ## Nginx (deployment)
 

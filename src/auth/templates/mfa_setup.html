@@ -38,8 +38,6 @@
 
       <form method="post" action="{{ url_for('mfa.confirm') }}" class="space-y-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <!-- TODO: check why secret is sent to the client here if still hidden??? @emile -->
-        <input type="hidden" name="secret" value="{{ secret }}">
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2" for="otp">One-Time Password</label>

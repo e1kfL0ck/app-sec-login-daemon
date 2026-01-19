@@ -1,7 +1,8 @@
 FROM python:3.12-slim
 
-RUN apt update && apt install -y --no-install-recommends \
+RUN apt update && apt-get install -y --no-install-recommends \
     sqlite3 \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace

@@ -1,0 +1,194 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{svg}
+\usepackage{float}
+
+\title{Application Security -- Laboratories\\[0.4em]
+\large LAB-05}
+\author{Gaillard Théo \\ \texttt{theo.gaillard@student.put.poznan.pl} \\
+Quivron Emile \\ \texttt{emile.quivron@student.put.poznan.pl} \\
+\\
+Supervisor: Michał Apolinarski, Ph.D. \\ Politechnika Poznańska}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+This report documents the implementation of the User Registration Module as part of a MicroBlog application. The MicroBlog application will be discussed extensively here.
+\part{API modifications and encapsulation}
+
+\chapter{Component Overview}
+
+\part{MicroBlog Application Implementation}
+
+\part{Design Principles}
+\chapter{Used Design Principles}
+This chapter summarizes the guiding principles used while implementing the new features and security controls.
+
+\section{User Input Is Untrusted}
+All data originating from users is treated as untrusted by default. Every input is validated, sanitized, and constrained
+before it reaches business logic or persistence. This applies equally to form fields, search queries, and uploaded files.
+The goal is to prevent injection, spoofing, and unexpected parsing behavior by enforcing strict formats and explicit
+allowlists.
+
+\section{Security-First, Then Usability}
+The implementation followed a deliberate sequence:
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Add security controls}: define authentication, authorization, validation, and safe storage first.
+  \item \textbf{Improve user experience}: refine flows and templates only after the security requirements were in place.
+  \item \textbf{Re-verify security}: validate that usability changes did not bypass or weaken existing controls.
+\end{enumerate}
+This approach reduces the risk of usability-driven regressions and keeps security invariants explicit throughout the
+development cycle.
+
+\chapter{Module and Route Security Mapping}
+This chapter reorganizes the changes introduced for this last element into a module-level view. Each module
+lists its route surface and the security controls that govern access, validation, and data handling. The aim is to make permissions and defensive measures explicit at the module boundary.
+
+\section{Core Application Module}
+\subsection*{Route surface}
+This module exposes the base routes outside of any blueprint and the global error handlers used across all modules.
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{/} (public; redirects authenticated sessions via \texttt{already\_logged\_in})
+  \item \texttt{/dashboard} (authenticated; \texttt{login\_required})
+  \item Error handlers for 404 and 500 (global response surface)
+\end{itemize}
+
+\subsection*{Security and permissions}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Access control}: \texttt{/dashboard} is protected by \texttt{login\_required}, and \texttt{/} uses
+  \texttt{already\_logged\_in} to prevent authenticated users from re-entering registration/login flows.
+  \item \textbf{CSRF protection}: \texttt{CSRFProtect} is enabled application-wide, so all state-changing forms must
+  include a valid CSRF token.
+  \item \textbf{Session integrity}: the session secret is sourced from \texttt{SECRET\_KEY} to prevent tampering, and
+  sessions are cleared on login/logout in the auth module to mitigate fixation.
+  \item \textbf{Error handling}: custom 404/500 handlers avoid stack-trace leakage and provide consistent responses
+  that do not expose internal details.
+\end{itemize}
+\paragraph{Implementation references}
+\texttt{src/app.py} registers blueprints, applies \texttt{CSRFProtect}, and defines base routes and error handlers.
+\texttt{src/session\_helpers.py} provides \texttt{login\_required} and \texttt{already\_logged\_in}.
+
+\section{Authentication Module (\texttt{auth} and \texttt{mfa})}
+\subsection*{Route surface}
+The authentication module exposes all registration, activation, login, and MFA flows.
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{/register} (public; blocked if already logged in)
+  \item \texttt{/activate/<token>} (public; blocked if already logged in)
+  \item \texttt{/login} (public; blocked if already logged in)
+  \item \texttt{/logout} (authenticated; \texttt{login\_required})
+  \item \texttt{/forgotten\_password} (public; email entry only)
+  \item \texttt{/password\_reset/<token>} (public; token-gated)
+  \item \texttt{/mfa/setup} (authenticated; requires \texttt{session["user\_id"]})
+  \item \texttt{/mfa/confirm} (authenticated; requires setup secret in session)
+  \item \texttt{/mfa/verify} (pre-auth or authenticated; requires \texttt{pre\_auth\_user\_id})
+\end{itemize}
+
+\subsection*{Security and permissions}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Input validation}: email, password, and token inputs are sanitized and validated in
+  \texttt{auth/validators.py} using shared helpers to enforce format and length constraints.
+  \item \textbf{CSRF enforcement}: all POST-based auth forms require a valid CSRF token, enforced globally by
+  \texttt{CSRFProtect}.
+  \item \textbf{Password storage}: passwords are hashed with \texttt{generate\_password\_hash} (Werkzeug default
+  algorithm) before persistence; verification uses \texttt{check\_password\_hash}.
+  \item \textbf{Activation tokens}: activation tokens are stored server-side with expiry and a used flag; activation
+  succeeds only if the token is valid, unused, and unexpired.
+  \item \textbf{Activation gating}: accounts must be activated before login is accepted, preventing use of unverified
+  registrations.
+  \item \textbf{Password reset tokens}: reset requests always return a neutral message to prevent email enumeration.
+  Tokens are validated for format, expiry, and reuse before password updates.
+  \item \textbf{Failed login controls}: failed logins are counted; after three failures the flow requires a reset. Failed
+  MFA attempts also increment the counter, keeping brute-force protections consistent.
+  \item \textbf{Session hardening}: successful login clears the session before storing user identity and role data.
+  MFA uses a pre-auth session state (\texttt{pre\_auth\_user\_id}) to separate credentials from full access.
+  \item \textbf{Account disablement}: accounts disabled by an administrator are blocked at login and cannot self-reenable.
+  \item \textbf{MFA security}: TOTP verification uses a narrow time window and backup codes are stored as a list in the database and removed
+  after single use. MFA setup secrets are held in session until confirmation. MFA pages are marked \texttt{no-store} to
+  prevent caching of sensitive screens.
+\end{itemize}
+\paragraph{Implementation references}
+\texttt{src/auth/routes.py} defines auth routes. \texttt{src/auth/services.py} implements login, activation, and reset
+logic. \texttt{src/auth/tokens.py} handles token generation and expiry. MFA is implemented in \texttt{src/auth/mfa.py},
+and templates are under \texttt{src/auth/templates/}.
+
+\section{Content Module (\texttt{content})}
+\subsection*{Route surface}
+The content module provides feeds, post CRUD, comments, search, and attachment downloads.
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{/content/feed} (public feed of public posts)
+  \item \texttt{/content/admin/feed} (admin-only global feed)
+  \item \texttt{/content/posts} (authenticated; current user's posts)
+  \item \texttt{/content/post/<id>} (public if view permissions allow it)
+  \item \texttt{/content/post/create} (authenticated)
+  \item \texttt{/content/post/<id>/edit} (authenticated; owner-only)
+  \item \texttt{/content/post/<id>/delete} (authenticated; owner or admin)
+  \item \texttt{/content/post/<id>/comment} (authenticated)
+  \item \texttt{/content/search} (public; query-validated)
+  \item \texttt{/content/attachment/<id>} (permission-gated download)
+\end{itemize}
+
+\subsection*{Security and permissions}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Access control}: create/edit/delete/comment routes require authentication. Admin feeds require
+  \texttt{admin\_required}. Public post views are permitted only when visibility and permissions allow it.
+  \item \textbf{Authorization checks}: view, edit, and delete permissions are centralized in
+  \texttt{content/permissions.py}. Private posts are restricted to authors, while admins can override for moderation.
+  Content from disabled accounts is hidden from non-admin users.
+  \item \textbf{Input sanitization}: post titles, body content, comments, and search queries are sanitized with strict
+  length limits; search queries must be at least two characters to avoid abuse.
+  \item \textbf{CSRF enforcement}: all POST routes in this module require a CSRF token due to global CSRF protection.
+  \item \textbf{Attachment validation}: file uploads enforce an allowlist of MIME types and extensions, a 5 MB size
+  limit, filename sanitization via \texttt{secure\_filename}, and magic-byte MIME detection using file content. The
+  claimed MIME type must match the detected type, preventing spoofed extensions.
+  \item \textbf{Attachment delivery}: downloads are served via \texttt{send\_from\_directory} with
+  \texttt{as\_attachment=True}, so files are not previewed by the web server. After a successful download, the browser
+  serves the file from the user's cache. Every download passes a permission check.
+\end{itemize}
+\paragraph{Implementation references}
+\texttt{src/content/routes.py} defines routes. \texttt{src/content/services.py} provides feed/search logic and calls
+permission checks. \texttt{src/content/validators.py} enforces input and file constraints. Attachment metadata and post
+data are handled by \texttt{src/content/repository.py}.
+
+\section{User Module (\texttt{user})}
+\subsection*{Route surface}
+This module provides profile and account management routes, plus admin tools.
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{/user/profile} (authenticated)
+  \item \texttt{/user/settings} (authenticated)
+  \item \texttt{/user/update-email} (authenticated; password confirmation)
+  \item \texttt{/user/delete-account} (authenticated; password confirmation + \texttt{DELETE})
+  \item \texttt{/user/disable} (authenticated; password confirmation + \texttt{DISABLE})
+  \item \texttt{/user/reactivate} (authenticated; self-disabled accounts only)
+  \item \texttt{/user/admin/users} (admin-only)
+  \item \texttt{/user/profile/<id>} (admin-only)
+  \item \texttt{/user/admin/<id>/disable} (admin-only; self-disable blocked)
+  \item \texttt{/user/admin/<id>/enable} (admin-only)
+\end{itemize}
+
+\subsection*{Security and permissions}
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Role enforcement}: admin-only routes are protected by \texttt{admin\_required}; all self-service routes
+  require authentication.
+  \item \textbf{CSRF enforcement}: all state-changing user actions are CSRF-protected via the global CSRF middleware.
+  \item \textbf{Password confirmation}: email updates, account deletion, and account disablement require the current
+  password to reduce account takeover risk.
+  \item \textbf{Explicit confirmations}: destructive actions require explicit confirmation tokens (typing
+  \texttt{DELETE} or \texttt{DISABLE}) to prevent accidental or scripted submissions.
+  \item \textbf{Account state rules}: self-disabled accounts can be reactivated by the user, but accounts disabled by an
+  admin cannot. Admins are prevented from disabling their own account to avoid lockout.
+  \item \textbf{Session hygiene}: account deletion or disablement clears the session to remove access tokens and session
+  state immediately.
+\end{itemize}
+\paragraph{Implementation references}
+\texttt{src/user/routes.py} defines user/admin routes. \texttt{src/user/services.py} implements account changes and
+permission logic, with persistence in \texttt{src/user/repository.py}. Validators are in
+\texttt{src/user/validators.py}.

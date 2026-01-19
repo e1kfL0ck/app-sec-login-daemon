@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+	<div class="mb-6">
+		<a href="{{ url_for('content.feed') }}" class="text-indigo-600 hover:text-indigo-800 font-semibold">← Back to Feed</a>
+	</div>
+
+	<div class="bg-white rounded-lg shadow-lg p-8 border-l-4 border-indigo-600">
+		<h1 class="text-3xl font-bold text-gray-900 mb-6">Create a Post</h1>
+
+		{% if errors %}
+		<div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+			<h2 class="font-semibold mb-2">Please fix the following:</h2>
+			<ul class="list-disc list-inside space-y-1">
+				{% for err in errors %}
+				<li>{{ err }}</li>
+				{% endfor %}
+			</ul>
+		</div>
+		{% endif %}
+
+		<form method="POST" action="{{ url_for('content.create_post') }}" class="space-y-6" enctype="multipart/form-data">
+						<div>
+							<label for="attachments" class="block text-sm font-semibold text-gray-700 mb-1">Attachments</label>
+							<input
+								id="attachments"
+								name="attachments"
+								type="file"
+								multiple
+								class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+							>
+							<p class="text-xs text-gray-500 mt-1">Allowed: PNG, JPG, GIF, WEBP, PDF, TXT. Max 5MB each.</p>
+						</div>
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+			<div>
+				<label for="title" class="block text-sm font-semibold text-gray-700 mb-1">Title</label>
+				<input
+					id="title"
+					name="title"
+					type="text"
+					required
+					autocomplete="off"
+					value="{{ request.form.title or '' }}"
+					class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+					placeholder="Awesome announcement"
+				>
+			</div>
+
+			<div>
+				<label for="body" class="block text-sm font-semibold text-gray-700 mb-1">Content</label>
+				<textarea
+					id="body"
+					name="body"
+					rows="8"
+					required
+					class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+					placeholder="Share your update..."
+				>{{ request.form.body or '' }}</textarea>
+			</div>
+
+			<div class="flex items-center gap-3">
+				<input
+					id="is_public"
+					name="is_public"
+					type="checkbox"
+					class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+					{% if request.form.get('is_public', 'on') == 'on' %}checked{% endif %}
+				>
+				<label for="is_public" class="text-sm text-gray-700">Public post</label>
+			</div>
+
+			<div class="flex gap-3">
+				<button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">Publish</button>
+				<a href="{{ url_for('content.feed') }}" class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+			</div>
+		</form>
+	</div>
+</div>
+{% endblock %}

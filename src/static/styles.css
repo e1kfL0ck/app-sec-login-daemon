@@ -3,7 +3,10 @@
 /* Base styles */
 body {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: radial-gradient(ellipse at center,
+            #e6eaff 0%,
+            #f2f4ff 40%,
+            #ffffff 80%);
 }
 
 /* Form containers */

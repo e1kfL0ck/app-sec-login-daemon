@@ -17,7 +17,7 @@
     </div>
 
     <div class="grid md:grid-cols-3 gap-6 mt-8">
-      <div class="card bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
+      <div class="card bg-gradient-to-br from-white to-indigo-50/60 p-6 rounded-lg border border-indigo-100/60">
         <div class="flex items-center space-x-3 mb-3">
           <div class="p-2 bg-indigo-500 rounded-lg">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +29,6 @@
           <h3 class="text-lg font-semibold text-gray-800">Account Status</h3>
         </div>
         <p class="text-gray-600 text-sm">
-          <!-- TODO: Is that true? Maybe display it only when there is MFA? -->
           Your account is active and verified. All security features are enabled.
         </p>
       </div>
@@ -68,17 +67,63 @@
     </div>
 
     <div class="mt-8 pt-8 border-t border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Content Hub</h3>
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <a href="{{ url_for('user.profile') }}"
+          class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition text-center">
+          My Profile
+        </a>
+        <a href="{{ url_for('content.feed') }}"
+          class="inline-block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition text-center">
+          View Public Feed
+        </a>
+        <a href="{{ url_for('content.create_post') }}"
+          class="inline-block bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition text-center">
+          Create New Post
+        </a>
+        <a href="{{ url_for('content.user_posts') }}"
+          class="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition text-center">
+          My Posts
+        </a>
+      </div>
+
+      {% if user.role == 'admin' %}
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <a href="{{ url_for('user.admin_list_users') }}"
+          class="inline-block bg-gradient-to-r from-slate-700 to-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:from-slate-800 hover:to-black transition text-center">
+          Admin: Manage Users
+        </a>
+        <a href="{{ url_for('content.admin_feed') }}"
+          class="inline-block bg-gradient-to-r from-orange-500 to-amber-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-amber-700 transition text-center">
+          Admin: Global Feed
+        </a>
+      </div>
+      {% endif %}
+      <!-- Search Bar -->
+      <div class="bg-white rounded-lg shadow-md p-4">
+        <form method="get" action="{{ url_for('content.search') }}" class="flex gap-2">
+          <input type="text" name="q" placeholder="Search posts, content, or filenames..." minlength="2"
+            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-sm">
+          <button type="submit"
+            class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold text-sm">
+            🔍 Search
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="mt-8 pt-8 border-t border-gray-200">
       <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
       <div class="flex flex-col sm:flex-row gap-4">
         <a href="{{ url_for('mfa.setup') }}"
           class="flex-1 inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition text-center">
           Setup MFA
         </a>
-        <a href="{{ url_for('forgotten_password') }}"
+        <a href="{{ url_for('auth.forgotten_password') }}"
           class="flex-1 inline-block bg-white border-2 border-indigo-600 text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition text-center">
           Change Password
         </a>
-        <a href="{{ url_for('logout') }}"
+        <a href="{{ url_for('auth.logout') }}"
           class="flex-1 inline-block bg-gradient-to-r from-red-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-700 hover:to-pink-700 transition text-center">
           Logout
         </a>
