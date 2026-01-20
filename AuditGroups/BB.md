@@ -63,8 +63,12 @@ Content-Type: image/png
 4. **Inconsistant post name and image preview**
    
     - **Description** : At some time, the name of the post no matter the id asked with `/post.html?id=$id` will always return the last one. However, this issue does not seems to happen for comments. 
-    - The route `/api/posts?id=$id` always return all the posts, no matter the id asked.
+    - The route `/api/posts?id=$id` always return all the posts, no matter the id asked.b
 ## Observed good practices 
 
-1. We did not manage to find SSTI, SQLInjection, RCE, Security flaws in the file upload
-2. No secrets disovered
+1. We did not manage to find any files with directory enumeration.
+   [File enumeration](./ffuf.png)
+
+2. No SSTI, SQLi or XSS found in other inputs than the one mentioned above.
+
+3. No secrets disovered in the frontend code.
