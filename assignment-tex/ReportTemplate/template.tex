@@ -1,0 +1,124 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{svg}
+\usepackage{float}
+\usepackage{titlesec}
+
+% -------------------------------------------------------------------
+% CUSTOM FORMATTING
+% -------------------------------------------------------------------
+% This removes "Chapter X" and the number, but keeps the Title
+\titleformat{\chapter}[hang] 
+{\normalfont\huge\bfseries}{}{0pt}{}
+
+% -------------------------------------------------------------------
+% TITLE PAGE INFORMATION
+% -------------------------------------------------------------------
+\title{Course Name -- Laboratory Report\\[0.4em]
+\large LAB-XX: Title of the Specific Lab Exercise}
+
+% Update Authors here
+\author{Student One Name \\ \texttt{student1.email@student.put.poznan.pl} \\
+Student Two Name \\ \texttt{student2.email@student.put.poznan.pl} \\
+\\
+Supervisor: Supervisor Name, Ph.D. \\ Politechnika Poznańska}
+
+\date{\today}
+
+% -------------------------------------------------------------------
+% DOCUMENT START
+% -------------------------------------------------------------------
+\begin{document}
+
+% Generates the Title Page
+\maketitle
+
+% Generates the Table of Contents
+\tableofcontents
+\newpage
+
+% -------------------------------------------------------------------
+% INTRODUCTION
+% -------------------------------------------------------------------
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction} % Adds Intro to TOC manually since it's unnumbered
+
+Type your introduction here. Briefly describe the goal of the laboratory, the technologies used, and the scope of the report.
+
+% -------------------------------------------------------------------
+% PART 1
+% -------------------------------------------------------------------
+\part{General Concepts}
+
+\chapter{Guiding Principles}
+This section describes the theoretical approach or general rules followed during the lab.
+
+\section{First Principle (e.g., Input Validation)}
+Describe the first principle here.
+\begin{enumerate}
+    \item \textbf{Point One}: Description of the first step.
+    \item \textbf{Point Two}: Description of the second step.
+    \item \textbf{Point Three}: Description of the third step.
+\end{enumerate}
+
+\section{Second Principle}
+Describe the methodology or lifecycle used.
+\begin{itemize}
+    \item \textbf{Phase 1}: Detail.
+    \item \textbf{Phase 2}: Detail.
+    \item \textbf{Phase 3}: Detail.
+\end{itemize}
+
+% -------------------------------------------------------------------
+% PART 2
+% -------------------------------------------------------------------
+\part{Technical Implementation}
+
+\chapter{Module Name (e.g., Core Routing)}
+Description of this specific module.
+
+\section{Route Surface}
+List the endpoints or routes involved.
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{/example/route} -- Public; description of behavior.
+    \item \texttt{/admin/route} -- Authenticated; protection mechanism.
+\end{itemize}
+
+\section{Security Controls}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Control Name}: Description of the implementation.
+    \item \textbf{Another Control}: Description. 
+    
+    \textit{Note: You can use italic text for important notes or observations regarding the implementation.}
+\end{itemize}
+
+\chapter{Another Module (e.g., Authentication)}
+
+\section{Route Surface}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{/login} -- Entry point.
+    \item \texttt{/register} -- Entry point.
+\end{itemize}
+
+\section{Implementation Details}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Feature A}: Explain how it works.
+    \item \textbf{Feature B}: Explain how it works.
+    \item \textbf{Feature C}: Explain how it works.
+\end{itemize}
+
+% -------------------------------------------------------------------
+% CONCLUSION (Optional)
+% -------------------------------------------------------------------
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+
+Summary of findings and final thoughts.
+
+\end{document}
