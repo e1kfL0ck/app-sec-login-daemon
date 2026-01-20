@@ -2,7 +2,7 @@
 Repository pattern for content data access.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from db import get_db
 
 
