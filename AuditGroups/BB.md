@@ -47,7 +47,7 @@ Content-Type: image/png
 
 PNG
 ```
-[Screenshot of the alert](./xss.png)
+![Screenshot of the alert](./xss.png)
   
 2. **Unproper verification of sessions for post deletions**
 
@@ -58,7 +58,7 @@ Content-Type: image/png
     - **Description** : Any visitor of the website can preview the admin panel template by accessing the URL /admin/ directly, the user is redirected to the login page, but after the preview of the page. Even tought the user cannot perform any action, or see any metrics without being logged in as an admin
     - **Recommendation** : Load the page and HTML/CSS/JS ressources only after a successful check of the user session as an admin.
 
-[Screenshot of the admin panel preview](./admin.png)
+![Screenshot of the admin panel preview](./admin.png)
 
 4. **Inconsistant post name and image preview**
    
@@ -67,7 +67,7 @@ Content-Type: image/png
 ## Observed good practices 
 
 1. We did not manage to find any files with directory enumeration.
-   [File enumeration](./ffuf.png)
+   ![File enumeration](./ffuf.png)
 
 2. No SSTI, SQLi or XSS found in other inputs than the one mentioned above.
 
