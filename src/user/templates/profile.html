@@ -71,7 +71,14 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Member since:</span>
-                        <span class="font-semibold text-sm">{{ user.created_at.split('T')[0] if user.created_at else
+                        <span class="font-semibold text-sm">{{ user.created_at.replace('T', ' ').split('.')[0] if
+                            user.created_at else
+                            'N/A' }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Last connection:</span>
+                        <span class="font-semibold text-sm">{{ user.last_login.replace('T', ' ').split('.')[0] if
+                            user.last_login else
                             'N/A' }}</span>
                     </div>
                 </div>

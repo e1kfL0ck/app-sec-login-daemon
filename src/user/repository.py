@@ -15,7 +15,7 @@ class UserProfileRepository:
         return db.execute(
             """
             SELECT id, email, password_hash, created_at, activated,
-                   mfa_enabled, role, disabled, disabled_by_admin
+                   mfa_enabled, role, disabled, disabled_by_admin, last_login
             FROM users
             WHERE id = ?
             """,

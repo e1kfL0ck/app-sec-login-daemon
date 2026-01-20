@@ -11,6 +11,14 @@ cp .env.example .env
 ```
 
 Note that email validation of the token is at the moment not mandatory, but an error will be logged if the credentials aren't set. Email credential setup is still mandatory if you want to use the password reset feature.
+**Debug Mode**: When `DEBUG=True`, email tokens for registration or password resets are printed directly to the console. This allows you to test the full flow without a functional SMTP server. (although untested in recent versions, it should still work)
+
+You will also get nicely prepared users for testing/demo purposes:
+
+- <admin@domain.org>
+- <user@domain.org>
+
+And a few default posts to see how the content feed looks like.
 
 ### Example: Add a Google App Password (for Gmail)
 
@@ -30,6 +38,12 @@ MAIL_SERVER=smtp.gmail.com
 
 For reference, see Google's help page: `https://support.google.com/accounts/answer/185833`.
 
+## MFA (or 2FA, 2-factor authentication)
+
+MFA can be enabled by users inside the app. By default, the demo/testing users come with it pre-enabled. You can use an authenticator app like Proton Authenticator or Authy to scan the QR code and generate time-based one-time passwords (TOTP).
+
+When logging in, after entering your username and password, you will be prompted to enter the 6-digit code from your authenticator app.
+
 ## Run the app
 
 While at the root of the project, run :
@@ -40,20 +54,8 @@ docker compose up --build
 
 Console logs will be displayed on stdout. In order to exit, use the standard `^c`.
 
-## MFA (or 2FA, 2-factor authentication)
+The web app is then accessible at `https://localhost/` (note the HTTPS). This means that you will need to accept the self-signed certificate in your browser.
 
-In `app.py`, the line `if mfa_enabled:` is a conditional statement that branches the login flow based on whether the user has multi-factor authentication (MFA) enabled on their account.
+## License
 
-### What It Does
-
-After a successful login, the code queries the database to retrieve the `mfa_enabled` flag for the authenticated user. This boolean value indicates whether the user has opted into MFA protection. The `if` statement then evaluates this flag to determine which authentication path to follow.
-
-### The Two Paths
-
-**If MFA is enabled** (`True`): The application stores the user's ID in the session as `pre_auth_user_id` and redirects them to the MFA verification page. This is a temporary, partial authentication state—the user has proven their identity but hasn't yet completed the second authentication factor (like a TOTP code or security key).
-
-**If MFA is disabled** (`False`): The code skips this block and proceeds directly to the next lines, where it sets `user_id` and `email` in the session as fully authenticated credentials, then redirects to the dashboard.
-
-### Security Consideration
-
-Notice that `session.clear()` is called *before* this check. This mitigates **session fixation attacks** by invalidating any pre-existing session data. Then the code selectively populates the session with either partial credentials (for MFA flow) or full credentials (for direct login), ensuring a clean state either way.
+This project is licensed under the GNU General Public License v3.0 (GPLv3). See the LICENSE file for the full text.

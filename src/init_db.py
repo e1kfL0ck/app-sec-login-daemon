@@ -153,6 +153,10 @@ def init_db():
         print("Initial private post created.")
         print("Title: Private Post")
         print("Post is located at: /content/post/2")
+        create_initial_image_example_post(conn)
+        print("Initial image example post created.")
+        print("Title: Image Attachment Example")
+        print("Post is located at: /content/post/3")
     conn.close()
     print(f"Database initialized successfully: {DB_FILE}")
 
@@ -261,6 +265,103 @@ def create_initial_private_post(conn: sqlite3.Connection) -> None:
             "2025-12-03T15:00:00.000000",
             "2025-12-03T15:00:00.000000",
         ),
+    )
+    conn.commit()
+
+
+def create_initial_image_example_post(conn: sqlite3.Connection) -> None:
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO posts (
+            id, author_id, title, body, is_public, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+        """,
+        (
+            3,
+            1,
+            "Image Attachment Example",
+            "This post demonstrates an image attachment.",
+            1,
+            "2025-12-03T16:00:00.000000",
+            "2025-12-03T16:00:00.000000",
+        ),
+    )
+    conn.commit()
+    # Attach images to the post
+    _attach_initial_images_to_example_post(conn)
+
+
+def _attach_initial_images_to_example_post(conn: sqlite3.Connection) -> None:
+    attachments_data = [
+        (
+            3,
+            1,
+            "horse-radish.jpg",
+            "426992c9dfa64a419c5174b6f519f4f7.jpg",
+            "image/jpeg",
+            102400,
+            "2026-01-14 13:30:00",
+        ),
+        (
+            3,
+            1,
+            "895ce751ba0379700381d17a67086931.gif",
+            "abe44ba481f0448f9a9c74ed64d60db6.gif",
+            "image/gif",
+            512000,
+            "2026-01-14 13:31:00",
+        ),
+        (
+            3,
+            1,
+            "bird-wings-flying-feature.gif",
+            "7327a7a66d9f4d2f8112f877f8cd3967.gif",
+            "image/gif",
+            204800,
+            "2026-01-14 13:32:00",
+        ),
+        (
+            3,
+            1,
+            "tumblr_ku2pvuJkJG1qz9qooo1_r1_400.webp",
+            "cdc0cef890c540569a377866786c3bfd.webp",
+            "image/webp",
+            85000,
+            "2026-01-14 13:33:00",
+        ),
+        (
+            3,
+            1,
+            "aic-home.jpg",
+            "7a598b12187c48caa9373f814e023bc9.jpg",
+            "image/jpeg",
+            307200,
+            "2026-01-14 13:34:00",
+        ),
+        (
+            3,
+            1,
+            "Screenshot_20260114_133448.png",
+            "d8c1841ebcf04988be05d03e1a38ea62.png",
+            "image/png",
+            410000,
+            "2026-01-14 13:35:00",
+        ),
+    ]
+
+    cur = conn.cursor()
+
+    cur.executemany(
+        """
+    INSERT OR IGNORE INTO attachments (
+        post_id, uploader_id, original_name, stored_name, mime_type, size_bytes, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?);
+    """,
+        attachments_data,
     )
     conn.commit()
 
