@@ -1,0 +1,257 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{svg}
+\usepackage{float}
+\usepackage{titlesec}
+\usepackage{graphicx} % Added for screenshots
+
+% -------------------------------------------------------------------
+% CUSTOM FORMATTING
+% -------------------------------------------------------------------
+\titleformat{\chapter}[hang] 
+{\normalfont\huge\bfseries}{}{0pt}{}
+
+% -------------------------------------------------------------------
+% TITLE PAGE INFORMATION
+% -------------------------------------------------------------------
+\title{Application Security -- Laboratory Report\\[0.4em]
+\large LAB-06 \& LAB-07: Blackbox \& Whitebox Security Audits}
+
+\author{Gaillard Théo \\ \texttt{theo.gaillard@student.put.poznan.pl} \\
+Quivron Emile \\ \texttt{emile.quivron@student.put.poznan.pl} \\
+\\
+Supervisor: Michał Apolinarski, Ph.D. \\ Politechnika Poznańska}
+
+\date{\today}
+
+% -------------------------------------------------------------------
+% DOCUMENT START
+% -------------------------------------------------------------------
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% -------------------------------------------------------------------
+% INTRODUCTION
+% -------------------------------------------------------------------
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+
+This report details the findings of a security assessment performed on the web application developed by \textit{Group 6}, hosted at \url{https://bitbucket.org/crane_4/appsecurity.git}.
+
+The audit was conducted in two phases:
+\begin{enumerate}
+    \item \textbf{Blackbox Testing}: External analysis of the running application without prior knowledge of the internal source code.
+    \item \textbf{Whitebox Testing}: Code review focused on specific logic flows, particularly regarding token validity and session management.
+\end{enumerate}
+
+\textbf{Scope}: The assessment was strictly limited to the web application. Database configurations, server operating systems, and external infrastructure were considered out of reach, unless by exposed application functionality.
+
+% -------------------------------------------------------------------
+% PART 1: BLACKBOX
+% -------------------------------------------------------------------
+\part{Blackbox Security Audit}
+
+\chapter{Critical Vulnerabilities}
+
+\section{Stored Cross-Site Scripting (XSS)}
+\textbf{Severity: High}
+
+\textbf{Description}: \\
+The application fails to properly sanitize user input in the "Title" field when creating a new post. This allows an attacker to inject arbitrary JavaScript code. This code is stored in the database and executed in the browser of any user who views the post list.
+
+\textbf{Impact}: \\
+Successful exploitation can lead to session hijacking (stealing cookies), page defacement, or forced redirection to malicious websites.
+
+\textbf{Proof of Concept}: \\
+The following HTTP request was used to inject a payload that triggers an alert box.
+
+\begin{verbatim}
+POST /api/posts HTTP/1.1
+Host: localhost
+Cookie: session_id=ddc24b35616672863e66066cd25e5174bdc5dab6fbd0419a3ca400d1f7650319
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0
+Accept: */*
+Accept-Language: en-US,en;q=0.9
+Accept-Encoding: gzip, deflate, br
+Referer: https://localhost/
+Content-Type: multipart/form-data; boundary=----geckoformboundary9c3c45e0868a181c89e4de4af82f54b5
+Content-Length: 321811
+Origin: https://localhost
+Sec-Gpc: 1
+Sec-Fetch-Dest: empty
+Sec-Fetch-Mode: cors
+Sec-Fetch-Site: same-origin
+Priority: u=0
+Te: trailers
+Connection: keep-alive
+
+------geckoformboundary9c3c45e0868a181c89e4de4af82f54b5
+Content-Disposition: form-data; name="title"
+
+<img src='x' onerror=alert(document.location)>
+------geckoformboundary9c3c45e0868a181c89e4de4af82f54b5
+Content-Disposition: form-data; name="image"; filename="slide1_lahoud.png"
+Content-Type: image/png
+\end{verbatim}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/xss.png}
+    \caption{Execution of the injected JavaScript payload}
+\end{figure}
+
+\textbf{Recommendation}: \\
+Implement strict input validation and context-aware output encoding. Ensure that user-supplied data is treated as plain text when rendered in the HTML document.
+
+\section{Broken Access Control (IDOR)}
+\textbf{Severity: High}
+
+\textbf{Description}: \\
+The application lacks verification of ownership during the post deletion process. An authenticated user can delete posts belonging to other users by manipulating the request, indicating a Broken Access Control (BAC) vulnerability, specifically Insecure Direct Object Reference (IDOR).
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{img/idor.png}
+%     \caption{Execution of the injected JavaScript payload}
+% \end{figure}
+
+\textbf{Recommendation}: \\
+Before processing a delete request, the server should verify that the authenticated user is indeed the owner of the post being deleted. This can be achieved by checking the user ID associated with the post against the user ID stored in the session.
+
+\chapter{Authentication and Logic Flaws}
+
+\section{Broken Password Reset Implementation}
+\textbf{Severity: High}
+
+The password reset flow exhibited multiple severe flaws:
+\begin{itemize}
+    \item \textbf{Sensitive Data Exposure}: Upon requesting a reset, the recovery link/token is logged directly to the client-side browser console instead of being sent via email (or logged server side for the purposes of the lab).
+    \item \textbf{Account Lockout/Integrity}: The \texttt{reset\_confirm} handler appears to corrupt the user's account. After a "successful" reset, the user is unable to log in with the new password, effectively causing a Denial of Service (DoS) for that account.
+    \item \textbf{Bypassing Controls}: The page \texttt{reset\_confirm.html} is accessible without a valid token. While it may not function correctly, the lack of access control on the view itself is a bad practice.
+    \item \textbf{UX/Security}: The reset form lacks a confirmation field for the new password, increasing the risk of user typos locking them out of their account.
+    \item \textbf{Error Handling}: Submitting an invalid token does not provide user feedback. Pressing on the reset button with or without a correct password doesn't either. The form basically behaves as a static page.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/password-reset-client-console.png}
+    \caption{Console log showing the reset token}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/password-reset-broken-confirm.png}
+    \caption{Broken password reset confirmation shown in the browser's logs}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/password-reset-access.png}
+    \caption{Successful access to reset\_confirm.html without a token}
+\end{figure}
+
+\textbf{Recommendation}: \\
+Redesign the password reset flow to ensure secure token handling, proper account recovery, and user feedback. Implement token validation checks, and ensure that the reset form is only accessible with a valid token.
+
+\section{Admin Panel Information Leakage}
+\textbf{Severity: Low/Medium}
+
+\textbf{Description}: \\
+Unauthenticated visitors accessing \texttt{/admin/} are shown a preview of the admin dashboard template before being redirected to the login page. While no live metrics or data are populated, this exposes the internal structure and existence of the admin interface to unauthorized users.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/admin.png}
+    \caption{Unauthenticated preview of the Admin Panel}
+\end{figure}
+
+\textbf{Recommendation}: \\
+Load the page and HTML/CSS/JS ressources only after a successful check of the user session as an admin.
+
+\section{API Logic Flaws}
+\textbf{Severity: Low}
+
+The API endpoint \texttt{/api/posts} behaves inconsistently:
+\begin{itemize}
+    \item Passing an ID parameter (e.g., \texttt{?id=1}) is ignored; the API always returns all posts.
+    \item In some instances, the post name preview renders incorrectly, displaying the name of the last loaded post regardless of the requested ID.
+\end{itemize}
+
+\chapter{Infrastructure Security}
+
+\section{TLS Configuration Analysis}
+A standard TLS scan using a tool available on github revealed the following weaknesses in the SSL/TLS configuration:
+\begin{itemize}
+    \item \textbf{Obsolete Ciphers}: The server reports supporting some CBC ciphers (AES, ARIA) which are considered legacy.
+    \item \textbf{Missing TLS 1.3}: The server does not support the latest version of the protocol.
+    \item \textbf{Vulnerability}: Susceptibility to the LUCKY13 attack (CVE-2013-0169) due to the use of CBC ciphers.
+\end{itemize}
+
+\chapter{Observations of Good Practice}
+Despite the vulnerabilities listed above, several security best practices were observed:
+\begin{itemize}
+    \item \textbf{No Directory Enumeration}: Fuzzing tools (e.g., \texttt{ffuf}) did not reveal hidden files or directories.
+    \item \textbf{Frontend Secrets}: No API keys or hardcoded credentials were found in the client-side source code (although the localhost endpoint is hardcoded throughout).
+    \item \textbf{Resilience}: No SQL Injection (SQLi) or Server-Side Template Injection (SSTI) vulnerabilities were identified in the inputs tested (outside of the noted XSS).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/ffuf.png}
+    \caption{No directories found during fuzzing with ffuf}
+\end{figure}
+
+% -------------------------------------------------------------------
+% PART 2: WHITEBOX
+% -------------------------------------------------------------------
+\part{Whitebox Security Audit}
+
+\chapter{Code Review Findings}
+
+\section{Infinite Token Validity}
+\textbf{Severity: Medium}
+
+\textbf{Issue}: \\
+The password reset logic verifies the existence of a token but fails to check an expiration timestamp.
+
+\textbf{Risk}: \\
+If a user requested a reset years ago and never used it, that token remains valid indefinitely. If an attacker discovers this token in old logs, they can take over the account.
+
+\textbf{Recommendation}: \\
+Implement a database check to ensure the token was created within a short window (e.g., 1 hour).
+\begin{verbatim}
+WHERE reset_token=? AND reset_requested_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+\end{verbatim}
+
+\section{Insufficient Session Invalidation}
+\textbf{Severity: Medium}
+
+\textbf{Description}: \\
+When a user successfully changes their password, existing active sessions are not invalidated.
+
+\textbf{Risk}: \\
+If an attacker has hijacked a valid session cookie, they will retain access to the account even after the legitimate user changes their password to remediate the breach.
+
+\textbf{Recommendation}: \\
+The \texttt{ResetConfirmHandler} should identify the user ID associated with the token and explicitly flush all related sessions from the session store (Redis/Database).
+
+% -------------------------------------------------------------------
+% CONCLUSION
+% -------------------------------------------------------------------
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+
+The security audit of the Group 6 application revealed a mix of implementation strengths and critical flaws. While the application resists common enumeration and injection attacks (SQLi/SSTI), it suffers from significant \textbf{Authentication} and \textbf{Access Control} vulnerabilities.
+
+The most critical issues requiring immediate attention are the \textbf{Stored XSS} in post titles, the broken \textbf{Password Reset} functionality (which currently results in account lockouts), and the lack of \textbf{Ownership Verification} on delete operations. Remediation of these items is essential before the application can be considered production-ready.
+
+\end{document}

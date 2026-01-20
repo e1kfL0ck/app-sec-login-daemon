@@ -4,7 +4,7 @@
 
 ## Scope
 
-The project available at https://bitbucket.org/crane_4/appsecurity.git, made by group 6.
+The project available at <https://bitbucket.org/crane_4/appsecurity.git>, made by group 6.
 
 Only the web application has been tested. Therefore any other part of the project (databases calls, access, configuration files, etc.) is out of the scope of this report.
 
@@ -47,24 +47,26 @@ Content-Type: image/png
 
 PNG
 ```
+
 [Screenshot of the alert](./xss.png)
   
-2. **Unproper verification of sessions for post deletions**
+1. **Unproper verification of sessions for post deletions**
 
     - **Description**: The application does not make a proper verification of post owner prior to deletions resulting in the possibility for a user to delete the post of an other user.
 
-3. **Panel admin template preview possible**
+2. **Panel admin template preview possible**
 
     - **Description** : Any visitor of the website can preview the admin panel template by accessing the URL /admin/ directly, the user is redirected to the login page, but after the preview of the page. Even tought the user cannot perform any action, or see any metrics without being logged in as an admin
     - **Recommendation** : Load the page and HTML/CSS/JS ressources only after a successful check of the user session as an admin.
 
 [Screenshot of the admin panel preview](./admin.png)
 
-4. **Inconsistant post name and image preview**
-   
-    - **Description** : At some time, the name of the post no matter the id asked with `/post.html?id=$id` will always return the last one. However, this issue does not seems to happen for comments. 
+1. **Inconsistant post name and image preview**
+
+    - **Description** : At some time, the name of the post no matter the id asked with `/post.html?id=$id` will always return the last one. However, this issue does not seems to happen for comments.
     - The route `/api/posts?id=$id` always return all the posts, no matter the id asked.b
-## Observed good practices 
+
+## Observed good practices
 
 1. We did not manage to find any files with directory enumeration.
    [File enumeration](./ffuf.png)
@@ -72,12 +74,45 @@ Content-Type: image/png
 2. No SSTI, SQLi or XSS found in other inputs than the one mentioned above.
 
 3. No secrets disovered in the frontend code.
-1. We did not manage to find SSTI, SQLInjection, RCE, Security flaws in the file upload
-2. No secrets disovered
-
+4. We did not manage to find SSTI, SQLInjection, RCE, Security flaws in the file upload
+5. No secrets disovered
 
 ## TLS tester run
 
 Obsoleted CBC ciphers (AES, ARIA etc.) offered by the server.
 TLS v1.3 is not supported by the server.
 LUCKY13 (CVE-2013-0169), experimental, potentially VULNERABLE, uses cipher block chaining (CBC) ciphers with TLS.
+
+## Maybe (confirmed)
+
+Infinite Token Validity (reset_confirm.go) The confirmation handler checks if the token exists, but does not check if it has expired.
+
+Risk: If a user requested a reset 3 years ago and never used it, that token is still valid. If an attacker finds it in old logs or emails, they can take over the account.
+
+Fix: Add an expiry check (e.g., 1 hour):
+SQL
+
+WHERE reset_token=? AND reset_requested_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+
+Session Invalidation When a password is changed, you do not clear existing sessions.
+
+Risk: If an attacker has stolen a session cookie, changing the password does not kick them out.
+
+Fix: In ResetConfirmHandler, find the user ID associated with the token and delete all their sessions from Redis.
+
+## Route seems to be broken for memes
+
+as they are present in the back but not in the front. Not sure as it's all in polish.
+
+Password reset seems broken :
+
+- if there is an error (password not conform) in the reset form, the user stays on /reset_request without any error message displayed.
+- there is only one imput field for the new password, no confirmation field.
+
+Upon requesting a password reset, the reset link is logged to the client console (should be sent by email, and logged only to server-side console, even for testing purposes). See screenshot
+
+The <https://localhost/reset_confirm.html> page is accessible without any token, displaying no error whatsoever. (see screenshot)
+
+The reset_confirm handler breaks the account by setting a wrong password hash. The password reset process locks the user out of their account. After submitting a new password, the user cannot log in anymore. (see screenshot)
+
+The activate page has no frontend.
