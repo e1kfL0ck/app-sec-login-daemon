@@ -70,5 +70,6 @@ Content-Type: image/png
    ![File enumeration](./ffuf.png)
 
 2. No SSTI, SQLi or XSS found in other inputs than the one mentioned above.
+   ![SQLI](./SQLi.png)
 
 3. No secrets disovered in the frontend code.
