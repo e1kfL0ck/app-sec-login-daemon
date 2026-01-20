@@ -73,3 +73,12 @@ Content-Type: image/png
    ![SQLI](./SQLi.png)
 
 3. No secrets disovered in the frontend code.
+1. We did not manage to find SSTI, SQLInjection, RCE, Security flaws in the file upload
+2. No secrets disovered
+
+
+## TLS tester run
+
+Obsoleted CBC ciphers (AES, ARIA etc.) offered by the server.
+TLS v1.3 is not supported by the server.
+LUCKY13 (CVE-2013-0169), experimental, potentially VULNERABLE, uses cipher block chaining (CBC) ciphers with TLS.
