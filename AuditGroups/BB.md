@@ -73,8 +73,6 @@ Content-Type: image/png
    ![SQLI](./SQLi.png)
 
 3. No secrets disovered in the frontend code.
-1. We did not manage to find SSTI, SQLInjection, RCE, Security flaws in the file upload
-2. No secrets disovered
 
 
 ## TLS tester run
