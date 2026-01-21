@@ -177,6 +177,21 @@ Unauthenticated visitors accessing \texttt{/admin/} are shown a preview of the a
 \textbf{Recommendation}: \\
 Load the page and HTML/CSS/JS ressources only after a successful check of the user session as an admin.
 
+\section{Openly Accessible Resources}
+\textbf{Severity: Low}
+
+\textbf{Description}: \\
+The endpoint \texttt{/uploads/memes} is publicly accessible without authentication. This allows any user to view all uploaded memes, which may include sensitive or private content.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/uploads.png}
+    \caption{Unauthenticated view of the uploaded memes}
+\end{figure}
+
+\textbf{Recommendation}: \\
+Restrict access to the \texttt{/uploads/memes} endpoint to authenticated users only.
+
 \section{API Logic Flaws}
 \textbf{Severity: Low}
 
